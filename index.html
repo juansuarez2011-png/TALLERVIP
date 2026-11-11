@@ -124,7 +124,7 @@
                 </section>
             </div>
 
-            <!-- COLUMNAS 2 y 3: Módulos 2 y 3 (Recepción, Mapa Base y Checklist) -->
+            <!-- COLUMNAS 2 y 3: Módulos 2 y 3 (Recepción, Mapa Base y Checklist Técnico) -->
             <div class="lg:col-span-2 space-y-6">
                 <section class="neumo-card p-6">
                     <h2 class="text-xl font-semibold mb-4 text-slate-200">Módulos 2 y 3: Recepción y Mapa Base del Vehículo</h2>
@@ -191,77 +191,13 @@
                                 <textarea id="ord-servicio" rows="3" required class="w-full p-2 rounded-lg neumo-input text-sm focus:outline-none" placeholder="Mantenimiento de radiador, mangueras..."></textarea>
                             </div>
                             <div class="space-y-3">
-                                <div class="grid grid-cols-2 gap-2">
-                                    <div>
-                                        <label class="block text-xs text-slate-400 mb-1">Ingreso en Grúa</label>
-                                        <select id="ord-grua" class="w-full p-2 rounded-lg neumo-input text-sm focus:outline-none">
-                                            <option value="NO">No</option>
-                                            <option value="SI">Sí</option>
-                                        </select>
-                                    </div>
-                                    <div>
-                                        <label class="block text-xs text-slate-400 mb-1">Mecánico Asignado</label>
-                                        <input type="text" id="ord-mecanico" required class="w-full p-2 rounded-lg neumo-input text-sm focus:outline-none" value="ANTONIO GUTIERREZ">
-                                    </div>
+                                <div>
+                                    <label class="block text-xs text-slate-400 mb-1">Mecánico Asignado</label>
+                                    <input type="text" id="ord-mecanico" required class="w-full p-2 rounded-lg neumo-input text-sm focus:outline-none" value="ANTONIO GUTIERREZ">
                                 </div>
                                 <div>
                                     <label class="block text-xs text-slate-400 mb-1">Fotografía de Recepción</label>
                                     <input type="file" id="ord-foto" accept="image/*" class="w-full text-xs text-slate-300 file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-blue-600 file:text-white cursor-pointer">
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- CHECKLIST DE ACCESORIOS Y ESTADO -->
-                        <div class="p-4 rounded-xl border border-slate-700 bg-slate-900/40 space-y-3">
-                            <h3 class="text-sm font-bold text-blue-400 uppercase tracking-wider">Checklist de Accesorios y Estado</h3>
-                            <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
-                                <div>
-                                    <span class="text-slate-400">Gato</span>
-                                    <select id="chk-gato" class="w-full p-1 rounded neumo-input mt-1"><option value="SI">Sí</option><option value="NO">No</option></select>
-                                </div>
-                                <div>
-                                    <span class="text-slate-400">Herramientas</span>
-                                    <select id="chk-herramientas" class="w-full p-1 rounded neumo-input mt-1"><option value="SI">Sí</option><option value="NO">No</option></select>
-                                </div>
-                                <div>
-                                    <span class="text-slate-400">Triángulo</span>
-                                    <select id="chk-triangulo" class="w-full p-1 rounded neumo-input mt-1"><option value="SI">Sí</option><option value="NO">No</option></select>
-                                </div>
-                                <div>
-                                    <span class="text-slate-400">Neumático Repuesto</span>
-                                    <select id="chk-repuesto" class="w-full p-1 rounded neumo-input mt-1"><option value="SI">Sí</option><option value="NO">No</option></select>
-                                </div>
-                                <div>
-                                    <span class="text-slate-400">Estéreo</span>
-                                    <select id="chk-estereo" class="w-full p-1 rounded neumo-input mt-1"><option value="SI">Sí</option><option value="NO">No</option></select>
-                                </div>
-                                <div>
-                                    <span class="text-slate-400">Antena</span>
-                                    <select id="chk-antena" class="w-full p-1 rounded neumo-input mt-1"><option value="SI">Sí</option><option value="NO">No</option></select>
-                                </div>
-                                <div>
-                                    <span class="text-slate-400">Emblemas</span>
-                                    <select id="chk-emblemas" class="w-full p-1 rounded neumo-input mt-1"><option value="SI">Sí</option><option value="NO">No</option></select>
-                                </div>
-                                <div>
-                                    <span class="text-slate-400">Alfombras</span>
-                                    <select id="chk-alfombras" class="w-full p-1 rounded neumo-input mt-1"><option value="SI">Sí</option><option value="NO">No</option></select>
-                                </div>
-                            </div>
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2">
-                                <div>
-                                    <label class="block text-xs text-slate-400 mb-1">Nivel de Combustible</label>
-                                    <select id="chk-combustible" class="w-full p-2 rounded-lg neumo-input text-sm focus:outline-none">
-                                        <option value="Lleno">Lleno</option>
-                                        <option value="3/4">3/4</option>
-                                        <option value="1/2">1/2</option>
-                                        <option value="1/4">1/4</option>
-                                        <option value="Vacío">Vacío</option>
-                                    </select>
-                                </div>
-                                <div>
-                                    <label class="block text-xs text-slate-400 mb-1">Luces de Advertencia Encendidas</label>
-                                    <input type="text" id="chk-luces-adv" class="w-full p-2 rounded-lg neumo-input text-sm focus:outline-none" placeholder="Ej: ABS, Check Engine (o Ninguna)">
                                 </div>
                             </div>
                         </div>
@@ -335,11 +271,11 @@
                     <h2 class="text-xl font-semibold text-slate-200">Gestión de Base de Datos (Importar / Exportar CSV)</h2>
                     
                     <div class="p-4 rounded-xl border border-slate-700 bg-slate-900/50 space-y-3">
-                        <label class="block text-xs text-blue-400 font-semibold uppercase">⬆️ Importación Masiva de Clientes (Subir CSV)</label>
+                        <label class="block text-xs text-blue-400 font-semibold uppercase">⬆️ Importación Masiva (Subir CSV Histórico)</label>
                         <div class="flex flex-col sm:flex-row gap-3">
                             <input type="file" id="csv-file-input" accept=".csv" class="w-full p-2 rounded-lg neumo-input text-xs text-slate-300 file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-blue-600 file:text-white cursor-pointer">
-                            <button type="button" onclick="procesarCargaMasiva()" class="px-4 py-2 rounded-lg text-xs font-semibold text-white neumo-button-purple whitespace-nowrap">
-                                Subir CSV a la Nube
+                            <button type="button" onclick="procesarCSVHistorico()" class="px-4 py-2 rounded-lg text-xs font-semibold text-white neumo-button-purple whitespace-nowrap">
+                                Importar CSV a la Nube
                             </button>
                         </div>
                     </div>
@@ -361,7 +297,7 @@
                             <div id="progress-bar" class="bg-blue-500 h-full w-0 transition-all duration-300"></div>
                         </div>
                         <div id="log-console" class="bg-slate-950 p-3 rounded-lg font-mono text-xs text-emerald-400 h-32 overflow-y-auto neumo-input">
-                            [Sistema Listo] Historial y mapa base completo activo.
+                            [Sistema Listo] Recepción optimizada y Módulo 3 activo.
                         </div>
                     </div>
                 </section>
@@ -434,9 +370,7 @@
         }, 1000);
 
         function inicializarFormulario() {
-            // Limpieza completa del formulario de órdenes al guardar o ingresar
             document.getElementById('orden-form').reset();
-            
             const now = new Date();
             const anio = now.getFullYear();
             const mes = (now.getMonth() + 1).toString().padStart(2, '0');
@@ -451,38 +385,37 @@
 
         async function cargarBaseVehiculosCloud() {
             try {
-                const querySnapshot = await getDocs(collection(db, "clientes_taller"));
+                const querySnapshot = await getDocs(collection(db, "ordenes_servicio"));
                 baseVehiculosGlobal = [];
                 const datalist = document.getElementById('lista-placas');
                 datalist.innerHTML = '';
 
                 querySnapshot.forEach((docSnapshot) => {
-                    const data = docSnapshot.data();
-                    if (data.vehiculos && Array.isArray(data.vehiculos)) {
-                        data.vehiculos.forEach(v => {
-                            baseVehiculosGlobal.push({
-                                placa: v.placa.toUpperCase(),
-                                marca: v.marca || '',
-                                modelo: v.modelo || '',
-                                anio: v.anio || '',
-                                serialCarroceria: v.serialCarroceria || '',
-                                serialBateria: v.serialBateria || '',
-                                clienteNombre: data.nombre || '',
-                                clienteTelefono: data.telefono || '',
-                                clienteEmail: data.email || '',
-                                clienteCedula: data.cedula || ''
-                            });
-                            datalist.innerHTML += `<option value="${v.placa.toUpperCase()}">${v.marca} ${v.modelo} - Propietario: ${data.nombre}</option>`;
+                    const d = docSnapshot.data();
+                    if (d.placa) {
+                        baseVehiculosGlobal.push({
+                            placa: d.placa.toUpperCase(),
+                            marca: d.marca || '',
+                            modelo: d.modelo || '',
+                            anio: d.anio || '',
+                            km: d.km || '',
+                            serialCarroceria: d.serialCarroceria || '',
+                            serialBateria: d.serialBateria || '',
+                            cliente: d.cliente || '',
+                            telefono: d.telefono || '',
+                            email: d.email || '',
+                            servicio: d.servicio || ''
                         });
+                        datalist.innerHTML += `<option value="${d.placa.toUpperCase()}">${d.marca || ''} ${d.modelo || ''} - ${d.cliente || ''}</option>`;
                     }
                 });
-                logConsola(`[MAPA BASE] ${baseVehiculosGlobal.length} vehículos cargados.`);
+                logConsola(`[MAPA BASE] ${baseVehiculosGlobal.length} registros cargados desde el historial.`);
             } catch (e) {
                 logConsola(`Error al cargar mapa base: ${e.message}`);
             }
         }
 
-        // AUTOCOMPLETADO INTELIGENTE: Trae todos los datos fijos al escribir la placa
+        // AUTOCOMPLETADO INTELIGENTE: Trae cliente, vehículo y detalles al escribir la placa
         window.seleccionarPlacaInteligente = function(valorPlaca) {
             const placaBuscada = valorPlaca.trim().toUpperCase();
             const v = baseVehiculosGlobal.find(item => item.placa === placaBuscada);
@@ -491,21 +424,13 @@
                 document.getElementById('ord-marca').value = v.marca;
                 document.getElementById('ord-modelo').value = v.modelo;
                 document.getElementById('ord-anio').value = v.anio;
+                document.getElementById('ord-km').value = v.km;
                 document.getElementById('ord-serial-carroceria').value = v.serialCarroceria;
                 document.getElementById('ord-serial-bateria').value = v.serialBateria;
-                document.getElementById('ord-cliente').value = v.clienteNombre;
-                document.getElementById('ord-telefono').value = v.clienteTelefono;
-                document.getElementById('ord-email').value = v.clienteEmail || '';
-                logConsola(`[VEHÍCULO RECONOCIDO] Placa ${placaBuscada} cargada correctamente.`);
-            } else {
-                document.getElementById('ord-cliente').value = "";
-                document.getElementById('ord-telefono').value = "";
-                document.getElementById('ord-email').value = "";
-                document.getElementById('ord-marca').value = "";
-                document.getElementById('ord-modelo').value = "";
-                document.getElementById('ord-anio').value = "";
-                document.getElementById('ord-serial-carroceria').value = "";
-                document.getElementById('ord-serial-bateria').value = "";
+                document.getElementById('ord-cliente').value = v.cliente;
+                document.getElementById('ord-telefono').value = v.telefono;
+                document.getElementById('ord-email').value = v.email;
+                logConsola(`[AUTOCOMPLETADO] Datos cargados para la placa ${placaBuscada}`);
             }
         };
 
@@ -541,7 +466,6 @@
                 await addDoc(collection(db, "clientes_taller"), { cedula, nombre, telefono, direccion, vehiculos: [], registradoPor: operador, fechaRegistro: new Date().toISOString() });
                 alert("¡Cliente guardado con éxito!");
                 document.getElementById('client-form').reset();
-                await cargarBaseVehiculosCloud();
             } catch (e) { alert("Error al guardar cliente."); }
         };
 
@@ -559,22 +483,8 @@
             const km = document.getElementById('ord-km').value.trim();
             const serialCarroceria = document.getElementById('ord-serial-carroceria').value.trim().toUpperCase();
             const serialBateria = document.getElementById('ord-serial-bateria').value.trim().toUpperCase();
-            const grua = document.getElementById('ord-grua').value;
             const servicio = document.getElementById('ord-servicio').value.trim();
             const mecanico = document.getElementById('ord-mecanico').value.trim();
-
-            const accesorios = {
-                gato: document.getElementById('chk-gato').value,
-                herramientas: document.getElementById('chk-herramientas').value,
-                triangulo: document.getElementById('chk-triangulo').value,
-                repuesto: document.getElementById('chk-repuesto').value,
-                estereo: document.getElementById('chk-estereo').value,
-                antena: document.getElementById('chk-antena').value,
-                emblemas: document.getElementById('chk-emblemas').value,
-                alfombras: document.getElementById('chk-alfombras').value,
-                combustible: document.getElementById('chk-combustible').value,
-                lucesAdv: document.getElementById('chk-luces-adv').value
-            };
 
             const checklistTecnico = {
                 aceite: { nivel: document.getElementById('chk-aceite-nivel').value, color: document.getElementById('chk-aceite-color').value, filtro: document.getElementById('chk-aceite-filtro').value, fugas: document.getElementById('chk-aceite-fugas').value },
@@ -593,43 +503,16 @@
             try {
                 await addDoc(collection(db, "ordenes_servicio"), {
                     codigo, placa, fechaIngreso, cliente, telefono, email, marca, modelo, anio, km,
-                    serialCarroceria, serialBateria, grua, servicio, mecanico,
-                    accesorios, checklistTecnico, registradoPor: operador,
+                    serialCarroceria, serialBateria, servicio, mecanico,
+                    checklistTecnico, registradoPor: operador,
                     fechaRegistroCloud: new Date().toISOString()
                 });
 
-                // Si el vehículo es nuevo, registrarlo automáticamente en el mapa base
-                const existeVehiculo = baseVehiculosGlobal.some(v => v.placa === placa);
-                if (!existeVehiculo) {
-                    const cedulaCliente = prompt("Vehículo nuevo. Ingrese la Cédula o RIF del cliente para vincularlo al mapa base:");
-                    if (cedulaCliente) {
-                        const querySnapshot = await getDocs(collection(db, "clientes_taller"));
-                        let docIdCliente = null;
-                        let vehiculosPrevios = [];
-
-                        querySnapshot.forEach((docSnapshot) => {
-                            const d = docSnapshot.data();
-                            if ((d.cedula || "").toLowerCase() === cedulaCliente.toLowerCase()) {
-                                docIdCliente = docSnapshot.id;
-                                vehiculosPrevios = d.vehiculos || [];
-                            }
-                        });
-
-                        if (docIdCliente) {
-                            vehiculosPrevios.push({ placa, marca, modelo, anio, serialCarroceria, serialBateria });
-                            await updateDoc(doc(db, "clientes_taller", docIdCliente), { vehiculos: vehiculosPrevios });
-                            alert("¡Vehículo vinculado al mapa base con éxito!");
-                            await cargarBaseVehiculosCloud();
-                        } else {
-                            alert("Cliente no encontrado por cédula. Registre primero al cliente en el Módulo 1.");
-                        }
-                    }
-                }
-
                 actualizarProgreso(100);
-                logConsola(`[ÉXITO] Orden ${codigo} guardada y limpiada correctamente.`);
+                logConsola(`[ÉXITO] Orden ${codigo} guardada y formulario limpiado.`);
                 alert("¡Orden de servicio guardada con éxito!");
                 inicializarFormulario();
+                await cargarBaseVehiculosCloud();
             } catch (e) {
                 logConsola(`Error: ${e.message}`);
                 alert("Error al guardar en la nube.");
@@ -637,7 +520,7 @@
             }
         };
 
-        window.procesarCargaMasiva = async function() {
+        window.procesarCSVHistorico = async function() {
             const fileInput = document.getElementById('csv-file-input');
             if (!fileInput.files.length) { alert("Seleccione un archivo CSV."); return; }
             const file = fileInput.files[0];
@@ -648,21 +531,35 @@
                 const text = e.target.result;
                 const lineas = text.split('\n');
                 let subidos = 0;
+                
                 for (let i = 1; i < lineas.length; i++) {
                     const linea = lineas[i].trim();
                     if (!linea) continue;
                     const c = linea.split(',');
-                    if (c.length >= 4) {
+                    if (c.length >= 14) {
                         try {
-                            await addDoc(collection(db, "clientes_taller"), {
-                                cedula: c[0].trim(), nombre: c[1].trim(), telefono: c[2].trim(), direccion: c[3].trim(), vehiculos: [],
-                                registradoPor: operador, fechaRegistro: new Date().toISOString()
+                            await addDoc(collection(db, "ordenes_servicio"), {
+                                codigo: c[2] || '',
+                                placa: c[3] || '',
+                                marca: c[5] || '',
+                                modelo: c[6] || '',
+                                anio: c[7] || '',
+                                km: c[8] || '',
+                                fechaIngreso: c[1] || '',
+                                serialCarroceria: c[10] || '',
+                                serialBateria: c[11] || '',
+                                cliente: c[12] || '',
+                                telefono: c[13] || '',
+                                email: c[14] || '',
+                                servicio: c[16] || '',
+                                registradoPor: operador,
+                                origenCSV: true
                             });
                             subidos++;
                         } catch (err) {}
                     }
                 }
-                alert(`¡Carga masiva completada! ${subidos} clientes subidos.`);
+                alert(`¡Importación histórica completada! Se cargaron ${subidos} registros a la nube.`);
                 await cargarBaseVehiculosCloud();
                 fileInput.value = '';
             };
@@ -684,10 +581,10 @@
         window.exportarOrdenesCSV = async function() {
             try {
                 const querySnapshot = await getDocs(collection(db, "ordenes_servicio"));
-                let csv = "data:text/csv;charset=utf-8,\uFEFFID,Codigo,FechaIngreso,Cliente,Telefono,Email,Placa,Marca,Modelo,Anio,KM,SerialCarroceria,SerialBateria,Grua,Mecanico,Servicio\n";
+                let csv = "data:text/csv;charset=utf-8,\uFEFFID,Codigo,FechaIngreso,Cliente,Telefono,Email,Placa,Marca,Modelo,Anio,KM,SerialCarroceria,SerialBateria,Mecanico,Servicio\n";
                 querySnapshot.forEach(d => {
                     const dt = d.data();
-                    csv += `"${d.id}","${dt.codigo || ''}","${dt.fechaIngreso || ''}","${dt.cliente || ''}","${dt.telefono || ''}","${dt.email || ''}","${dt.placa || ''}","${dt.marca || ''}","${dt.modelo || ''}","${dt.anio || ''}","${dt.km || ''}","${dt.serialCarroceria || ''}","${dt.serialBateria || ''}","${dt.grua || ''}","${dt.mecanico || ''}","${(dt.servicio || '').replace(/\n/g,' ')}"\n`;
+                    csv += `"${d.id}","${dt.codigo || ''}","${dt.fechaIngreso || ''}","${dt.cliente || ''}","${dt.telefono || ''}","${dt.email || ''}","${dt.placa || ''}","${dt.marca || ''}","${dt.modelo || ''}","${dt.anio || ''}","${dt.km || ''}","${dt.serialCarroceria || ''}","${dt.serialBateria || ''}","${dt.mecanico || ''}","${(dt.servicio || '').replace(/\n/g,' ')}"\n`;
                 });
                 descargarCSV(csv, `Ordenes_Syntro.csv`);
             } catch (e) { alert("Error al exportar."); }
