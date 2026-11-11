@@ -127,11 +127,11 @@
             <!-- COLUMNAS 2 y 3: Módulos 2 y 3 (Recepción, Mapa Base y Checklist Técnico) -->
             <div class="lg:col-span-2 space-y-6">
                 <section class="neumo-card p-6">
-                    <h2 class="text-xl font-semibold mb-4 text-slate-200">Módulos 2 y 3: Recepción y Mapa Base del Vehículo</h2>
+                    <h2 class="text-xl font-semibold mb-4 text-slate-200">Módulos 2 y 3: Recepción e Inspección Técnica</h2>
                     
                     <form id="orden-form" onsubmit="guardarOrdenServicio(event)" class="space-y-6">
                         
-                        <!-- Datos Principales de Recepción -->
+                        <!-- Datos Principales de Recepción (Autocompletados por Placa) -->
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                             <div>
                                 <label class="block text-xs text-slate-400 mb-1">Código de Orden</label>
@@ -266,12 +266,12 @@
                     </form>
                 </section>
 
-                <!-- PANEL DE GESTIÓN DE BASE DE DATOS (IMPORTAR HISTÓRICO CSV) -->
+                <!-- PANEL DE GESTIÓN DE BASE DE DATOS -->
                 <section class="neumo-card p-6 space-y-4">
                     <h2 class="text-xl font-semibold text-slate-200">Gestión de Base de Datos (Importar / Exportar CSV)</h2>
                     
                     <div class="p-4 rounded-xl border border-slate-700 bg-slate-900/50 space-y-3">
-                        <label class="block text-xs text-blue-400 font-semibold uppercase">⬆️ Importación Masiva (Subir CSV Histórico de Órdenes)</label>
+                        <label class="block text-xs text-blue-400 font-semibold uppercase">⬆️ Importación Histórica (Subir CSV de Órdenes)</label>
                         <div class="flex flex-col sm:flex-row gap-3">
                             <input type="file" id="csv-file-input" accept=".csv" class="w-full p-2 rounded-lg neumo-input text-xs text-slate-300 file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-blue-600 file:text-white cursor-pointer">
                             <button type="button" onclick="procesarCSVHistorico()" class="px-4 py-2 rounded-lg text-xs font-semibold text-white neumo-button-purple whitespace-nowrap">
@@ -297,7 +297,7 @@
                             <div id="progress-bar" class="bg-blue-500 h-full w-0 transition-all duration-300"></div>
                         </div>
                         <div id="log-console" class="bg-slate-950 p-3 rounded-lg font-mono text-xs text-emerald-400 h-32 overflow-y-auto neumo-input">
-                            [Sistema Listo] Importación de historial y mapa base inteligente activo.
+                            [Sistema Listo] Módulo de importación y autocompletado por placa activo.
                         </div>
                     </div>
                 </section>
@@ -415,7 +415,7 @@
             }
         }
 
-        // AUTOCOMPLETADO INTELIGENTE POR PLACA
+        // AUTOCOMPLETADO INTELIGENTE POR PLACA BASADO EN EL CSV
         window.seleccionarPlacaInteligente = function(valorPlaca) {
             const placaBuscada = valorPlaca.trim().toUpperCase();
             const v = baseVehiculosGlobal.find(item => item.placa === placaBuscada);
@@ -440,7 +440,7 @@
             const placa = document.getElementById('ord-placa').value.trim().toUpperCase();
             const fechaIngreso = document.getElementById('ord-fecha').value;
             const cliente = document.getElementById('ord-cliente').value.trim();
-            const telefono = document.getElementById('telefono').value.trim();
+            const telefono = document.getElementById('ord-telefono').value.trim();
             const email = document.getElementById('ord-email').value.trim();
             const marca = document.getElementById('ord-marca').value.trim();
             const modelo = document.getElementById('ord-modelo').value.trim();
@@ -485,7 +485,7 @@
             }
         };
 
-        // IMPORTAR CSV HISTÓRICO USANDO EL BOTÓN INFERIOR CORRECTO
+        // IMPORTACIÓN DEL CSV HISTÓRICO ADAPTADA A LAS COLUMNAS EXACTAS
         window.procesarCSVHistorico = async function() {
             const fileInput = document.getElementById('csv-file-input');
             if (!fileInput.files.length) { alert("Seleccione su archivo CSV histórico."); return; }
@@ -501,14 +501,12 @@
                 const lineas = text.split('\n');
                 let subidos = 0;
                 
-                // Empezar en i = 1 para saltar la cabecera
                 for (let i = 1; i < lineas.length; i++) {
                     const linea = lineas[i].trim();
                     if (!linea) continue;
                     
-                    // Separar por comas respetando celdas
                     const c = linea.split(',');
-                    if (c.length >= 4 && c[3]) { // Verificar que tenga al menos la placa (columna 3)
+                    if (c.length >= 14) {
                         try {
                             await addDoc(collection(db, "ordenes_servicio"), {
                                 codigo: (c[2] || '').replace(/"/g, ''),
