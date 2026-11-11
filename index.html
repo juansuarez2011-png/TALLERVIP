@@ -95,7 +95,7 @@
                     <div class="mb-4 p-3 rounded-xl border border-slate-700 bg-slate-900/50">
                         <label class="block text-xs text-blue-400 font-semibold uppercase mb-1">Buscar Cliente</label>
                         <div class="flex gap-2">
-                            <input type="text" id="criterio-busqueda" class="w-full p-2 rounded-lg neumo-input text-sm focus:outline-none" placeholder="Cédula o Nombre">
+                            <input type="text" id="criterio-busqueda" class="w-full p-2 rounded-lg neumo-input text-sm focus:outline-none" placeholder="Cédula, RIF o Nombre">
                             <button type="button" onclick="buscarCliente()" class="px-3 py-2 rounded-lg text-white font-semibold text-xs neumo-button-secondary">Buscar</button>
                         </div>
                     </div>
@@ -124,28 +124,33 @@
                 </section>
             </div>
 
-            <!-- COLUMNAS 2 y 3: Módulos 2 y 3 (Recepción, Vehículos y Checklist Técnico) -->
+            <!-- COLUMNAS 2 y 3: Recepción, Vehículos, Chequeo Técnico y Exportación -->
             <div class="lg:col-span-2 space-y-6">
                 <section class="neumo-card p-6">
                     <h2 class="text-xl font-semibold mb-4 text-slate-200">Módulos 2 y 3: Recepción y Chequeo Técnico</h2>
                     
                     <form id="orden-form" onsubmit="guardarOrdenServicio(event)" class="space-y-6">
                         
-                        <!-- Datos de la Orden y Selección de Vehículo -->
+                        <!-- Datos de la Orden y Selección / Registro de Vehículo -->
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                             <div>
-                                <label class="block text-xs text-slate-400 mb-1">Código de Orden (AñoMes-Consecutivo)</label>
+                                <label class="block text-xs text-slate-400 mb-1">Código de Orden (Automático)</label>
                                 <input type="text" id="ord-codigo" readonly class="w-full p-2 rounded-lg neumo-input text-sm font-mono text-emerald-400 focus:outline-none">
                             </div>
                             <div>
-                                <label class="block text-xs text-slate-400 mb-1">Placa del Vehículo</label>
-                                <select id="ord-placa" onchange="seleccionarVehiculo()" class="w-full p-2 rounded-lg neumo-input text-sm focus:outline-none">
+                                <label class="block text-xs text-slate-400 mb-1">Vehículo (Placa)</label>
+                                <select id="ord-placa" onchange="manejarSeleccionPlaca()" class="w-full p-2 rounded-lg neumo-input text-sm focus:outline-none">
                                     <option value="">Seleccione cliente primero</option>
+                                    <option value="NUEVO">➕ Registrar Nuevo Vehículo</option>
                                 </select>
                             </div>
                             <div>
                                 <label class="block text-xs text-slate-400 mb-1">Kilometraje</label>
                                 <input type="text" id="ord-km" required class="w-full p-2 rounded-lg neumo-input text-sm focus:outline-none" placeholder="Ej: 64500">
+                            </div>
+                            <div>
+                                <label class="block text-xs text-slate-400 mb-1">Placa (Si es nuevo)</label>
+                                <input type="text" id="nuevo-placa" class="w-full p-2 rounded-lg neumo-input text-sm focus:outline-none hidden" placeholder="Ej: AAO83NL">
                             </div>
                             <div>
                                 <label class="block text-xs text-slate-400 mb-1">Marca</label>
@@ -184,7 +189,6 @@
                             <h3 class="text-sm font-bold text-blue-400 uppercase tracking-wider">Módulo 3: Inspección Técnica Detallada</h3>
                             
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
-                                <!-- Aceite y Filtros -->
                                 <div class="p-3 bg-slate-900 rounded-lg">
                                     <span class="font-semibold text-slate-300 block mb-2">1. Sistema de Aceite</span>
                                     <div class="grid grid-cols-2 gap-2">
@@ -195,7 +199,6 @@
                                     </div>
                                 </div>
 
-                                <!-- Correas y Mangueras -->
                                 <div class="p-3 bg-slate-900 rounded-lg">
                                     <span class="font-semibold text-slate-300 block mb-2">2. Correas y Mangueras</span>
                                     <div class="grid grid-cols-2 gap-2">
@@ -204,7 +207,6 @@
                                     </div>
                                 </div>
 
-                                <!-- Refrigerante -->
                                 <div class="p-3 bg-slate-900 rounded-lg">
                                     <span class="font-semibold text-slate-300 block mb-2">3. Líquido Refrigerante</span>
                                     <div class="grid grid-cols-3 gap-2">
@@ -214,7 +216,6 @@
                                     </div>
                                 </div>
 
-                                <!-- Batería y Alternador -->
                                 <div class="p-3 bg-slate-900 rounded-lg">
                                     <span class="font-semibold text-slate-300 block mb-2">4. Batería y Alternador</span>
                                     <div class="grid grid-cols-2 gap-2">
@@ -223,7 +224,6 @@
                                     </div>
                                 </div>
 
-                                <!-- Dirección y Frenos -->
                                 <div class="p-3 bg-slate-900 rounded-lg">
                                     <span class="font-semibold text-slate-300 block mb-2">5. Dirección y Frenos</span>
                                     <div class="grid grid-cols-2 gap-2">
@@ -232,7 +232,6 @@
                                     </div>
                                 </div>
 
-                                <!-- Ruedas, Luces y Limpiaparabrisas -->
                                 <div class="p-3 bg-slate-900 rounded-lg">
                                     <span class="font-semibold text-slate-300 block mb-2">6. Ruedas, Luces y Limpiaparabrisas</span>
                                     <div class="grid grid-cols-2 gap-2">
@@ -249,14 +248,26 @@
                     </form>
                 </section>
 
-                <!-- Bitácora y Progreso -->
-                <section class="neumo-card p-6">
-                    <h2 class="text-xl font-semibold mb-3 text-slate-200">Bitácora del Sistema</h2>
-                    <div class="w-full bg-slate-900 rounded-full h-3 mb-3 overflow-hidden neumo-input">
+                <!-- Bitácora y Panel de Exportación a CSV -->
+                <section class="neumo-card p-6 space-y-4">
+                    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
+                        <h2 class="text-xl font-semibold text-slate-200">Bitácora y Exportación de Datos</h2>
+                        <div class="flex gap-2 w-full md:w-auto">
+                            <button type="button" onclick="exportarClientesCSV()" class="flex-1 md:flex-none px-3 py-2 rounded-lg text-xs font-semibold text-white neumo-button-secondary">
+                                📊 Exportar Clientes CSV
+                            </button>
+                            <button type="button" onclick="exportarOrdenesCSV()" class="flex-1 md:flex-none px-3 py-2 rounded-lg text-xs font-semibold text-white neumo-button">
+                                📋 Exportar Órdenes CSV
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="w-full bg-slate-900 rounded-full h-3 overflow-hidden neumo-input">
                         <div id="progress-bar" class="bg-blue-500 h-full w-0 transition-all duration-300"></div>
                     </div>
+                    
                     <div id="log-console" class="bg-slate-950 p-3 rounded-lg font-mono text-xs text-emerald-400 h-36 overflow-y-auto neumo-input">
-                        [Sistema Listo] Módulos de Clientes, Recepción y Chequeo Técnico activos.
+                        [Sistema Listo] Módulos de Clientes, Recepción, Chequeo Técnico y Exportación activos.
                     </div>
                 </section>
             </div>
@@ -337,10 +348,9 @@
             document.getElementById('ord-codigo').value = `${anio}${mes}${consecutivo}`;
         }
 
-        // Búsqueda de cliente y carga de sus placas asociadas
         window.buscarCliente = async function() {
             const criterio = document.getElementById('criterio-busqueda').value.trim().toLowerCase();
-            if (!criterio) { alert("Ingrese Cédula o Nombre."); return; }
+            if (!criterio) { alert("Ingrese Cédula, RIF o Nombre."); return; }
             logConsola(`Buscando cliente "${criterio}"...`);
             actualizarProgreso(40);
             try {
@@ -348,11 +358,14 @@
                 let encontrado = false;
                 vehiculosClienteActual = [];
                 const selectPlaca = document.getElementById('ord-placa');
-                selectPlaca.innerHTML = '<option value="">Seleccione placa</option>';
+                selectPlaca.innerHTML = '<option value="">Seleccione placa</option><option value="NUEVO">➕ Registrar Nuevo Vehículo</option>';
 
                 querySnapshot.forEach((docSnapshot) => {
                     const data = docSnapshot.data();
-                    if ((data.cedula || "").toLowerCase() === criterio || (data.nombre || "").toLowerCase().includes(criterio)) {
+                    const cedulaDB = (data.cedula || "").toLowerCase();
+                    const nombreDB = (data.nombre || "").toLowerCase();
+
+                    if (cedulaDB === criterio || nombreDB.includes(criterio)) {
                         clienteDocIdActual = docSnapshot.id;
                         document.getElementById('cedula').value = data.cedula || '';
                         document.getElementById('nombre').value = data.nombre || '';
@@ -375,20 +388,33 @@
                     document.getElementById('nombre').value = '';
                     document.getElementById('telefono').value = '';
                     document.getElementById('direccion').value = '';
-                    logConsola(`[NUEVO CLIENTE] Registre los datos.`);
+                    logConsola(`[NUEVO CLIENTE] Registre los datos del cliente primero.`);
+                    alert("Cliente no encontrado. Ingrese los datos en el Módulo 1 para guardarlo.");
                 }
                 actualizarProgreso(100);
             } catch (e) { logConsola(`Error: ${e.message}`); actualizarProgreso(0); }
         };
 
-        window.seleccionarVehiculo = function() {
+        window.manejarSeleccionPlaca = function() {
             const placaSeleccionada = document.getElementById('ord-placa').value;
-            const vehiculo = vehiculosClienteActual.find(v => v.placa === placaSeleccionada);
-            if (vehiculo) {
-                document.getElementById('ord-marca').value = vehiculo.marca || '';
-                document.getElementById('ord-modelo').value = vehiculo.modelo || '';
-                document.getElementById('ord-anio').value = vehiculo.anio || '';
-                logConsola(`[VEHÍCULO SELECCIONADO] Placa: ${placaSeleccionada}`);
+            const inputNuevaPlaca = document.getElementById('nuevo-placa');
+            
+            if (placaSeleccionada === "NUEVO") {
+                inputNuevaPlaca.classList.remove('hidden');
+                inputNuevaPlaca.value = '';
+                document.getElementById('ord-marca').value = '';
+                document.getElementById('ord-modelo').value = '';
+                document.getElementById('ord-anio').value = '';
+                logConsola(`[NUEVO VEHÍCULO] Ingrese los datos del vehículo.`);
+            } else {
+                inputNuevaPlaca.classList.add('hidden');
+                const vehiculo = vehiculosClienteActual.find(v => v.placa === placaSeleccionada);
+                if (vehiculo) {
+                    document.getElementById('ord-marca').value = vehiculo.marca || '';
+                    document.getElementById('ord-modelo').value = vehiculo.modelo || '';
+                    document.getElementById('ord-anio').value = vehiculo.anio || '';
+                    logConsola(`[VEHÍCULO SELECCIONADO] Placa: ${placaSeleccionada}`);
+                }
             }
         };
 
@@ -411,11 +437,25 @@
             } catch (e) { alert("Error al guardar cliente."); }
         };
 
-        // Guardar Orden de Servicio y Chequeo Técnico (Módulos 2 y 3)
         window.guardarOrdenServicio = async function(event) {
             event.preventDefault();
+            if (!clienteDocIdActual) {
+                alert("Por favor busque y seleccione un cliente válido antes de generar la orden.");
+                return;
+            }
+
             const codigo = document.getElementById('ord-codigo').value.trim();
-            const placa = document.getElementById('ord-placa').value.trim() || prompt("Ingrese la placa del vehículo:");
+            const selectPlaca = document.getElementById('ord-placa').value;
+            let placa = selectPlaca;
+
+            if (selectPlaca === "NUEVO") {
+                placa = document.getElementById('nuevo-placa').value.trim();
+                if (!placa) {
+                    alert("Por favor ingrese la placa del nuevo vehículo.");
+                    return;
+                }
+            }
+
             const marca = document.getElementById('ord-marca').value.trim();
             const modelo = document.getElementById('ord-modelo').value.trim();
             const anio = document.getElementById('ord-anio').value.trim();
@@ -454,7 +494,7 @@
             };
 
             const operador = usuarioActual ? usuarioActual.email : 'sistema';
-            const clienteNombre = document.getElementById('nombre').value.trim() || 'General';
+            const clienteNombre = document.getElementById('nombre').value.trim();
 
             logConsola(`Guardando Orden ${codigo} en la nube...`);
             actualizarProgreso(60);
@@ -466,16 +506,17 @@
                     fechaIngreso: new Date().toISOString()
                 });
 
-                // Si es un vehículo nuevo, vincularlo al cliente actual
-                if (clienteDocIdActual && placa) {
+                if (selectPlaca === "NUEVO") {
                     vehiculosClienteActual.push({ placa, marca, modelo, anio });
                     await updateDoc(doc(db, "clientes_taller", clienteDocIdActual), { vehiculos: vehiculosClienteActual });
+                    logConsola(`[NUEVO VEHÍCULO] Placa ${placa} vinculada a ${clienteNombre}`);
                 }
 
                 actualizarProgreso(100);
                 logConsola(`[ÉXITO] Orden ${codigo} guardada y sincronizada.`);
                 alert("¡Orden de servicio y checklist técnico guardados correctamente en Firebase!");
                 document.getElementById('orden-form').reset();
+                document.getElementById('nuevo-placa').classList.add('hidden');
                 generarCodigoOrdenAutomatico();
             } catch (e) {
                 logConsola(`Error: ${e.message}`);
@@ -483,6 +524,69 @@
                 actualizarProgreso(0);
             }
         };
+
+        // EXPORTACIÓN A CSV DIRECTA (Clientes)
+        window.exportarClientesCSV = async function() {
+            logConsola("Generando archivo CSV de clientes...");
+            actualizarProgreso(40);
+            try {
+                const querySnapshot = await getDocs(collection(db, "clientes_taller"));
+                let csvContent = "data:text/csv;charset=utf-8,\uFEFF";
+                csvContent += "ID,Cedula/RIF,Nombre,Telefono,Direccion,RegistradoPor,FechaRegistro\n";
+
+                querySnapshot.forEach((docSnapshot) => {
+                    const d = docSnapshot.data();
+                    const linea = `"${docSnapshot.id}","${d.cedula || ''}","${d.nombre || ''}","${d.telefono || ''}","${(d.direccion || '').replace(/\n/g, ' ')}","${d.registradoPor || ''}","${d.fechaRegistro || ''}"`;
+                    csvContent += linea + "\n";
+                });
+
+                descargarCSV(csvContent, `Clientes_Syntro_${obtenerFechaString()}.csv`);
+                actualizarProgreso(100);
+                logConsola("[EXPORTACIÓN EXITOSA] Base de datos de clientes descargada.");
+            } catch (e) {
+                logConsola(`Error al exportar clientes: ${e.message}`);
+                actualizarProgreso(0);
+            }
+        };
+
+        // EXPORTACIÓN A CSV DIRECTA (Órdenes de Servicio)
+        window.exportarOrdenesCSV = async function() {
+            logConsola("Generando archivo CSV de órdenes...");
+            actualizarProgreso(40);
+            try {
+                const querySnapshot = await getDocs(collection(db, "ordenes_servicio"));
+                let csvContent = "data:text/csv;charset=utf-8,\uFEFF";
+                csvContent += "ID,CodigoOrden,Cliente,Placa,Marca,Modelo,Anio,KM,Mecanico,Servicio,RegistradoPor,FechaIngreso\n";
+
+                querySnapshot.forEach((docSnapshot) => {
+                    const d = docSnapshot.data();
+                    const linea = `"${docSnapshot.id}","${d.codigo || ''}","${d.clienteNombre || ''}","${d.placa || ''}","${d.marca || ''}","${d.modelo || ''}","${d.anio || ''}","${d.km || ''}","${d.mecanico || ''}","${(d.servicio || '').replace(/\n/g, ' ')}","${d.registradoPor || ''}","${d.fechaIngreso || ''}"`;
+                    csvContent += linea + "\n";
+                });
+
+                descargarCSV(csvContent, `Ordenes_Servicio_Syntro_${obtenerFechaString()}.csv`);
+                actualizarProgreso(100);
+                logConsola("[EXPORTACIÓN EXITOSA] Base de datos de órdenes descargada.");
+            } catch (e) {
+                logConsola(`Error al exportar órdenes: ${e.message}`);
+                actualizarProgreso(0);
+            }
+        };
+
+        function descargarCSV(contenidoURI, nombreArchivo) {
+            const encodedUri = encodeURI(contenidoURI);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", nombreArchivo);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        function obtenerFechaString() {
+            const now = new Date();
+            return `${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}`;
+        }
 
         function logConsola(mensaje) {
             const consola = document.getElementById('log-console');
