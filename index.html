@@ -184,7 +184,7 @@
                             </div>
                         </div>
 
-                        <!-- Servicios, Grúa y Mecánico -->
+                        <!-- Servicios y Mecánico -->
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
                                 <label class="block text-xs text-slate-400 mb-1">Trabajo / Servicio a Realizar</label>
@@ -266,12 +266,12 @@
                     </form>
                 </section>
 
-                <!-- PANEL DE GESTIÓN DE BASE DE DATOS -->
+                <!-- PANEL DE GESTIÓN DE BASE DE DATOS (IMPORTAR HISTÓRICO CSV) -->
                 <section class="neumo-card p-6 space-y-4">
                     <h2 class="text-xl font-semibold text-slate-200">Gestión de Base de Datos (Importar / Exportar CSV)</h2>
                     
                     <div class="p-4 rounded-xl border border-slate-700 bg-slate-900/50 space-y-3">
-                        <label class="block text-xs text-blue-400 font-semibold uppercase">⬆️ Importación Masiva (Subir CSV Histórico)</label>
+                        <label class="block text-xs text-blue-400 font-semibold uppercase">⬆️ Importación Masiva (Subir CSV Histórico de Órdenes)</label>
                         <div class="flex flex-col sm:flex-row gap-3">
                             <input type="file" id="csv-file-input" accept=".csv" class="w-full p-2 rounded-lg neumo-input text-xs text-slate-300 file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-blue-600 file:text-white cursor-pointer">
                             <button type="button" onclick="procesarCSVHistorico()" class="px-4 py-2 rounded-lg text-xs font-semibold text-white neumo-button-purple whitespace-nowrap">
@@ -297,7 +297,7 @@
                             <div id="progress-bar" class="bg-blue-500 h-full w-0 transition-all duration-300"></div>
                         </div>
                         <div id="log-console" class="bg-slate-950 p-3 rounded-lg font-mono text-xs text-emerald-400 h-32 overflow-y-auto neumo-input">
-                            [Sistema Listo] Recepción optimizada y Módulo 3 activo.
+                            [Sistema Listo] Importación de historial y mapa base inteligente activo.
                         </div>
                     </div>
                 </section>
@@ -409,13 +409,13 @@
                         datalist.innerHTML += `<option value="${d.placa.toUpperCase()}">${d.marca || ''} ${d.modelo || ''} - ${d.cliente || ''}</option>`;
                     }
                 });
-                logConsola(`[MAPA BASE] ${baseVehiculosGlobal.length} registros cargados desde el historial.`);
+                logConsola(`[MAPA BASE] ${baseVehiculosGlobal.length} vehículos cargados desde la nube.`);
             } catch (e) {
                 logConsola(`Error al cargar mapa base: ${e.message}`);
             }
         }
 
-        // AUTOCOMPLETADO INTELIGENTE: Trae cliente, vehículo y detalles al escribir la placa
+        // AUTOCOMPLETADO INTELIGENTE POR PLACA
         window.seleccionarPlacaInteligente = function(valorPlaca) {
             const placaBuscada = valorPlaca.trim().toUpperCase();
             const v = baseVehiculosGlobal.find(item => item.placa === placaBuscada);
@@ -434,48 +434,13 @@
             }
         };
 
-        window.buscarCliente = async function() {
-            const criterio = document.getElementById('criterio-busqueda').value.trim().toLowerCase();
-            if (!criterio) { alert("Ingrese Cédula o Nombre."); return; }
-            try {
-                const querySnapshot = await getDocs(collection(db, "clientes_taller"));
-                let encontrado = false;
-                querySnapshot.forEach((docSnapshot) => {
-                    const data = docSnapshot.data();
-                    if ((data.cedula || "").toLowerCase() === criterio || (data.nombre || "").toLowerCase().includes(criterio)) {
-                        document.getElementById('cedula').value = data.cedula || '';
-                        document.getElementById('nombre').value = data.nombre || '';
-                        document.getElementById('telefono').value = data.telefono || '';
-                        document.getElementById('direccion').value = data.direccion || '';
-                        encontrado = true;
-                    }
-                });
-                if (!encontrado) alert("Cliente no encontrado.");
-            } catch (e) { logConsola(`Error: ${e.message}`); }
-        };
-
-        window.guardarCliente = async function(event) {
-            event.preventDefault();
-            const cedula = document.getElementById('cedula').value.trim();
-            const nombre = document.getElementById('nombre').value.trim();
-            const telefono = document.getElementById('telefono').value.trim();
-            const direccion = document.getElementById('direccion').value.trim();
-            const operador = usuarioActual ? usuarioActual.email : 'sistema';
-
-            try {
-                await addDoc(collection(db, "clientes_taller"), { cedula, nombre, telefono, direccion, vehiculos: [], registradoPor: operador, fechaRegistro: new Date().toISOString() });
-                alert("¡Cliente guardado con éxito!");
-                document.getElementById('client-form').reset();
-            } catch (e) { alert("Error al guardar cliente."); }
-        };
-
         window.guardarOrdenServicio = async function(event) {
             event.preventDefault();
             const codigo = document.getElementById('ord-codigo').value.trim();
             const placa = document.getElementById('ord-placa').value.trim().toUpperCase();
             const fechaIngreso = document.getElementById('ord-fecha').value;
             const cliente = document.getElementById('ord-cliente').value.trim();
-            const telefono = document.getElementById('ord-telefono').value.trim();
+            const telefono = document.getElementById('telefono').value.trim();
             const email = document.getElementById('ord-email').value.trim();
             const marca = document.getElementById('ord-marca').value.trim();
             const modelo = document.getElementById('ord-modelo').value.trim();
@@ -520,38 +485,45 @@
             }
         };
 
+        // IMPORTAR CSV HISTÓRICO USANDO EL BOTÓN INFERIOR CORRECTO
         window.procesarCSVHistorico = async function() {
             const fileInput = document.getElementById('csv-file-input');
-            if (!fileInput.files.length) { alert("Seleccione un archivo CSV."); return; }
+            if (!fileInput.files.length) { alert("Seleccione su archivo CSV histórico."); return; }
             const file = fileInput.files[0];
             const reader = new FileReader();
             const operador = usuarioActual ? usuarioActual.email : 'sistema';
+
+            logConsola("Iniciando lectura del archivo CSV histórico...");
+            actualizarProgreso(20);
 
             reader.onload = async function(e) {
                 const text = e.target.result;
                 const lineas = text.split('\n');
                 let subidos = 0;
                 
+                // Empezar en i = 1 para saltar la cabecera
                 for (let i = 1; i < lineas.length; i++) {
                     const linea = lineas[i].trim();
                     if (!linea) continue;
+                    
+                    // Separar por comas respetando celdas
                     const c = linea.split(',');
-                    if (c.length >= 14) {
+                    if (c.length >= 4 && c[3]) { // Verificar que tenga al menos la placa (columna 3)
                         try {
                             await addDoc(collection(db, "ordenes_servicio"), {
-                                codigo: c[2] || '',
-                                placa: c[3] || '',
-                                marca: c[5] || '',
-                                modelo: c[6] || '',
-                                anio: c[7] || '',
-                                km: c[8] || '',
-                                fechaIngreso: c[1] || '',
-                                serialCarroceria: c[10] || '',
-                                serialBateria: c[11] || '',
-                                cliente: c[12] || '',
-                                telefono: c[13] || '',
-                                email: c[14] || '',
-                                servicio: c[16] || '',
+                                codigo: (c[2] || '').replace(/"/g, ''),
+                                placa: (c[3] || '').replace(/"/g, '').trim().toUpperCase(),
+                                marca: (c[5] || '').replace(/"/g, '').trim(),
+                                modelo: (c[6] || '').replace(/"/g, '').trim(),
+                                anio: (c[7] || '').replace(/"/g, '').trim(),
+                                km: (c[8] || '').replace(/"/g, '').trim(),
+                                fechaIngreso: (c[1] || '').replace(/"/g, ''),
+                                serialCarroceria: (c[10] || '').replace(/"/g, '').trim().toUpperCase(),
+                                serialBateria: (c[11] || '').replace(/"/g, '').trim().toUpperCase(),
+                                cliente: (c[12] || '').replace(/"/g, '').trim(),
+                                telefono: (c[13] || '').replace(/"/g, '').trim(),
+                                email: (c[14] || '').replace(/"/g, '').trim(),
+                                servicio: (c[16] || '').replace(/"/g, '').trim(),
                                 registradoPor: operador,
                                 origenCSV: true
                             });
@@ -559,7 +531,9 @@
                         } catch (err) {}
                     }
                 }
-                alert(`¡Importación histórica completada! Se cargaron ${subidos} registros a la nube.`);
+                actualizarProgreso(100);
+                logConsola(`[IMPORTACIÓN EXITOSA] ${subidos} registros cargados al historial.`);
+                alert(`¡Importación completada! Se cargaron ${subidos} vehículos al mapa base.`);
                 await cargarBaseVehiculosCloud();
                 fileInput.value = '';
             };
