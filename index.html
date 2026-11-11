@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Taller Mecánico Syntro - Acceso Autorizado</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background-color: #0f172a;
+            color: #f8fafc;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .neumo-card {
+            background: #1e293b;
+            box-shadow: 8px 8px 16px #0b1120, -8px -8px 16px #314159;
+            border-radius: 1rem;
+        }
+        .neumo-input {
+            background: #0f172a;
+            box-shadow: inset 4px 4px 8px #0b1120, inset -4px -4px 8px #314159;
+            border: none;
+            color: #ffffff;
+        }
+        .neumo-button {
+            background: #3b82f6;
+            box-shadow: 4px 4px 8px #1d4ed8, -4px -4px 8px #60a5fa;
+            transition: all 0.2s ease;
+        }
+        .neumo-button:active {
+            box-shadow: inset 2px 2px 4px #1d4ed8, inset -2px -2px 4px #60a5fa;
+        }
+        .neumo-button-secondary {
+            background: #059669;
+            box-shadow: 4px 4px 8px #047857, -4px -4px 8px #10b981;
+        }
+        .neumo-button-purple {
+            background: #7c3aed;
+            box-shadow: 4px 4px 8px #5b21b6, -4px -4px 8px #8b5cf6;
+        }
+        .neumo-button-red {
+            background: #dc2626;
+            box-shadow: 4px 4px 8px #991b1b, -4px -4px 8px #ef4444;
+        }
+    </style>
+</head>
+<body class="p-4 md:p-6 min-h-screen flex flex-col justify-between">
+
+    <!-- PANTALLA DE LOGIN (Obligatoria para ingresar) -->
+    <div id="auth-container" class="max-w-md mx-auto my-auto w-full neumo-card p-8">
+        <div class="text-center mb-6">
+            <h1 class="text-2xl font-bold text-blue-400">Taller Mecánico Syntro</h1>
+            <p class="text-xs text-slate-400 mt-1">Ingrese sus credenciales de operador</p>
+        </div>
+        <form onsubmit="manejarAutenticacion(event)" class="space-y-4">
+            <div>
+                <label class="block text-sm text-slate-400 mb-1">Correo Electrónico</label>
+                <input type="email" id="auth-email" required class="w-full p-3 rounded-lg neumo-input focus:outline-none" placeholder="taller@syntro.com">
+            </div>
+            <div>
+                <label class="block text-sm text-slate-400 mb-1">Contraseña</label>
+                <input type="password" id="auth-password" required class="w-full p-3 rounded-lg neumo-input focus:outline-none" placeholder="••••••••">
+            </div>
+            <button type="submit" class="w-full py-3 rounded-lg font-semibold text-white neumo-button">
+                Iniciar Sesión / Registrarse
+            </button>
+            <p class="text-[10px] text-slate-500 text-center mt-2">
+                Si es su primera vez, el sistema creará su cuenta automáticamente con estos datos.
+            </p>
+        </form>
+    </div>
+
+    <!-- APLICACIÓN PRINCIPAL (Bloqueada hasta iniciar sesión) -->
+    <div id="app-container" class="max-w-6xl mx-auto w-full hidden">
+        <header class="flex flex-col md:flex-row justify-between items-center mb-8 p-4 neumo-card gap-4">
+            <div>
+                <h1 class="text-2xl font-bold text-blue-400">Taller Mecánico Syntro</h1>
+                <p class="text-xs text-slate-400">Operador Autorizado: <span id="user-display" class="text-emerald-400 font-mono"></span></p>
+            </div>
+            <div class="flex items-center gap-6">
+                <div class="text-center md:text-right">
+                    <div id="timer" class="text-lg font-mono text-emerald-400">00:00:00</div>
+                    <div id="sync-status" class="text-xs text-emerald-400">Sincronizado con Cloud</div>
+                </div>
+                <button onclick="cerrarSesion()" class="px-4 py-2 rounded-lg text-xs font-semibold text-white neumo-button-red">
+                    Cerrar Sesión
+                </button>
+            </div>
+        </header>
+
+        <main class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- Izquierda: Búsqueda y Registro -->
+            <div class="space-y-6">
+                <section class="neumo-card p-6">
+                    <h2 class="text-xl font-semibold mb-4 text-slate-200">Gestión de Clientes</h2>
+                    
+                    <div class="mb-6 p-4 rounded-xl border border-slate-700 bg-slate-900/50">
+                        <label class="block text-xs text-blue-400 font-semibold uppercase tracking-wider mb-2">Buscar por Cédula, RIF o Nombre</label>
+                        <div class="flex gap-2">
+                            <input type="text" id="criterio-busqueda" class="w-full p-3 rounded-lg neumo-input focus:outline-none" placeholder="Ej: 12803709 o Juan" onkeypress="evaluarEnter(event)">
+                            <button type="button" onclick="buscarCliente()" class="px-4 py-3 rounded-lg text-white font-semibold neumo-button-secondary whitespace-nowrap">
+                                Buscar
+                            </button>
+                        </div>
+                    </div>
+
+                    <form id="client-form" onsubmit="guardarCliente(event)" class="space-y-4">
+                        <div>
+                            <label class="block text-sm text-slate-400 mb-1">Cédula o RIF</label>
+                            <input type="text" id="cedula" required class="w-full p-3 rounded-lg neumo-input focus:outline-none" placeholder="Ej: 12803709">
+                        </div>
+                        <div>
+                            <label class="block text-sm text-slate-400 mb-1">Nombre y Apellido / Razón Social</label>
+                            <input type="text" id="nombre" required class="w-full p-3 rounded-lg neumo-input focus:outline-none" placeholder="Juan Segundo">
+                        </div>
+                        <div>
+                            <label class="block text-sm text-slate-400 mb-1">Teléfono de Contacto</label>
+                            <input type="text" id="telefono" required class="w-full p-3 rounded-lg neumo-input focus:outline-none" placeholder="04123372660">
+                        </div>
+                        <div>
+                            <label class="block text-sm text-slate-400 mb-1">Dirección</label>
+                            <textarea id="direccion" rows="3" required class="w-full p-3 rounded-lg neumo-input focus:outline-none" placeholder="BARRIO FELIPE PIRELA 95A"></textarea>
+                        </div>
+                        <button type="submit" class="w-full py-3 rounded-lg font-semibold text-white neumo-button mt-4">
+                            Guardar / Actualizar en Base de Datos
+                        </button>
+                    </form>
+                </section>
+            </div>
+
+            <!-- Derecha: Carga Masiva y Bitácora -->
+            <div class="space-y-6">
+                <section class="neumo-card p-6">
+                    <h2 class="text-xl font-semibold mb-2 text-slate-200">Importación Masiva CSV</h2>
+                    <p class="text-xs text-slate-400 mb-4">Sube toda tu base de datos de clientes de golpe.</p>
+                    <div class="space-y-4">
+                        <input type="file" id="csv-file-input" accept=".csv" class="w-full p-3 rounded-lg neumo-input text-sm text-slate-300 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-600 file:text-white hover:file:bg-blue-700 cursor-pointer">
+                        <button type="button" onclick="procesarCargaMasiva()" class="w-full py-3 rounded-lg font-semibold text-white neumo-button-purple">
+                            Subir Base de Datos Masiva a la Nube
+                        </button>
+                    </div>
+                </section>
+
+                <section class="neumo-card p-6 flex flex-col justify-between">
+                    <div>
+                        <h2 class="text-xl font-semibold mb-4 text-slate-200">Bitácora y Auditoría</h2>
+                        <div class="w-full bg-slate-900 rounded-full h-3 mb-4 overflow-hidden neumo-input">
+                            <div id="progress-bar" class="bg-blue-500 h-full w-0 transition-all duration-300"></div>
+                        </div>
+                        <div id="log-console" class="bg-slate-950 p-4 rounded-lg font-mono text-xs text-emerald-400 h-48 overflow-y-auto neumo-input">
+                            [Sistema Listo] Sesión asegurada en la nube...
+                        </div>
+                    </div>
+                    <div class="mt-4 text-xs text-slate-500 text-center">
+                        Seguridad Cloud Firestore + Auth Activa
+                    </div>
+                </section>
+            </div>
+        </main>
+    </div>
+
+    <!-- Script Firebase y Control de Sesión -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-app.js";
+        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-auth.js";
+        import { getFirestore, collection, addDoc, getDocs, updateDoc, doc } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBe96LcGjwrVh6ciDoEbbUwRhfGCOrqBS8",
+            authDomain: "taller-mecanico-c2124.firebaseapp.com",
+            projectId: "taller-mecanico-c2124",
+            storageBucket: "taller-mecanico-c2124.firebasestorage.app",
+            messagingSenderId: "524886950258",
+            appId: "1:524886950258:web:8980e91ab51833e7b49deb",
+            measurementId: "G-TWRKEQBJML"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        let clienteDocIdActual = null;
+        let usuarioActual = null;
+
+        // Vigilar estado de la sesión en tiempo real
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                usuarioActual = user;
+                document.getElementById('auth-container').classList.add('hidden');
+                document.getElementById('app-container').classList.remove('hidden');
+                document.getElementById('user-display').innerText = user.email;
+                logConsola(`Sesión activa de: ${user.email}`);
+            } else {
+                usuarioActual = null;
+                document.getElementById('auth-container').classList.remove('hidden');
+                document.getElementById('app-container').classList.add('hidden');
+            }
+        });
+
+        // Autenticación Inteligente (Login o Registro automático)
+        window.manejarAutenticacion = async function(event) {
+            event.preventDefault();
+            const email = document.getElementById('auth-email').value.trim();
+            const pass = document.getElementById('auth-password').value.trim();
+
+            try {
+                await signInWithEmailAndPassword(auth, email, pass);
+            } catch (error) {
+                try {
+                    await createUserWithEmailAndPassword(auth, email, pass);
+                    alert("¡Cuenta de operador creada y sesión iniciada con éxito!");
+                } catch (err) {
+                    alert("Error de acceso: " + err.message);
+                }
+            }
+        };
+
+        window.cerrarSesion = async function() {
+            await signOut(auth);
+            logConsola("Sesión cerrada.");
+        };
+
+        // Temporizador
+        let segundosTotales = 0;
+        setInterval(() => {
+            segundosTotales++;
+            let hrs = Math.floor(segundosTotales / 3600).toString().padStart(2, '0');
+            let mins = Math.floor((segundosTotales % 3600) / 60).toString().padStart(2, '0');
+            let secs = (segundosTotales % 60).toString().padStart(2, '0');
+            document.getElementById('timer').innerText = `${hrs}:${mins}:${secs}`;
+        }, 1000);
+
+        function limpiarFormulario() {
+            document.getElementById('client-form').reset();
+            document.getElementById('criterio-busqueda').value = '';
+            clienteDocIdActual = null;
+        }
+
+        window.buscarCliente = async function() {
+            const criterio = document.getElementById('criterio-busqueda').value.trim().toLowerCase();
+            if (!criterio) {
+                alert("Ingrese Cédula o Nombre para buscar.");
+                return;
+            }
+
+            logConsola(`Buscando "${criterio}" en la nube...`);
+            actualizarProgreso(50);
+
+            try {
+                const querySnapshot = await getDocs(collection(db, "clientes_taller"));
+                let encontrado = false;
+
+                querySnapshot.forEach((docSnapshot) => {
+                    const data = docSnapshot.data();
+                    const cedulaDB = (data.cedula || "").toLowerCase();
+                    const nombreDB = (data.nombre || "").toLowerCase();
+
+                    if (cedulaDB === criterio || nombreDB.includes(criterio)) {
+                        clienteDocIdActual = docSnapshot.id;
+                        document.getElementById('cedula').value = data.cedula || '';
+                        document.getElementById('nombre').value = data.nombre || '';
+                        document.getElementById('telefono').value = data.telefono || '';
+                        document.getElementById('direccion').value = data.direccion || '';
+
+                        logConsola(`[ENCONTRADO] Cliente: ${data.nombre} (Registrado por: ${data.registradoPor || 'N/A'})`);
+                        alert(`¡Cliente encontrado: ${data.nombre}!`);
+                        encontrado = true;
+                    }
+                });
+
+                if (!encontrado) {
+                    clienteDocIdActual = null;
+                    document.getElementById('cedula').value = !isNaN(criterio) || criterio.includes('-') ? criterio : '';
+                    document.getElementById('nombre').value = isNaN(criterio) && !criterio.includes('-') ? criterio : '';
+                    document.getElementById('telefono').value = '';
+                    document.getElementById('direccion').value = '';
+                    logConsola(`[NO REGISTRADO] "${criterio}" no existe. Puede registrarlo.`);
+                    alert("Cliente no registrado. Ingrese los datos para guardarlo.");
+                }
+                actualizarProgreso(100);
+            } catch (e) {
+                logConsola(`Error en consulta: ${e.message}`);
+                actualizarProgreso(0);
+            }
+        };
+
+        window.evaluarEnter = function(event) {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                buscarCliente();
+            }
+        };
+
+        window.guardarCliente = async function(event) {
+            event.preventDefault();
+            const cedula = document.getElementById('cedula').value.trim();
+            const nombre = document.getElementById('nombre').value.trim();
+            const telefono = document.getElementById('telefono').value.trim();
+            const direccion = document.getElementById('direccion').value.trim();
+            const operador = usuarioActual ? usuarioActual.email : 'sistema';
+
+            logConsola(`Guardando cliente ${nombre}...`);
+            actualizarProgreso(50);
+
+            try {
+                if (clienteDocIdActual) {
+                    const docRef = doc(db, "clientes_taller", clienteDocIdActual);
+                    await updateDoc(docRef, { cedula, nombre, telefono, direccion, actualizadoPor: operador, fechaActualizacion: new Date().toISOString() });
+                    logConsola(`[ACTUALIZADO] ${nombre} por ${operador}`);
+                    alert("¡Datos actualizados en la nube!");
+                } else {
+                    const docRef = await addDoc(collection(db, "clientes_taller"), { cedula, nombre, telefono, direccion, registradoPor: operador, fechaRegistro: new Date().toISOString() });
+                    logConsola(`[REGISTRADO] ${nombre} ID: ${docRef.id} por ${operador}`);
+                    alert("¡Cliente guardado en la nube con éxito!");
+                }
+                actualizarProgreso(100);
+                limpiarFormulario();
+            } catch (e) {
+                logConsola(`Error al guardar: ${e.message}`);
+                alert("Error al guardar en la nube.");
+                actualizarProgreso(0);
+            }
+        };
+
+        window.procesarCargaMasiva = async function() {
+            const fileInput = document.getElementById('csv-file-input');
+            if (!fileInput.files.length) {
+                alert("Seleccione un archivo CSV primero.");
+                return;
+            }
+
+            const file = fileInput.files[0];
+            const reader = new FileReader();
+            const operador = usuarioActual ? usuarioActual.email : 'sistema';
+
+            logConsola(`Leyendo archivo masivo ${file.name}...`);
+            actualizarProgreso(20);
+
+            reader.onload = async function(e) {
+                const text = e.target.result;
+                const lineas = text.split('\n');
+                let subidos = 0;
+
+                logConsola(`Procesando ${lineas.length - 1} registros...`);
+
+                for (let i = 1; i < lineas.length; i++) {
+                    const linea = lineas[i].trim();
+                    if (!linea) continue;
+
+                    const columnas = linea.split(',');
+                    if (columnas.length >= 4) {
+                        const cedula = columnas[0].trim();
+                        const nombre = columnas[1].trim();
+                        const telefono = columnas[2].trim();
+                        const direccion = columnas[3].trim();
+
+                        try {
+                            await addDoc(collection(db, "clientes_taller"), {
+                                cedula, nombre, telefono, direccion,
+                                registradoPor: operador,
+                                fechaRegistro: new Date().toISOString()
+                            });
+                            subidos++;
+                            logConsola(`[MASIVO] Subido: ${nombre}`);
+                        } catch (err) {
+                            logConsola(`[ERROR] ${nombre}: ${err.message}`);
+                        }
+                    }
+                }
+
+                actualizarProgreso(100);
+                logConsola(`=== IMPORTACIÓN MASIVA FINALIZADA: ${subidos} clientes subidos por ${operador} ===`);
+                alert(`¡Proceso completado! Se subieron ${subidos} clientes a Firebase.`);
+                fileInput.value = '';
+            };
+
+            reader.readAsText(file);
+        };
+
+        function logConsola(mensaje) {
+            const consola = document.getElementById('log-console');
+            consola.innerHTML += `<br>> ${mensaje}`;
+            consola.scrollTop = consola.scrollHeight;
+        }
+
+        function actualizarProgreso(porcentaje) {
+            document.getElementById('progress-bar').style.width = porcentaje + '%';
+        }
+    </script>
+</body>
+</html>
