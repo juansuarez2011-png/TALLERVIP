@@ -124,33 +124,32 @@
                 </section>
             </div>
 
-            <!-- COLUMNAS 2 y 3: Módulos 2 y 3 (Recepción, Vehículos y Chequeo Técnico) -->
+            <!-- COLUMNAS 2 y 3: Módulos 2 y 3 (Recepción por Placa, Vehículos y Checklist Técnico) -->
             <div class="lg:col-span-2 space-y-6">
                 <section class="neumo-card p-6">
-                    <h2 class="text-xl font-semibold mb-4 text-slate-200">Módulos 2 y 3: Recepción y Chequeo Técnico</h2>
+                    <h2 class="text-xl font-semibold mb-4 text-slate-200">Módulos 2 y 3: Recepción por Placa y Chequeo Técnico</h2>
                     
                     <form id="orden-form" onsubmit="guardarOrdenServicio(event)" class="space-y-6">
                         
-                        <!-- Datos de la Orden y Selección / Registro de Vehículo -->
+                        <!-- Recepción Inteligente por Placa y Fecha Editable -->
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                             <div>
-                                <label class="block text-xs text-slate-400 mb-1">Código de Orden (Automático)</label>
+                                <label class="block text-xs text-slate-400 mb-1">Código de Orden</label>
                                 <input type="text" id="ord-codigo" readonly class="w-full p-2 rounded-lg neumo-input text-sm font-mono text-emerald-400 focus:outline-none">
                             </div>
                             <div>
-                                <label class="block text-xs text-slate-400 mb-1">Vehículo (Placa)</label>
-                                <select id="ord-placa" onchange="manejarSeleccionPlaca()" class="w-full p-2 rounded-lg neumo-input text-sm focus:outline-none">
-                                    <option value="">Seleccione cliente primero</option>
-                                    <option value="NUEVO">➕ Registrar Nuevo Vehículo</option>
-                                </select>
+                                <label class="block text-xs text-slate-400 mb-1">Placa (Escriba y busque)</label>
+                                <div class="flex gap-1">
+                                    <input type="text" id="ord-placa" required onblur="buscarPorPlaca()" class="w-full p-2 rounded-lg neumo-input text-sm uppercase font-mono text-amber-400 focus:outline-none" placeholder="Ej: AAO83NL">
+                                </div>
                             </div>
                             <div>
-                                <label class="block text-xs text-slate-400 mb-1">Kilometraje</label>
-                                <input type="text" id="ord-km" required class="w-full p-2 rounded-lg neumo-input text-sm focus:outline-none" placeholder="Ej: 64500">
+                                <label class="block text-xs text-slate-400 mb-1">Fecha de Ingreso (Editable)</label>
+                                <input type="datetime-local" id="ord-fecha" required class="w-full p-2 rounded-lg neumo-input text-xs focus:outline-none">
                             </div>
                             <div>
-                                <label class="block text-xs text-slate-400 mb-1">Placa (Si es nuevo)</label>
-                                <input type="text" id="nuevo-placa" class="w-full p-2 rounded-lg neumo-input text-sm focus:outline-none hidden" placeholder="Ej: AAO83NL">
+                                <label class="block text-xs text-slate-400 mb-1">Cliente Vinculado</label>
+                                <input type="text" id="ord-cliente-info" readonly class="w-full p-2 rounded-lg neumo-input text-sm text-blue-300 focus:outline-none" placeholder="Auto-asignado por placa">
                             </div>
                             <div>
                                 <label class="block text-xs text-slate-400 mb-1">Marca</label>
@@ -163,6 +162,10 @@
                             <div>
                                 <label class="block text-xs text-slate-400 mb-1">Año</label>
                                 <input type="text" id="ord-anio" required class="w-full p-2 rounded-lg neumo-input text-sm focus:outline-none" placeholder="2010">
+                            </div>
+                            <div>
+                                <label class="block text-xs text-slate-400 mb-1">Kilometraje</label>
+                                <input type="text" id="ord-km" required class="w-full p-2 rounded-lg neumo-input text-sm focus:outline-none" placeholder="64500">
                             </div>
                         </div>
 
@@ -252,7 +255,6 @@
                 <section class="neumo-card p-6 space-y-4">
                     <h2 class="text-xl font-semibold text-slate-200">Gestión de Base de Datos (Importar / Exportar CSV)</h2>
                     
-                    <!-- Carga Masiva (Subir) -->
                     <div class="p-4 rounded-xl border border-slate-700 bg-slate-900/50 space-y-3">
                         <label class="block text-xs text-blue-400 font-semibold uppercase">⬆️ Importación Masiva de Clientes (Subir CSV)</label>
                         <div class="flex flex-col sm:flex-row gap-3">
@@ -263,7 +265,6 @@
                         </div>
                     </div>
 
-                    <!-- Exportación (Descargar) -->
                     <div class="p-4 rounded-xl border border-slate-700 bg-slate-900/50 space-y-3">
                         <label class="block text-xs text-emerald-400 font-semibold uppercase">⬇️ Descargar Respaldos (Exportar CSV)</label>
                         <div class="flex gap-2">
@@ -276,13 +277,12 @@
                         </div>
                     </div>
 
-                    <!-- Bitácora y Progreso -->
                     <div>
                         <div class="w-full bg-slate-900 rounded-full h-3 mb-2 overflow-hidden neumo-input">
                             <div id="progress-bar" class="bg-blue-500 h-full w-0 transition-all duration-300"></div>
                         </div>
                         <div id="log-console" class="bg-slate-950 p-3 rounded-lg font-mono text-xs text-emerald-400 h-32 overflow-y-auto neumo-input">
-                            [Sistema Listo] Carga masiva y Descargas CSV activas.
+                            [Sistema Listo] Recepción por placa y control de fechas activo.
                         </div>
                     </div>
                 </section>
@@ -310,9 +310,8 @@
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
-        let clienteDocIdActual = null;
+        let clienteAsociadoId = null;
         let usuarioActual = null;
-        let vehiculosClienteActual = [];
 
         onAuthStateChanged(auth, (user) => {
             if (user) {
@@ -320,7 +319,7 @@
                 document.getElementById('auth-container').classList.add('hidden');
                 document.getElementById('app-container').classList.remove('hidden');
                 document.getElementById('user-display').innerText = user.email;
-                generarCodigoOrdenAutomatico();
+                inicializarFormulario();
                 logConsola(`Sesión activa: ${user.email}`);
             } else {
                 usuarioActual = null;
@@ -356,82 +355,44 @@
             document.getElementById('timer').innerText = `${hrs}:${mins}:${secs}`;
         }, 1000);
 
-        function generarCodigoOrdenAutomatico() {
+        function inicializarFormulario() {
+            // Generar Código de orden AñoMes-Consecutivo
             const now = new Date();
             const anio = now.getFullYear();
             const mes = (now.getMonth() + 1).toString().padStart(2, '0');
             const consecutivo = Math.floor(Math.random() * 900) + 100;
             document.getElementById('ord-codigo').value = `${anio}${mes}${consecutivo}`;
+
+            // Poner fecha y hora actual en formato compatible con input datetime-local (Editable)
+            const tzoffset = (now).getTimezoneOffset() * 60000;
+            const localISOTime = (new Date(now - tzoffset)).toISOString().slice(0, 16);
+            document.getElementById('ord-fecha').value = localISOTime;
         }
 
+        // Búsqueda de Cliente en Módulo 1
         window.buscarCliente = async function() {
             const criterio = document.getElementById('criterio-busqueda').value.trim().toLowerCase();
-            if (!criterio) { alert("Ingrese Cédula, RIF o Nombre."); return; }
+            if (!criterio) { alert("Ingrese Cédula o Nombre."); return; }
             logConsola(`Buscando cliente "${criterio}"...`);
             actualizarProgreso(40);
             try {
                 const querySnapshot = await getDocs(collection(db, "clientes_taller"));
                 let encontrado = false;
-                vehiculosClienteActual = [];
-                const selectPlaca = document.getElementById('ord-placa');
-                selectPlaca.innerHTML = '<option value="">Seleccione placa</option><option value="NUEVO">➕ Registrar Nuevo Vehículo</option>';
-
                 querySnapshot.forEach((docSnapshot) => {
                     const data = docSnapshot.data();
-                    const cedulaDB = (data.cedula || "").toLowerCase();
-                    const nombreDB = (data.nombre || "").toLowerCase();
-
-                    if (cedulaDB === criterio || nombreDB.includes(criterio)) {
-                        clienteDocIdActual = docSnapshot.id;
+                    if ((data.cedula || "").toLowerCase() === criterio || (data.nombre || "").toLowerCase().includes(criterio)) {
                         document.getElementById('cedula').value = data.cedula || '';
                         document.getElementById('nombre').value = data.nombre || '';
                         document.getElementById('telefono').value = data.telefono || '';
                         document.getElementById('direccion').value = data.direccion || '';
-                        
-                        if (data.vehiculos && Array.isArray(data.vehiculos)) {
-                            vehiculosClienteActual = data.vehiculos;
-                            data.vehiculos.forEach(v => {
-                                selectPlaca.innerHTML += `<option value="${v.placa}">${v.placa} - ${v.marca} ${v.modelo}</option>`;
-                            });
-                        }
                         encontrado = true;
                     }
                 });
-
                 if (!encontrado) {
-                    clienteDocIdActual = null;
-                    document.getElementById('cedula').value = criterio;
-                    document.getElementById('nombre').value = '';
-                    document.getElementById('telefono').value = '';
-                    document.getElementById('direccion').value = '';
-                    logConsola(`[NUEVO CLIENTE] Registre los datos del cliente primero.`);
-                    alert("Cliente no encontrado. Ingrese los datos en el Módulo 1 para guardarlo.");
+                    alert("Cliente no encontrado. Ingrese los datos para registrarlo.");
                 }
                 actualizarProgreso(100);
             } catch (e) { logConsola(`Error: ${e.message}`); actualizarProgreso(0); }
-        };
-
-        window.manejarSeleccionPlaca = function() {
-            const placaSeleccionada = document.getElementById('ord-placa').value;
-            const inputNuevaPlaca = document.getElementById('nuevo-placa');
-            
-            if (placaSeleccionada === "NUEVO") {
-                inputNuevaPlaca.classList.remove('hidden');
-                inputNuevaPlaca.value = '';
-                document.getElementById('ord-marca').value = '';
-                document.getElementById('ord-modelo').value = '';
-                document.getElementById('ord-anio').value = '';
-                logConsola(`[NUEVO VEHÍCULO] Ingrese los datos del vehículo.`);
-            } else {
-                inputNuevaPlaca.classList.add('hidden');
-                const vehiculo = vehiculosClienteActual.find(v => v.placa === placaSeleccionada);
-                if (vehiculo) {
-                    document.getElementById('ord-marca').value = vehiculo.marca || '';
-                    document.getElementById('ord-modelo').value = vehiculo.modelo || '';
-                    document.getElementById('ord-anio').value = vehiculo.anio || '';
-                    logConsola(`[VEHÍCULO SELECCIONADO] Placa: ${placaSeleccionada}`);
-                }
-            }
         };
 
         window.guardarCliente = async function(event) {
@@ -443,41 +404,68 @@
             const operador = usuarioActual ? usuarioActual.email : 'sistema';
 
             try {
-                if (clienteDocIdActual) {
-                    await updateDoc(doc(db, "clientes_taller", clienteDocIdActual), { cedula, nombre, telefono, direccion, actualizadoPor: operador });
-                } else {
-                    const docRef = await addDoc(collection(db, "clientes_taller"), { cedula, nombre, telefono, direccion, vehiculos: [], registradoPor: operador, fechaRegistro: new Date().toISOString() });
-                    clienteDocIdActual = docRef.id;
-                }
+                await addDoc(collection(db, "clientes_taller"), { cedula, nombre, telefono, direccion, vehiculos: [], registradoPor: operador, fechaRegistro: new Date().toISOString() });
                 alert("¡Cliente guardado con éxito!");
             } catch (e) { alert("Error al guardar cliente."); }
         };
 
+        // BÚSQUEDA AUTOMÁTICA POR PLACA EN MÓDULO 2
+        window.buscarPorPlaca = async function() {
+            const placaBuscada = document.getElementById('ord-placa').value.trim().toUpperCase();
+            if (!placaBuscada) return;
+
+            logConsola(`Buscando placa "${placaBuscada}" en la base de datos...`);
+            actualizarProgreso(50);
+
+            try {
+                const querySnapshot = await getDocs(collection(db, "clientes_taller"));
+                let vehiculoEncontrado = false;
+
+                querySnapshot.forEach((docSnapshot) => {
+                    const data = docSnapshot.data();
+                    if (data.vehiculos && Array.isArray(data.vehiculos)) {
+                        data.vehiculos.forEach(v => {
+                            if (v.placa.toUpperCase() === placaBuscada) {
+                                clienteAsociadoId = docSnapshot.id;
+                                document.getElementById('ord-marca').value = v.marca || '';
+                                document.getElementById('ord-modelo').value = v.modelo || '';
+                                document.getElementById('ord-anio').value = v.anio || '';
+                                document.getElementById('ord-cliente-info').value = `${data.nombre} (${data.cedula})`;
+                                vehiculoEncontrado = true;
+                                logConsola(`[VEHÍCULO ENCONTRADO] Propietario: ${data.nombre}`);
+                            }
+                        });
+                    }
+                });
+
+                if (!vehiculoEncontrado) {
+                    clienteAsociadoId = null;
+                    document.getElementById('ord-cliente-info').value = "Vehículo Nuevo / Ingrese Propietario";
+                    document.getElementById('ord-marca').value = '';
+                    document.getElementById('ord-modelo').value = '';
+                    document.getElementById('ord-anio').value = '';
+                    logConsola(`[PLACA NUEVA] La placa ${placaBuscada} no está registrada. Complete los datos.`);
+                }
+                actualizarProgreso(100);
+            } catch (e) {
+                logConsola(`Error al buscar placa: ${e.message}`);
+                actualizarProgreso(0);
+            }
+        };
+
+        // Guardar Orden de Servicio y Chequeo Técnico
         window.guardarOrdenServicio = async function(event) {
             event.preventDefault();
-            if (!clienteDocIdActual) {
-                alert("Por favor busque y seleccione un cliente válido antes de generar la orden.");
-                return;
-            }
-
             const codigo = document.getElementById('ord-codigo').value.trim();
-            const selectPlaca = document.getElementById('ord-placa').value;
-            let placa = selectPlaca;
-
-            if (selectPlaca === "NUEVO") {
-                placa = document.getElementById('nuevo-placa').value.trim();
-                if (!placa) {
-                    alert("Por favor ingrese la placa del nuevo vehículo.");
-                    return;
-                }
-            }
-
+            const placa = document.getElementById('ord-placa').value.trim().toUpperCase();
+            const fechaIngreso = document.getElementById('ord-fecha').value;
             const marca = document.getElementById('ord-marca').value.trim();
             const modelo = document.getElementById('ord-modelo').value.trim();
             const anio = document.getElementById('ord-anio').value.trim();
             const km = document.getElementById('ord-km').value.trim();
             const servicio = document.getElementById('ord-servicio').value.trim();
             const mecanico = document.getElementById('ord-mecanico').value.trim();
+            const clienteInfo = document.getElementById('ord-cliente-info').value.trim();
 
             const checklistTecnico = {
                 aceite: {
@@ -510,30 +498,22 @@
             };
 
             const operador = usuarioActual ? usuarioActual.email : 'sistema';
-            const clienteNombre = document.getElementById('nombre').value.trim();
 
             logConsola(`Guardando Orden ${codigo} en la nube...`);
             actualizarProgreso(60);
 
             try {
                 await addDoc(collection(db, "ordenes_servicio"), {
-                    codigo, placa, marca, modelo, anio, km, servicio, mecanico,
-                    checklistTecnico, clienteNombre, registradoPor: operador,
-                    fechaIngreso: new Date().toISOString()
+                    codigo, placa, fechaIngreso, marca, modelo, anio, km, servicio, mecanico,
+                    clienteInfo, checklistTecnico, registradoPor: operador,
+                    fechaRegistroCloud: new Date().toISOString()
                 });
-
-                if (selectPlaca === "NUEVO") {
-                    vehiculosClienteActual.push({ placa, marca, modelo, anio });
-                    await updateDoc(doc(db, "clientes_taller", clienteDocIdActual), { vehiculos: vehiculosClienteActual });
-                    logConsola(`[NUEVO VEHÍCULO] Placa ${placa} vinculada a ${clienteNombre}`);
-                }
 
                 actualizarProgreso(100);
                 logConsola(`[ÉXITO] Orden ${codigo} guardada y sincronizada.`);
                 alert("¡Orden de servicio y checklist técnico guardados correctamente en Firebase!");
                 document.getElementById('orden-form').reset();
-                document.getElementById('nuevo-placa').classList.add('hidden');
-                generarCodigoOrdenAutomatico();
+                inicializarFormulario();
             } catch (e) {
                 logConsola(`Error: ${e.message}`);
                 alert("Error al sincronizar con la nube.");
@@ -544,10 +524,7 @@
         // SUBIR / CARGAR CSV A LA NUBE
         window.procesarCargaMasiva = async function() {
             const fileInput = document.getElementById('csv-file-input');
-            if (!fileInput.files.length) {
-                alert("Seleccione un archivo CSV primero.");
-                return;
-            }
+            if (!fileInput.files.length) { alert("Seleccione un archivo CSV primero."); return; }
 
             const file = fileInput.files[0];
             const reader = new FileReader();
@@ -560,8 +537,6 @@
                 const text = e.target.result;
                 const lineas = text.split('\n');
                 let subidos = 0;
-
-                logConsola(`Procesando ${lineas.length - 1} registros...`);
 
                 for (let i = 1; i < lineas.length; i++) {
                     const linea = lineas[i].trim();
@@ -577,30 +552,24 @@
                         try {
                             await addDoc(collection(db, "clientes_taller"), {
                                 cedula, nombre, telefono, direccion, vehiculos: [],
-                                registradoPor: operador,
-                                fechaRegistro: new Date().toISOString()
+                                registradoPor: operador, fechaRegistro: new Date().toISOString()
                             });
                             subidos++;
-                            logConsola(`[CARGA MASIVA] Subido: ${nombre}`);
-                        } catch (err) {
-                            logConsola(`[ERROR] ${nombre}: ${err.message}`);
-                        }
+                        } catch (err) {}
                     }
                 }
 
                 actualizarProgreso(100);
-                logConsola(`=== CARGA MASIVA FINALIZADA: ${subidos} clientes subidos por ${operador} ===`);
+                logConsola(`=== CARGA MASIVA FINALIZADA: ${subidos} clientes subidos ===`);
                 alert(`¡Proceso completado! Se subieron ${subidos} clientes a Firebase.`);
                 fileInput.value = '';
             };
-
             reader.readAsText(file);
         };
 
         // DESCARGAR / EXPORTAR CSV DESDE LA NUBE
         window.exportarClientesCSV = async function() {
             logConsola("Generando archivo CSV de clientes...");
-            actualizarProgreso(40);
             try {
                 const querySnapshot = await getDocs(collection(db, "clientes_taller"));
                 let csvContent = "data:text/csv;charset=utf-8,\uFEFF";
@@ -608,40 +577,29 @@
 
                 querySnapshot.forEach((docSnapshot) => {
                     const d = docSnapshot.data();
-                    const linea = `"${docSnapshot.id}","${d.cedula || ''}","${d.nombre || ''}","${d.telefono || ''}","${(d.direccion || '').replace(/\n/g, ' ')}","${d.registradoPor || ''}","${d.fechaRegistro || ''}"`;
-                    csvContent += linea + "\n";
+                    csvContent += `"${docSnapshot.id}","${d.cedula || ''}","${d.nombre || ''}","${d.telefono || ''}","${(d.direccion || '').replace(/\n/g, ' ')}","${d.registradoPor || ''}","${d.fechaRegistro || ''}"\n`;
                 });
 
                 descargarCSV(csvContent, `Clientes_Syntro_${obtenerFechaString()}.csv`);
-                actualizarProgreso(100);
-                logConsola("[EXPORTACIÓN EXITOSA] Base de datos de clientes descargada.");
-            } catch (e) {
-                logConsola(`Error al exportar clientes: ${e.message}`);
-                actualizarProgreso(0);
-            }
+                logConsola("[EXPORTACIÓN EXITOSA] Clientes descargados.");
+            } catch (e) { logConsola(`Error: ${e.message}`); }
         };
 
         window.exportarOrdenesCSV = async function() {
             logConsola("Generando archivo CSV de órdenes...");
-            actualizarProgreso(40);
             try {
                 const querySnapshot = await getDocs(collection(db, "ordenes_servicio"));
                 let csvContent = "data:text/csv;charset=utf-8,\uFEFF";
-                csvContent += "ID,CodigoOrden,Cliente,Placa,Marca,Modelo,Anio,KM,Mecanico,Servicio,RegistradoPor,FechaIngreso\n";
+                csvContent += "ID,CodigoOrden,FechaIngreso,Cliente,Placa,Marca,Modelo,Anio,KM,Mecanico,Servicio,RegistradoPor\n";
 
                 querySnapshot.forEach((docSnapshot) => {
                     const d = docSnapshot.data();
-                    const linea = `"${docSnapshot.id}","${d.codigo || ''}","${d.clienteNombre || ''}","${d.placa || ''}","${d.marca || ''}","${d.modelo || ''}","${d.anio || ''}","${d.km || ''}","${d.mecanico || ''}","${(d.servicio || '').replace(/\n/g, ' ')}","${d.registradoPor || ''}","${d.fechaIngreso || ''}"`;
-                    csvContent += linea + "\n";
+                    csvContent += `"${docSnapshot.id}","${d.codigo || ''}","${d.fechaIngreso || ''}","${d.clienteInfo || ''}","${d.placa || ''}","${d.marca || ''}","${d.modelo || ''}","${d.anio || ''}","${d.km || ''}","${d.mecanico || ''}","${(d.servicio || '').replace(/\n/g, ' ')}","${d.registradoPor || ''}"\n`;
                 });
 
                 descargarCSV(csvContent, `Ordenes_Servicio_Syntro_${obtenerFechaString()}.csv`);
-                actualizarProgreso(100);
-                logConsola("[EXPORTACIÓN EXITOSA] Base de datos de órdenes descargada.");
-            } catch (e) {
-                logConsola(`Error al exportar órdenes: ${e.message}`);
-                actualizarProgreso(0);
-            }
+                logConsola("[EXPORTACIÓN EXITOSA] Órdenes descargadas.");
+            } catch (e) { logConsola(`Error: ${e.message}`); }
         };
 
         function descargarCSV(contenidoURI, nombreArchivo) {
