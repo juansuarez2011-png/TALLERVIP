@@ -124,14 +124,14 @@
                 </section>
             </div>
 
-            <!-- COLUMNAS 2 y 3: Módulos 2 y 3 (Recepción Inteligente por Placa y Checklist) -->
+            <!-- COLUMNAS 2 y 3: Módulos 2 y 3 (Recepción, Mapa Base y Checklist) -->
             <div class="lg:col-span-2 space-y-6">
                 <section class="neumo-card p-6">
                     <h2 class="text-xl font-semibold mb-4 text-slate-200">Módulos 2 y 3: Recepción y Mapa Base del Vehículo</h2>
                     
                     <form id="orden-form" onsubmit="guardarOrdenServicio(event)" class="space-y-6">
                         
-                        <!-- Recepción Inteligente con Mapa Base Predeterminado -->
+                        <!-- Datos Principales de Recepción -->
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                             <div>
                                 <label class="block text-xs text-slate-400 mb-1">Código de Orden</label>
@@ -143,12 +143,20 @@
                                 <datalist id="lista-placas"></datalist>
                             </div>
                             <div>
-                                <label class="block text-xs text-slate-400 mb-1">Fecha de Ingreso (Editable)</label>
+                                <label class="block text-xs text-slate-400 mb-1">Fecha y Hora de Ingreso</label>
                                 <input type="datetime-local" id="ord-fecha" required class="w-full p-2 rounded-lg neumo-input text-xs focus:outline-none">
                             </div>
                             <div>
                                 <label class="block text-xs text-slate-400 mb-1">Cliente / Propietario</label>
-                                <input type="text" id="ord-cliente-info" readonly class="w-full p-2 rounded-lg neumo-input text-sm text-blue-300 focus:outline-none" placeholder="Auto-asignado por placa">
+                                <input type="text" id="ord-cliente" required class="w-full p-2 rounded-lg neumo-input text-sm focus:outline-none" placeholder="Nombre del cliente">
+                            </div>
+                            <div>
+                                <label class="block text-xs text-slate-400 mb-1">Teléfono</label>
+                                <input type="text" id="ord-telefono" required class="w-full p-2 rounded-lg neumo-input text-sm focus:outline-none" placeholder="Teléfono">
+                            </div>
+                            <div>
+                                <label class="block text-xs text-slate-400 mb-1">E-mail</label>
+                                <input type="email" id="ord-email" class="w-full p-2 rounded-lg neumo-input text-sm focus:outline-none" placeholder="Correo electrónico">
                             </div>
                             <div>
                                 <label class="block text-xs text-slate-400 mb-1">Marca</label>
@@ -168,24 +176,33 @@
                             </div>
                             <div>
                                 <label class="block text-xs text-slate-400 mb-1">Serial Carrocería (VIN)</label>
-                                <input type="text" id="ord-serial-carroceria" required class="w-full p-2 rounded-lg neumo-input text-sm uppercase font-mono focus:outline-none" placeholder="Serial fijo">
+                                <input type="text" id="ord-serial-carroceria" required class="w-full p-2 rounded-lg neumo-input text-sm uppercase font-mono focus:outline-none" placeholder="Serial carrocería">
                             </div>
                             <div>
-                                <label class="block text-xs text-slate-400 mb-1">Serial Batería (Modificable)</label>
+                                <label class="block text-xs text-slate-400 mb-1">Serial Batería</label>
                                 <input type="text" id="ord-serial-bateria" required class="w-full p-2 rounded-lg neumo-input text-sm uppercase font-mono focus:outline-none" placeholder="Serial batería">
                             </div>
                         </div>
 
-                        <!-- Servicios y Personal -->
+                        <!-- Servicios, Grúa y Mecánico -->
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
                                 <label class="block text-xs text-slate-400 mb-1">Trabajo / Servicio a Realizar</label>
                                 <textarea id="ord-servicio" rows="3" required class="w-full p-2 rounded-lg neumo-input text-sm focus:outline-none" placeholder="Mantenimiento de radiador, mangueras..."></textarea>
                             </div>
                             <div class="space-y-3">
-                                <div>
-                                    <label class="block text-xs text-slate-400 mb-1">Mecánico Asignado</label>
-                                    <input type="text" id="ord-mecanico" required class="w-full p-2 rounded-lg neumo-input text-sm focus:outline-none" placeholder="ANTONIO GUTIERREZ">
+                                <div class="grid grid-cols-2 gap-2">
+                                    <div>
+                                        <label class="block text-xs text-slate-400 mb-1">Ingreso en Grúa</label>
+                                        <select id="ord-grua" class="w-full p-2 rounded-lg neumo-input text-sm focus:outline-none">
+                                            <option value="NO">No</option>
+                                            <option value="SI">Sí</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs text-slate-400 mb-1">Mecánico Asignado</label>
+                                        <input type="text" id="ord-mecanico" required class="w-full p-2 rounded-lg neumo-input text-sm focus:outline-none" value="ANTONIO GUTIERREZ">
+                                    </div>
                                 </div>
                                 <div>
                                     <label class="block text-xs text-slate-400 mb-1">Fotografía de Recepción</label>
@@ -194,239 +211,10 @@
                             </div>
                         </div>
 
-                        <!-- MÓDULO 3: CHECKLIST TÉCNICO DETALLADO -->
-                        <div class="p-4 rounded-xl border border-slate-700 bg-slate-900/40 space-y-4">
-                            <h3 class="text-sm font-bold text-blue-400 uppercase tracking-wider">Módulo 3: Inspección Técnica Detallada</h3>
-                            
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
-                                <div class="p-3 bg-slate-900 rounded-lg">
-                                    <span class="font-semibold text-slate-300 block mb-2">1. Sistema de Aceite</span>
-                                    <div class="grid grid-cols-2 gap-2">
-                                        <input type="text" id="chk-aceite-nivel" placeholder="Nivel" class="p-1 neumo-input rounded">
-                                        <input type="text" id="chk-aceite-color" placeholder="Color" class="p-1 neumo-input rounded">
-                                        <input type="text" id="chk-aceite-filtro" placeholder="Filtro" class="p-1 neumo-input rounded">
-                                        <input type="text" id="chk-aceite-fugas" placeholder="Sin fugas (Sí/No)" class="p-1 neumo-input rounded">
-                                    </div>
-                                </div>
-
-                                <div class="p-3 bg-slate-900 rounded-lg">
-                                    <span class="font-semibold text-slate-300 block mb-2">2. Correas y Mangueras</span>
-                                    <div class="grid grid-cols-2 gap-2">
-                                        <input type="text" id="chk-correa-tension" placeholder="Tensión" class="p-1 neumo-input rounded">
-                                        <input type="text" id="chk-correa-grietas" placeholder="Sin grietas (Sí/No)" class="p-1 neumo-input rounded">
-                                    </div>
-                                </div>
-
-                                <div class="p-3 bg-slate-900 rounded-lg">
-                                    <span class="font-semibold text-slate-300 block mb-2">3. Líquido Refrigerante</span>
-                                    <div class="grid grid-cols-3 gap-2">
-                                        <input type="text" id="chk-refrig-nivel" placeholder="Nivel" class="p-1 neumo-input rounded">
-                                        <input type="text" id="chk-refrig-color" placeholder="Color" class="p-1 neumo-input rounded">
-                                        <input type="text" id="chk-refrig-fugas" placeholder="Fugas (Sí/No)" class="p-1 neumo-input rounded">
-                                    </div>
-                                </div>
-
-                                <div class="p-3 bg-slate-900 rounded-lg">
-                                    <span class="font-semibold text-slate-300 block mb-2">4. Batería y Alternador</span>
-                                    <div class="grid grid-cols-2 gap-2">
-                                        <input type="text" id="chk-bat-terminal" placeholder="Terminales limpios" class="p-1 neumo-input rounded">
-                                        <input type="text" id="chk-alt-voltaje" placeholder="Voltaje alternador" class="p-1 neumo-input rounded">
-                                    </div>
-                                </div>
-
-                                <div class="p-3 bg-slate-900 rounded-lg">
-                                    <span class="font-semibold text-slate-300 block mb-2">5. Dirección y Frenos</span>
-                                    <div class="grid grid-cols-2 gap-2">
-                                        <input type="text" id="chk-dir-juego" placeholder="Juego libre dirección" class="p-1 neumo-input rounded">
-                                        <input type="text" id="chk-freno-liga" placeholder="Nivel liga de freno" class="p-1 neumo-input rounded">
-                                    </div>
-                                </div>
-
-                                <div class="p-3 bg-slate-900 rounded-lg">
-                                    <span class="font-semibold text-slate-300 block mb-2">6. Ruedas, Luces y Limpiaparabrisas</span>
-                                    <div class="grid grid-cols-2 gap-2">
-                                        <input type="text" id="chk-ruedas-presion" placeholder="Presión neumática" class="p-1 neumo-input rounded">
-                                        <input type="text" id="chk-luces-ext" placeholder="Luces externas (Sí/No)" class="p-1 neumo-input rounded">
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <button type="submit" class="w-full py-3 rounded-lg font-semibold text-white neumo-button-purple">
-                            Generar y Guardar Orden Completa en la Nube
-                        </button>
-                    </form>
-                </section>
-
-                <!-- PANEL DE GESTIÓN DE BASE DE DATOS -->
-                <section class="neumo-card p-6 space-y-4">
-                    <h2 class="text-xl font-semibold text-slate-200">Gestión de Base de Datos (Importar / Exportar CSV)</h2>
-                    
-                    <div class="p-4 rounded-xl border border-slate-700 bg-slate-900/50 space-y-3">
-                        <label class="block text-xs text-blue-400 font-semibold uppercase">⬆️ Importación Masiva de Clientes (Subir CSV)</label>
-                        <div class="flex flex-col sm:flex-row gap-3">
-                            <input type="file" id="csv-file-input" accept=".csv" class="w-full p-2 rounded-lg neumo-input text-xs text-slate-300 file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-blue-600 file:text-white cursor-pointer">
-                            <button type="button" onclick="procesarCargaMasiva()" class="px-4 py-2 rounded-lg text-xs font-semibold text-white neumo-button-purple whitespace-nowrap">
-                                Subir CSV a la Nube
-                            </button>
-                        </div>
-                    </div>
-
-                    <div class="p-4 rounded-xl border border-slate-700 bg-slate-900/50 space-y-3">
-                        <label class="block text-xs text-emerald-400 font-semibold uppercase">⬇️ Descargar Respaldos (Exportar CSV)</label>
-                        <div class="flex gap-2">
-                            <button type="button" onclick="exportarClientesCSV()" class="flex-1 py-2 rounded-lg text-xs font-semibold text-white neumo-button-secondary">
-                                📊 Descargar Clientes CSV
-                            </button>
-                            <button type="button" onclick="exportarOrdenesCSV()" class="flex-1 py-2 rounded-lg text-xs font-semibold text-white neumo-button">
-                                📋 Descargar Órdenes CSV
-                            </button>
-                        </div>
-                    </div>
-
-                    <div>
-                        <div class="w-full bg-slate-900 rounded-full h-3 mb-2 overflow-hidden neumo-input">
-                            <div id="progress-bar" class="bg-blue-500 h-full w-0 transition-all duration-300"></div>
-                        </div>
-                        <div id="log-console" class="bg-slate-950 p-3 rounded-lg font-mono text-xs text-emerald-400 h-32 overflow-y-auto neumo-input">
-                            [Sistema Listo] Mapa base de vehículos y autocompletado activo.
-                        </div>
-                    </div>
-                </section>
-            </div>
-
-        </main>
-    </div>
-
-    <!-- Script Firebase y Lógica -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-app.js";
-        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-auth.js";
-        import { getFirestore, collection, addDoc, getDocs, updateDoc, doc } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-firestore.js";
-
-        const firebaseConfig = {
-            apiKey: "AIzaSyBe96LcGjwrVh6ciDoEbbUwRhfGCOrqBS8",
-            authDomain: "taller-mecanico-c2124.firebaseapp.com",
-            projectId: "taller-mecanico-c2124",
-            storageBucket: "taller-mecanico-c2124.firebasestorage.app",
-            messagingSenderId: "524886950258",
-            appId: "1:524886950258:web:8980e91ab51833e7b49deb",
-            measurementId: "G-TWRKEQBJML"
-        };
-
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
-        let usuarioActual = null;
-        let baseVehiculosGlobal = [];
-
-        onAuthStateChanged(auth, async (user) => {
-            if (user) {
-                usuarioActual = user;
-                document.getElementById('auth-container').classList.add('hidden');
-                document.getElementById('app-container').classList.remove('hidden');
-                document.getElementById('user-display').innerText = user.email;
-                inicializarFormulario();
-                await cargarBaseVehiculosCloud();
-                logConsola(`Sesión activa: ${user.email}`);
-            } else {
-                usuarioActual = null;
-                document.getElementById('auth-container').classList.remove('hidden');
-                document.getElementById('app-container').classList.add('hidden');
-            }
-        });
-
-        window.manejarAutenticacion = async function(event) {
-            event.preventDefault();
-            const email = document.getElementById('auth-email').value.trim();
-            const pass = document.getElementById('auth-password').value.trim();
-            try {
-                await signInWithEmailAndPassword(auth, email, pass);
-            } catch (error) {
-                try {
-                    await createUserWithEmailAndPassword(auth, email, pass);
-                    alert("¡Cuenta de operador creada con éxito!");
-                } catch (err) { alert("Error: " + err.message); }
-            }
-        };
-
-        window.cerrarSesion = async function() { await signOut(auth); };
-
-        let segundosTotales = 0;
-        setInterval(() => {
-            segundosTotales++;
-            let hrs = Math.floor(segundosTotales / 3600).toString().padStart(2, '0');
-            let mins = Math.floor((segundosTotales % 3600) / 60).toString().padStart(2, '0');
-            let secs = (segundosTotales % 60).toString().padStart(2, '0');
-            document.getElementById('timer').innerText = `${hrs}:${mins}:${secs}`;
-        }, 1000);
-
-        function inicializarFormulario() {
-            // Limpiar y resetear formularios al ingresar o guardar
-            document.getElementById('orden-form').reset();
-            
-            const now = new Date();
-            const anio = now.getFullYear();
-            const mes = (now.getMonth() + 1).toString().padStart(2, '0');
-            const consecutivo = Math.floor(Math.random() * 900) + 100;
-            document.getElementById('ord-codigo').value = `${anio}${mes}${consecutivo}`;
-
-            const tzoffset = (now).getTimezoneOffset() * 60000;
-            const localISOTime = (new Date(now - tzoffset)).toISOString().slice(0, 16);
-            document.getElementById('ord-fecha').value = localISOTime;
-        }
-
-        async function cargarBaseVehiculosCloud() {
-            try {
-                const querySnapshot = await getDocs(collection(db, "clientes_taller"));
-                baseVehiculosGlobal = [];
-                const datalist = document.getElementById('lista-placas');
-                datalist.innerHTML = '';
-
-                querySnapshot.forEach((docSnapshot) => {
-                    const data = docSnapshot.data();
-                    if (data.vehiculos && Array.isArray(data.vehiculos)) {
-                        data.vehiculos.forEach(v => {
-                            baseVehiculosGlobal.push({
-                                placa: v.placa.toUpperCase(),
-                                marca: v.marca || '',
-                                modelo: v.modelo || '',
-                                anio: v.anio || '',
-                                serialCarroceria: v.serialCarroceria || '',
-                                serialBateria: v.serialBateria || '',
-                                clienteId: docSnapshot.id,
-                                clienteNombre: data.nombre || '',
-                                clienteCedula: data.cedula || ''
-                            });
-                            datalist.innerHTML += `<option value="${v.placa.toUpperCase()}">${v.marca} ${v.modelo} - Propietario: ${data.nombre}</option>`;
-                        });
-                    }
-                });
-                logConsola(`[MAPA BASE] ${baseVehiculosGlobal.length} vehículos cargados para autocompletado.`);
-            } catch (e) {
-                logConsola(`Error al cargar mapa base: ${e.message}`);
-            }
-        }
-
-        // MAPA BASE INTELIGENTE: Autocompleta marca, modelo, año y seriales fijos
-        window.seleccionarPlacaInteligente = function(valorPlaca) {
-            const placaBuscada = valorPlaca.trim().toUpperCase();
-            const v = baseVehiculosGlobal.find(item => item.placa === placaBuscada);
-
-            if (v) {
-                document.getElementById('ord-marca').value = v.marca;
-                document.getElementById('ord-modelo').value = v.modelo;
-                document.getElementById('ord-anio').value = v.anio;
-                document.getElementById('ord-serial-carroceria').value = v.serialCarroceria;
-                document.getElementById('ord-serial-bateria').value = v.serialBateria;
-                document.getElementById('ord-cliente-info').value = `${v.clienteNombre} (${v.clienteCedula})`;
-                logConsola(`[VEHÍCULO RECONOCIDO] Placa ${placaBuscada} cargada desde el mapa base.`);
-            } else {
-                document.getElementById('ord-cliente-info').value = "Vehículo Nuevo (Ingrese datos fijos y seriales)";
-            }
-        };
-
-        window.buscarCliente = async function() {
-            const criterio = document.getElementById('criterio-busqueda').value.trim().toLowerCase();
-            if (!criterio) { alert("Ingrese Cédula o Nombre."); return; }
-            logConsola(`Buscando cliente "${criterio}"...`);
+                        <!-- CHECKLIST DE ACCESORIOS Y ESTADO -->
+                        <div class="p-4 rounded-xl border border-slate-700 bg-slate-900/40 space-y-3">
+                            <h3 class="text-sm font-bold text-blue-400 uppercase tracking-wider">Checklist de Accesorios y Estado</h3>
+                            <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+                                <div>
+                                    <span class="text-slate-400">Gato</span>
+                                    <select id="chk-gato" class="w-full p-1 rounded neumo-input mt-1"><option value="SI
