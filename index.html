@@ -131,16 +131,15 @@
                     
                     <form id="orden-form" onsubmit="guardarOrdenServicio(event)" class="space-y-6">
                         
-                        <!-- Datos Principales de Recepción -->
+                        <!-- Datos Principales de Recepción con Búsqueda Eficiente por Placa -->
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                             <div>
                                 <label class="block text-xs text-slate-400 mb-1">Código de Orden</label>
                                 <input type="text" id="ord-codigo" readonly class="w-full p-2 rounded-lg neumo-input text-sm font-mono text-emerald-400 focus:outline-none">
                             </div>
                             <div>
-                                <label class="block text-xs text-slate-400 mb-1">Placa (Búsqueda Inteligente)</label>
-                                <input type="text" id="ord-placa" list="lista-placas" required oninput="seleccionarPlacaInteligente(this.value)" class="w-full p-2 rounded-lg neumo-input text-sm uppercase font-mono text-amber-400 focus:outline-none" placeholder="Escriba placa...">
-                                <datalist id="lista-placas"></datalist>
+                                <label class="block text-xs text-slate-400 mb-1">Placa (Escriba y presione Enter o salir)</label>
+                                <input type="text" id="ord-placa" required onblur="buscarPlacaEnNube(this.value)" class="w-full p-2 rounded-lg neumo-input text-sm uppercase font-mono text-amber-400 focus:outline-none" placeholder="Ej: AAO83NL">
                             </div>
                             <div>
                                 <label class="block text-xs text-slate-400 mb-1">Fecha y Hora de Ingreso</label>
@@ -271,11 +270,11 @@
                     <h2 class="text-xl font-semibold text-slate-200">Gestión de Base de Datos (Importar / Exportar CSV)</h2>
                     
                     <div class="p-4 rounded-xl border border-slate-700 bg-slate-900/50 space-y-3">
-                        <label class="block text-xs text-blue-400 font-semibold uppercase">⬆️ Importación Histórica (Subir CSV de Órdenes)</label>
+                        <label class="block text-xs text-blue-400 font-semibold uppercase">⬆️ Importación Histórica (Subir CSV en Segundo Plano)</label>
                         <div class="flex flex-col sm:flex-row gap-3">
                             <input type="file" id="csv-file-input" accept=".csv" class="w-full p-2 rounded-lg neumo-input text-xs text-slate-300 file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-blue-600 file:text-white cursor-pointer">
-                            <button type="button" onclick="procesarCSVHistorico()" class="px-4 py-2 rounded-lg text-xs font-semibold text-white neumo-button-purple whitespace-nowrap">
-                                Importar CSV a la Nube
+                            <button type="button" onclick="procesarCSVHistoricoSeguro()" class="px-4 py-2 rounded-lg text-xs font-semibold text-white neumo-button-purple whitespace-nowrap">
+                                Importar CSV Seguro
                             </button>
                         </div>
                     </div>
@@ -297,7 +296,7 @@
                             <div id="progress-bar" class="bg-blue-500 h-full w-0 transition-all duration-300"></div>
                         </div>
                         <div id="log-console" class="bg-slate-950 p-3 rounded-lg font-mono text-xs text-emerald-400 h-32 overflow-y-auto neumo-input">
-                            [Sistema Listo] Optimización anti-congelamiento activa.
+                            [Sistema Listo] Optimización anti-congelamiento iniciada.
                         </div>
                     </div>
                 </section>
@@ -310,7 +309,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-app.js";
         import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-auth.js";
-        import { getFirestore, collection, addDoc, getDocs, updateDoc, doc } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, getDocs, query, where, limit } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyBe96LcGjwrVh6ciDoEbbUwRhfGCOrqBS8",
@@ -326,7 +325,6 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
         let usuarioActual = null;
-        let baseVehiculosMap = new Map(); // Mapa optimizado sin duplicados para evitar congelamiento
 
         onAuthStateChanged(auth, async (user) => {
             if (user) {
@@ -335,7 +333,6 @@
                 document.getElementById('app-container').classList.remove('hidden');
                 document.getElementById('user-display').innerText = user.email;
                 inicializarFormulario();
-                await cargarBaseVehiculosCloud();
                 logConsola(`Sesión activa: ${user.email}`);
             } else {
                 usuarioActual = null;
@@ -383,63 +380,39 @@
             document.getElementById('ord-mecanico').value = "ANTONIO GUTIERREZ";
         }
 
-        async function cargarBaseVehiculosCloud() {
-            try {
-                const querySnapshot = await getDocs(collection(db, "ordenes_servicio"));
-                baseVehiculosMap.clear();
-                const datalist = document.getElementById('lista-placas');
-                datalist.innerHTML = '';
-
-                querySnapshot.forEach((docSnapshot) => {
-                    const d = docSnapshot.data();
-                    if (d.placa) {
-                        const placaKey = d.placa.toUpperCase().trim();
-                        // Guardamos de manera única por placa para optimizar memoria
-                        baseVehiculosMap.set(placaKey, {
-                            placa: placaKey,
-                            marca: d.marca || '',
-                            modelo: d.modelo || '',
-                            anio: d.anio || '',
-                            km: d.km || '',
-                            serialCarroceria: d.serialCarroceria || '',
-                            serialBateria: d.serialBateria || '',
-                            cliente: d.cliente || '',
-                            telefono: d.telefono || '',
-                            email: d.email || '',
-                            servicio: d.servicio || ''
-                        });
-                    }
-                });
-
-                // Llenar el datalist de forma rápida
-                let opcionesHTML = '';
-                baseVehiculosMap.forEach((v) => {
-                    opcionesHTML += `<option value="${v.placa}">${v.marca} ${v.modelo} - ${v.cliente}</option>`;
-                });
-                datalist.innerHTML = opcionesHTML;
-
-                logConsola(`[MAPA BASE OPTIMIZADO] ${baseVehiculosMap.size} vehículos únicos cargados.`);
-            } catch (e) {
-                logConsola(`Error al cargar mapa base: ${e.message}`);
-            }
-        }
-
-        // AUTOCOMPLETADO INSTANTÁNEO Y LIGERO
-        window.seleccionarPlacaInteligente = function(valorPlaca) {
+        // BÚSQUEDA RÁPIDA POR PLACA EN LA NUBE (SIN CONGELAR)
+        window.buscarPlacaEnNube = async function(valorPlaca) {
             const placaBuscada = valorPlaca.trim().toUpperCase();
-            const v = baseVehiculosMap.get(placaBuscada);
+            if (!placaBuscada) return;
 
-            if (v) {
-                document.getElementById('ord-marca').value = v.marca;
-                document.getElementById('ord-modelo').value = v.modelo;
-                document.getElementById('ord-anio').value = v.anio;
-                document.getElementById('ord-km').value = v.km;
-                document.getElementById('ord-serial-carroceria').value = v.serialCarroceria;
-                document.getElementById('ord-serial-bateria').value = v.serialBateria;
-                document.getElementById('ord-cliente').value = v.cliente;
-                document.getElementById('ord-telefono').value = v.telefono;
-                document.getElementById('ord-email').value = v.email;
-                logConsola(`[AUTOCOMPLETADO] Placa ${placaBuscada} encontrada.`);
+            logConsola(`Buscando vehículo con placa ${placaBuscada} en la nube...`);
+            actualizarProgreso(50);
+
+            try {
+                const q = query(collection(db, "ordenes_servicio"), where("placa", "==", placaBuscada), limit(1));
+                const querySnapshot = await getDocs(q);
+
+                if (!querySnapshot.empty) {
+                    querySnapshot.forEach((docSnapshot) => {
+                        const v = docSnapshot.data();
+                        document.getElementById('ord-marca').value = v.marca || '';
+                        document.getElementById('ord-modelo').value = v.modelo || '';
+                        document.getElementById('ord-anio').value = v.anio || '';
+                        document.getElementById('ord-km').value = v.km || '';
+                        document.getElementById('ord-serial-carroceria').value = v.serialCarroceria || '';
+                        document.getElementById('ord-serial-bateria').value = v.serialBateria || '';
+                        document.getElementById('ord-cliente').value = v.cliente || '';
+                        document.getElementById('ord-telefono').value = v.telefono || '';
+                        document.getElementById('ord-email').value = v.email || '';
+                        logConsola(`[ENCONTRADO] Datos cargados para la placa ${placaBuscada}`);
+                    });
+                } else {
+                    logConsola(`[NUEVO] La placa ${placaBuscada} no está registrada. Complete los datos.`);
+                }
+                actualizarProgreso(100);
+            } catch (e) {
+                logConsola(`Error al buscar placa: ${e.message}`);
+                actualizarProgreso(0);
             }
         };
 
@@ -486,7 +459,6 @@
                 logConsola(`[ÉXITO] Orden ${codigo} guardada y formulario limpiado.`);
                 alert("¡Orden de servicio guardada con éxito!");
                 inicializarFormulario();
-                await cargarBaseVehiculosCloud();
             } catch (e) {
                 logConsola(`Error: ${e.message}`);
                 alert("Error al guardar en la nube.");
@@ -494,25 +466,22 @@
             }
         };
 
-        // IMPORTACIÓN POR LOTES (EVITA CONGELAMIENTO EN ARCHIVOS GRANDES)
-        window.procesarCSVHistorico = async function() {
+        // IMPORTACIÓN SEGURA Y POR LOTES (NO CONGELA)
+        window.procesarCSVHistoricoSeguro = async function() {
             const fileInput = document.getElementById('csv-file-input');
             if (!fileInput.files.length) { alert("Seleccione su archivo CSV histórico."); return; }
             const file = fileInput.files[0];
             const reader = new FileReader();
             const operador = usuarioActual ? usuarioActual.email : 'sistema';
 
-            logConsola("Leyendo archivo CSV en segundo plano...");
-            actualizarProgreso(10);
+            logConsola("Leyendo archivo CSV de manera segura...");
+            actualizarProgreso(20);
 
             reader.onload = async function(e) {
                 const text = e.target.result;
                 const lineas = text.split('\n');
                 let subidos = 0;
                 
-                actualizarProgreso(30);
-                logConsola(`Procesando ${lineas.length} líneas... Por favor espere.`);
-
                 for (let i = 1; i < lineas.length; i++) {
                     const linea = lineas[i].trim();
                     if (!linea) continue;
@@ -542,9 +511,8 @@
                     }
                 }
                 actualizarProgreso(100);
-                logConsola(`[IMPORTACIÓN EXITOSA] ${subidos} registros subidos a Firebase.`);
-                alert(`¡Importación completada con éxito! Se cargaron ${subidos} registros.`);
-                await cargarBaseVehiculosCloud();
+                logConsola(`[IMPORTACIÓN EXITOSA] ${subidos} registros subidos.`);
+                alert(`¡Importación completada! Se subieron ${subidos} órdenes a Firebase de forma segura.`);
                 fileInput.value = '';
             };
             reader.readAsText(file);
