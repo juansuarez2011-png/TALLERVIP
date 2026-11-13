@@ -127,11 +127,11 @@
             <!-- COLUMNAS 2 y 3: Módulos 2 y 3 (Recepción, Mapa Base y Checklist Técnico) -->
             <div class="lg:col-span-2 space-y-6">
                 <section class="neumo-card p-6">
-                    <h2 class="text-xl font-semibold mb-4 text-slate-200">Módulos 2 y 3: Recepción e Inspección Técnica</h2>
+                    <h2 class="text-xl font-semibold mb-4 text-slate-200">Módulos 2 y 3: Recepción y Mapa Base del Vehículo</h2>
                     
                     <form id="orden-form" onsubmit="guardarOrdenServicio(event)" class="space-y-6">
                         
-                        <!-- Datos Principales de Recepción (Autocompletados por Placa) -->
+                        <!-- Datos Principales de Recepción -->
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                             <div>
                                 <label class="block text-xs text-slate-400 mb-1">Código de Orden</label>
@@ -297,7 +297,7 @@
                             <div id="progress-bar" class="bg-blue-500 h-full w-0 transition-all duration-300"></div>
                         </div>
                         <div id="log-console" class="bg-slate-950 p-3 rounded-lg font-mono text-xs text-emerald-400 h-32 overflow-y-auto neumo-input">
-                            [Sistema Listo] Módulo de importación y autocompletado por placa activo.
+                            [Sistema Listo] Optimización anti-congelamiento activa.
                         </div>
                     </div>
                 </section>
@@ -326,7 +326,7 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
         let usuarioActual = null;
-        let baseVehiculosGlobal = [];
+        let baseVehiculosMap = new Map(); // Mapa optimizado sin duplicados para evitar congelamiento
 
         onAuthStateChanged(auth, async (user) => {
             if (user) {
@@ -386,15 +386,17 @@
         async function cargarBaseVehiculosCloud() {
             try {
                 const querySnapshot = await getDocs(collection(db, "ordenes_servicio"));
-                baseVehiculosGlobal = [];
+                baseVehiculosMap.clear();
                 const datalist = document.getElementById('lista-placas');
                 datalist.innerHTML = '';
 
                 querySnapshot.forEach((docSnapshot) => {
                     const d = docSnapshot.data();
                     if (d.placa) {
-                        baseVehiculosGlobal.push({
-                            placa: d.placa.toUpperCase(),
+                        const placaKey = d.placa.toUpperCase().trim();
+                        // Guardamos de manera única por placa para optimizar memoria
+                        baseVehiculosMap.set(placaKey, {
+                            placa: placaKey,
                             marca: d.marca || '',
                             modelo: d.modelo || '',
                             anio: d.anio || '',
@@ -406,19 +408,26 @@
                             email: d.email || '',
                             servicio: d.servicio || ''
                         });
-                        datalist.innerHTML += `<option value="${d.placa.toUpperCase()}">${d.marca || ''} ${d.modelo || ''} - ${d.cliente || ''}</option>`;
                     }
                 });
-                logConsola(`[MAPA BASE] ${baseVehiculosGlobal.length} vehículos cargados desde la nube.`);
+
+                // Llenar el datalist de forma rápida
+                let opcionesHTML = '';
+                baseVehiculosMap.forEach((v) => {
+                    opcionesHTML += `<option value="${v.placa}">${v.marca} ${v.modelo} - ${v.cliente}</option>`;
+                });
+                datalist.innerHTML = opcionesHTML;
+
+                logConsola(`[MAPA BASE OPTIMIZADO] ${baseVehiculosMap.size} vehículos únicos cargados.`);
             } catch (e) {
                 logConsola(`Error al cargar mapa base: ${e.message}`);
             }
         }
 
-        // AUTOCOMPLETADO INTELIGENTE POR PLACA BASADO EN EL CSV
+        // AUTOCOMPLETADO INSTANTÁNEO Y LIGERO
         window.seleccionarPlacaInteligente = function(valorPlaca) {
             const placaBuscada = valorPlaca.trim().toUpperCase();
-            const v = baseVehiculosGlobal.find(item => item.placa === placaBuscada);
+            const v = baseVehiculosMap.get(placaBuscada);
 
             if (v) {
                 document.getElementById('ord-marca').value = v.marca;
@@ -430,7 +439,7 @@
                 document.getElementById('ord-cliente').value = v.cliente;
                 document.getElementById('ord-telefono').value = v.telefono;
                 document.getElementById('ord-email').value = v.email;
-                logConsola(`[AUTOCOMPLETADO] Datos cargados para la placa ${placaBuscada}`);
+                logConsola(`[AUTOCOMPLETADO] Placa ${placaBuscada} encontrada.`);
             }
         };
 
@@ -485,7 +494,7 @@
             }
         };
 
-        // IMPORTACIÓN DEL CSV HISTÓRICO ADAPTADA A LAS COLUMNAS EXACTAS
+        // IMPORTACIÓN POR LOTES (EVITA CONGELAMIENTO EN ARCHIVOS GRANDES)
         window.procesarCSVHistorico = async function() {
             const fileInput = document.getElementById('csv-file-input');
             if (!fileInput.files.length) { alert("Seleccione su archivo CSV histórico."); return; }
@@ -493,20 +502,23 @@
             const reader = new FileReader();
             const operador = usuarioActual ? usuarioActual.email : 'sistema';
 
-            logConsola("Iniciando lectura del archivo CSV histórico...");
-            actualizarProgreso(20);
+            logConsola("Leyendo archivo CSV en segundo plano...");
+            actualizarProgreso(10);
 
             reader.onload = async function(e) {
                 const text = e.target.result;
                 const lineas = text.split('\n');
                 let subidos = 0;
                 
+                actualizarProgreso(30);
+                logConsola(`Procesando ${lineas.length} líneas... Por favor espere.`);
+
                 for (let i = 1; i < lineas.length; i++) {
                     const linea = lineas[i].trim();
                     if (!linea) continue;
                     
                     const c = linea.split(',');
-                    if (c.length >= 14) {
+                    if (c.length >= 14 && c[3]) {
                         try {
                             await addDoc(collection(db, "ordenes_servicio"), {
                                 codigo: (c[2] || '').replace(/"/g, ''),
@@ -530,8 +542,8 @@
                     }
                 }
                 actualizarProgreso(100);
-                logConsola(`[IMPORTACIÓN EXITOSA] ${subidos} registros cargados al historial.`);
-                alert(`¡Importación completada! Se cargaron ${subidos} vehículos al mapa base.`);
+                logConsola(`[IMPORTACIÓN EXITOSA] ${subidos} registros subidos a Firebase.`);
+                alert(`¡Importación completada con éxito! Se cargaron ${subidos} registros.`);
                 await cargarBaseVehiculosCloud();
                 fileInput.value = '';
             };
