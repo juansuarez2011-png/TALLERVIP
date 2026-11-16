@@ -3,563 +3,1014 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Taller Mecánico Syntro - Sistema Cloud Integral</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <title>Taller Mecánico Syntro - Gestión Integral</title>
+    <!-- Supabase JS Client -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
+        :root {
+            --bg-color: #0b0f19;
+            --card-bg: #151c2c;
+            --surface-3d: #1a2336;
+            --primary: #2563eb;
+            --primary-hover: #1d4ed8;
+            --accent: #38bdf8;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --border: #2a3752;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --shadow-3d: 8px 8px 16px #060910, -4px -4px 12px #1e2840;
+            --inset-3d: inset 4px 4px 8px #070a12, inset -2px -2px 6px #202b44;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+        }
+
         body {
-            background-color: #0f172a;
-            color: #f8fafc;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            min-height: 100vh;
+            padding: 15px;
         }
-        .neumo-card {
-            background: #1e293b;
-            box-shadow: 8px 8px 16px #0b1120, -8px -8px 16px #314159;
-            border-radius: 1rem;
+
+        .wrapper {
+            max-width: 1280px;
+            margin: 0 auto;
         }
-        .neumo-input {
-            background: #0f172a;
-            box-shadow: inset 4px 4px 8px #0b1120, inset -4px -4px 8px #314159;
-            border: none;
-            color: #ffffff;
+
+        /* Header 3D Neumórfico */
+        header {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            gap: 15px;
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            padding: 20px 28px;
+            border-radius: 16px;
+            box-shadow: var(--shadow-3d);
+            margin-bottom: 24px;
         }
-        .neumo-button {
-            background: #3b82f6;
-            box-shadow: 4px 4px 8px #1d4ed8, -4px -4px 8px #60a5fa;
+
+        .brand-area h1 {
+            font-size: 1.45rem;
+            color: var(--accent);
+            letter-spacing: 0.5px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .status-pill {
+            font-size: 0.78rem;
+            padding: 4px 10px;
+            border-radius: 20px;
+            background: rgba(16, 185, 129, 0.15);
+            color: var(--success);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            margin-top: 4px;
+            display: inline-block;
+        }
+
+        .nav-tabs {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .tab-btn {
+            background: var(--surface-3d);
+            border: 1px solid var(--border);
+            color: var(--text-muted);
+            padding: 11px 20px;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 4px 4px 8px #070a11, -2px -2px 6px #202a42;
+            transition: all 0.25s ease;
+        }
+
+        .tab-btn:hover {
+            color: var(--text-main);
+        }
+
+        .tab-btn.active {
+            background: linear-gradient(145deg, #2563eb, #1d4ed8);
+            color: white;
+            border-color: #3b82f6;
+            box-shadow: 0 4px 15px rgba(37, 99, 235, 0.45);
+        }
+
+        /* Tarjetas 3D */
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 28px;
+            box-shadow: var(--shadow-3d);
+            margin-bottom: 24px;
+        }
+
+        h2 {
+            font-size: 1.2rem;
+            color: var(--accent);
+            margin-bottom: 20px;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 18px;
+        }
+
+        .col-2 { grid-column: span 2; }
+        .col-3 { grid-column: span 3; }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        label {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-bottom: 6px;
+            font-weight: 600;
+        }
+
+        input, select, textarea {
+            background: #0a0e17;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 11px 14px;
+            color: var(--text-main);
+            font-size: 0.95rem;
+            box-shadow: var(--inset-3d);
             transition: all 0.2s ease;
+            width: 100%;
         }
-        .neumo-button:active {
-            box-shadow: inset 2px 2px 4px #1d4ed8, inset -2px -2px 4px #60a5fa;
+
+        input:focus, select:focus, textarea:focus {
+            border-color: var(--accent);
+            outline: none;
+            box-shadow: var(--inset-3d), 0 0 0 3px rgba(56, 189, 248, 0.2);
         }
-        .neumo-button-secondary {
-            background: #059669;
-            box-shadow: 4px 4px 8px #047857, -4px -4px 8px #10b981;
+
+        /* Lista desplegable inteligente */
+        .autocomplete-list {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: #1a2336;
+            border: 1px solid var(--accent);
+            border-radius: 0 0 10px 10px;
+            max-height: 240px;
+            overflow-y: auto;
+            z-index: 1000;
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.7);
+            display: none;
         }
-        .neumo-button-purple {
-            background: #7c3aed;
-            box-shadow: 4px 4px 8px #5b21b6, -4px -4px 8px #8b5cf6;
+
+        .autocomplete-item {
+            padding: 11px 14px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
-        .neumo-button-red {
-            background: #dc2626;
-            box-shadow: 4px 4px 8px #991b1b, -4px -4px 8px #ef4444;
+
+        .autocomplete-item:hover {
+            background: var(--primary);
+            color: white;
+        }
+
+        .tipo-tag {
+            font-size: 0.75rem;
+            padding: 2px 8px;
+            border-radius: 6px;
+            background: rgba(56, 189, 248, 0.15);
+            color: var(--accent);
+            font-weight: 600;
+        }
+
+        .autocomplete-item:hover .tipo-tag {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+        }
+
+        /* Cuadrícula de Inventario */
+        .checkbox-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            background: #0a0e17;
+            padding: 16px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            box-shadow: var(--inset-3d);
+        }
+
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .checkbox-item input {
+            width: 18px;
+            height: 18px;
+            accent-color: var(--primary);
+            box-shadow: none;
+        }
+
+        /* Botones */
+        .btn {
+            background: linear-gradient(145deg, #2563eb, #1d4ed8);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            padding: 12px 24px;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 4px 4px 10px #060910;
+            transition: transform 0.15s ease, box-shadow 0.15s ease;
+        }
+
+        .btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 15px rgba(37, 99, 235, 0.4);
+        }
+
+        .btn-success {
+            background: linear-gradient(145deg, #10b981, #059669);
+        }
+
+        .btn-secondary {
+            background: var(--surface-3d);
+            border: 1px solid var(--border);
+            color: var(--text-main);
+        }
+
+        .actions-row {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+            margin-top: 25px;
+            gap: 12px;
+        }
+
+        /* Barra de progreso y consola */
+        .progress-container {
+            width: 100%;
+            height: 6px;
+            background: #0a0e17;
+            border-radius: 4px;
+            margin-top: 15px;
+            overflow: hidden;
+            display: none;
+        }
+
+        .progress-bar {
+            height: 100%;
+            width: 0%;
+            background: var(--accent);
+            transition: width 0.3s ease;
+        }
+
+        /* Dashboard Admin */
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .kpi-card {
+            background: var(--surface-3d);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 18px;
+            box-shadow: 4px 4px 10px #070a11;
+        }
+
+        .kpi-title {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+        }
+
+        .kpi-value {
+            font-size: 1.7rem;
+            font-weight: 700;
+            color: var(--accent);
+            margin-top: 6px;
+        }
+
+        .table-wrapper {
+            overflow-x: auto;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.88rem;
+        }
+
+        th, td {
+            padding: 12px 14px;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+
+        th {
+            background: #1a2336;
+            color: var(--accent);
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        tr:hover {
+            background: rgba(56, 189, 248, 0.04);
+        }
+
+        .badge {
+            background: rgba(37, 99, 235, 0.2);
+            color: var(--accent);
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            border: 1px solid rgba(37, 99, 235, 0.4);
+            white-space: nowrap;
+        }
+
+        .hidden { display: none !important; }
+
+        /* Adaptación Responsiva PC / Laptop / Tablet / Móvil */
+        @media (max-width: 900px) {
+            .form-grid { grid-template-columns: repeat(2, 1fr); }
+            .col-2, .col-3 { grid-column: span 2; }
+            .checkbox-grid { grid-template-columns: repeat(2, 1fr); }
+            .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+
+        @media (max-width: 600px) {
+            .form-grid { grid-template-columns: 1fr; }
+            .col-2, .col-3 { grid-column: span 1; }
+            .checkbox-grid { grid-template-columns: 1fr; }
+            .kpi-grid { grid-template-columns: 1fr; }
+            header { padding: 15px; }
         }
     </style>
 </head>
-<body class="p-4 md:p-6 min-h-screen flex flex-col justify-between">
+<body>
 
-    <!-- PANTALLA DE LOGIN -->
-    <div id="auth-container" class="max-w-md mx-auto my-auto w-full neumo-card p-8">
-        <div class="text-center mb-6">
-            <h1 class="text-2xl font-bold text-blue-400">Taller Mecánico Syntro</h1>
-            <p class="text-xs text-slate-400 mt-1">Acceso Autorizado Operadores</p>
+<div class="wrapper">
+    <header>
+        <div class="brand-area">
+            <h1>🛠️ Taller Mecánico Syntro</h1>
+            <span id="dbStatusBadge" class="status-pill">● Base Precargada Activa (64 Clientes listos)</span>
         </div>
-        <form onsubmit="manejarAutenticacion(event)" class="space-y-4">
-            <div>
-                <label class="block text-sm text-slate-400 mb-1">Correo Electrónico</label>
-                <input type="email" id="auth-email" required class="w-full p-3 rounded-lg neumo-input focus:outline-none" placeholder="taller@syntro.com">
+        <div class="nav-tabs">
+            <button class="tab-btn active" onclick="cambiarModulo('recepcion')">Módulo 1 y 2: Recepción</button>
+            <button class="tab-btn" onclick="cambiarModulo('admin')">Módulo 3: Panel Administrador</button>
+        </div>
+    </header>
+
+    <!-- MÓDULO 1 Y 2: RECEPCIÓN Y CHEQUEO -->
+    <div id="viewRecepcion" class="card">
+        <form id="formRecepcion" onsubmit="guardarRecepcion(event)">
+            
+            <h2>
+                <span>Módulo 1: Identificación del Cliente (Persona o Empresa)</span>
+                <button type="button" class="btn btn-secondary" style="padding: 6px 12px; font-size: 0.8rem;" onclick="limpiarCliente()">+ Nuevo Cliente</button>
+            </h2>
+
+            <div class="form-grid">
+                <div class="input-group col-2">
+                    <label>Buscador Inteligente (Escriba nombre, empresa o cédula/RIF) *</label>
+                    <input type="text" id="buscador_cliente" autocomplete="off" placeholder="Ej: José, Rafael, Zoom, Movilnet, Embajada..." oninput="buscarClienteInteligente(this.value)">
+                    <div id="autocompleteList" class="autocomplete-list"></div>
+                </div>
+
+                <div class="input-group">
+                    <label>Cédula o RIF *</label>
+                    <input type="text" id="cedula_rif" required placeholder="Ej: V-12345678 / J-00000000">
+                </div>
+
+                <div class="input-group col-2">
+                    <label>Nombre Completo / Razón Social *</label>
+                    <input type="text" id="nombre_razon_social" required placeholder="Nombre de persona o empresa">
+                </div>
+
+                <div class="input-group">
+                    <label>Tipo de Cliente</label>
+                    <select id="tipo_cliente">
+                        <option value="Persona">Persona Natural</option>
+                        <option value="Empresa">Empresa / Institución</option>
+                    </select>
+                </div>
+
+                <div class="input-group">
+                    <label>Teléfono *</label>
+                    <input type="text" id="telefono" required placeholder="Ej: 0412-6672767">
+                </div>
+
+                <div class="input-group">
+                    <label>Correo Electrónico</label>
+                    <input type="email" id="correo" placeholder="cliente@correo.com">
+                </div>
+
+                <div class="input-group">
+                    <label>Dirección *</label>
+                    <input type="text" id="direccion" required placeholder="Dirección fiscal o habitación">
+                </div>
             </div>
-            <div>
-                <label class="block text-sm text-slate-400 mb-1">Contraseña</label>
-                <input type="password" id="auth-password" required class="w-full p-3 rounded-lg neumo-input focus:outline-none" placeholder="••••••••">
+
+            <!-- MÓDULO 2: CHEQUEO DEL VEHÍCULO -->
+            <h2 style="margin-top: 32px;">Módulo 2: Chequeo de Entrada del Vehículo</h2>
+            <div class="form-grid">
+                <div class="input-group">
+                    <label>Placa *</label>
+                    <input type="text" id="placa" required placeholder="Ej: AAO83NL" style="text-transform: uppercase;">
+                </div>
+
+                <div class="input-group">
+                    <label>Marca *</label>
+                    <input type="text" id="marca" required placeholder="Ej: Toyota, Hyundai, Ford">
+                </div>
+
+                <div class="input-group">
+                    <label>Modelo *</label>
+                    <input type="text" id="modelo" required placeholder="Ej: Hilux, Aveo, Explorer">
+                </div>
+
+                <div class="input-group">
+                    <label>Año</label>
+                    <input type="number" id="anio" placeholder="Ej: 2015">
+                </div>
+
+                <div class="input-group">
+                    <label>Kilometraje *</label>
+                    <input type="number" id="kilometraje" required placeholder="Ej: 125000">
+                </div>
+
+                <div class="input-group">
+                    <label>Color</label>
+                    <input type="text" id="color" placeholder="Ej: Blanco">
+                </div>
+
+                <div class="input-group">
+                    <label>Serial de Carrocería (VIN)</label>
+                    <input type="text" id="serial_carroceria" placeholder="Serial carrocería">
+                </div>
+
+                <div class="input-group">
+                    <label>Serial de Batería</label>
+                    <input type="text" id="serial_bateria" placeholder="Ej: 12V45AH / 24MR">
+                </div>
+
+                <div class="input-group">
+                    <label>Ingreso en Grúa *</label>
+                    <select id="ingreso_grua">
+                        <option value="NO">NO</option>
+                        <option value="SI">SI</option>
+                    </select>
+                </div>
+
+                <div class="input-group">
+                    <label>Nivel de Combustible *</label>
+                    <select id="nivel_combustible">
+                        <option value="Vacío">Vacío</option>
+                        <option value="1/4">1/4</option>
+                        <option value="1/2" selected>1/2</option>
+                        <option value="3/4">3/4</option>
+                        <option value="Lleno">Lleno</option>
+                    </select>
+                </div>
+
+                <div class="input-group">
+                    <label>Mecánico Asignado (Representante Módulo) *</label>
+                    <select id="mecanico_asignado">
+                        <option value="ANTONIO GUTIERREZ">ANTONIO GUTIERREZ</option>
+                        <option value="BOGGIA DIAZ">BOGGIA DIAZ</option>
+                        <option value="DARWING SUÁREZ">DARWING SUÁREZ</option>
+                        <option value="JOSÉ ESCALONA">JOSÉ ESCALONA</option>
+                    </select>
+                </div>
+
+                <div class="input-group">
+                    <label>Recibido por (Administrador)</label>
+                    <input type="text" id="recibido_por" value="Juan Suárez" required>
+                </div>
+
+                <div class="input-group col-3">
+                    <label>Trabajo / Servicio a Realizar (Falla Reportada) *</label>
+                    <textarea id="trabajo_realizar" rows="3" required placeholder="Describa detalladamente los trabajos o fallas reportadas..."></textarea>
+                </div>
+
+                <div class="input-group col-3">
+                    <label>Chequeo de Inventario y Accesorios</label>
+                    <div class="checkbox-grid">
+                        <label class="checkbox-item"><input type="checkbox" id="check_gato" checked> Gato</label>
+                        <label class="checkbox-item"><input type="checkbox" id="check_herramientas" checked> Herramientas</label>
+                        <label class="checkbox-item"><input type="checkbox" id="check_triangulo" checked> Triángulo</label>
+                        <label class="checkbox-item"><input type="checkbox" id="check_repuesto" checked> Neumático Repuesto</label>
+                        <label class="checkbox-item"><input type="checkbox" id="check_estereo" checked> Estéreo</label>
+                        <label class="checkbox-item"><input type="checkbox" id="check_antena" checked> Antena</label>
+                        <label class="checkbox-item"><input type="checkbox" id="check_emblemas" checked> Emblemas</label>
+                        <label class="checkbox-item"><input type="checkbox" id="check_alfombras" checked> Alfombras</label>
+                        <label class="checkbox-item"><input type="checkbox" id="check_cables" checked> Cables</label>
+                        <label class="checkbox-item"><input type="checkbox" id="check_tazas" checked> Tazas / Rines</label>
+                        <label class="checkbox-item"><input type="checkbox" id="check_luces"> Luces Advertencia</label>
+                    </div>
+                </div>
             </div>
-            <button type="submit" class="w-full py-3 rounded-lg font-semibold text-white neumo-button">
-                Iniciar Sesión / Registrarse
-            </button>
+
+            <div class="progress-container" id="progressBarBox">
+                <div class="progress-bar" id="progressBar"></div>
+            </div>
+
+            <div class="actions-row">
+                <button type="reset" class="btn btn-secondary" onclick="limpiarCliente()">Limpiar Formulario</button>
+                <button type="submit" class="btn btn-success">Guardar Recepción en Base de Datos</button>
+            </div>
         </form>
     </div>
 
-    <!-- APLICACIÓN PRINCIPAL -->
-    <div id="app-container" class="max-w-7xl mx-auto w-full hidden">
-        <header class="flex flex-col md:flex-row justify-between items-center mb-8 p-4 neumo-card gap-4">
-            <div>
-                <h1 class="text-2xl font-bold text-blue-400">Taller Mecánico Syntro</h1>
-                <p class="text-xs text-slate-400">Operador Activo: <span id="user-display" class="text-emerald-400 font-mono"></span></p>
+    <!-- MÓDULO 3: PANEL ADMINISTRADOR -->
+    <div id="viewAdmin" class="card hidden">
+        <h2>
+            <span>Módulo 3: Panel Administrador - Control de Entradas y Salidas</span>
+            <button class="btn btn-secondary" style="padding: 6px 14px; font-size: 0.85rem;" onclick="exportarCSV()">📥 Exportar CSV</button>
+        </h2>
+
+        <div class="kpi-grid">
+            <div class="kpi-card">
+                <div class="kpi-title">Clientes Registrados</div>
+                <div class="kpi-value" id="kpiClientes">64</div>
             </div>
-            <div class="flex items-center gap-6">
-                <div class="text-center md:text-right">
-                    <div id="timer" class="text-lg font-mono text-emerald-400">00:00:00</div>
-                    <div id="sync-status" class="text-xs text-emerald-400">Cloud Sincronizado</div>
-                </div>
-                <button onclick="cerrarSesion()" class="px-4 py-2 rounded-lg text-xs font-semibold text-white neumo-button-red">
-                    Salir
-                </button>
+            <div class="kpi-card">
+                <div class="kpi-title">Vehículos en Taller</div>
+                <div class="kpi-value" id="kpiEnTaller">0</div>
             </div>
-        </header>
-
-        <main class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            
-            <!-- COLUMNA 1: Módulo 1 - Clientes -->
-            <div class="space-y-6">
-                <section class="neumo-card p-6">
-                    <h2 class="text-xl font-semibold mb-4 text-slate-200">Módulo 1: Clientes</h2>
-                    
-                    <div class="mb-4 p-3 rounded-xl border border-slate-700 bg-slate-900/50">
-                        <label class="block text-xs text-blue-400 font-semibold uppercase mb-1">Buscar Cliente</label>
-                        <div class="flex gap-2">
-                            <input type="text" id="criterio-busqueda" class="w-full p-2 rounded-lg neumo-input text-sm focus:outline-none" placeholder="Cédula, RIF o Nombre">
-                            <button type="button" onclick="buscarCliente()" class="px-3 py-2 rounded-lg text-white font-semibold text-xs neumo-button-secondary">Buscar</button>
-                        </div>
-                    </div>
-
-                    <form id="client-form" onsubmit="guardarCliente(event)" class="space-y-3">
-                        <div>
-                            <label class="block text-xs text-slate-400 mb-1">Cédula o RIF</label>
-                            <input type="text" id="cedula" required class="w-full p-2 rounded-lg neumo-input text-sm focus:outline-none" placeholder="V-12345678">
-                        </div>
-                        <div>
-                            <label class="block text-xs text-slate-400 mb-1">Nombre y Apellido</label>
-                            <input type="text" id="nombre" required class="w-full p-2 rounded-lg neumo-input text-sm focus:outline-none" placeholder="Juan Suárez">
-                        </div>
-                        <div>
-                            <label class="block text-xs text-slate-400 mb-1">Teléfono</label>
-                            <input type="text" id="telefono" required class="w-full p-2 rounded-lg neumo-input text-sm focus:outline-none" placeholder="0414-1234567">
-                        </div>
-                        <div>
-                            <label class="block text-xs text-slate-400 mb-1">Dirección</label>
-                            <textarea id="direccion" rows="2" required class="w-full p-2 rounded-lg neumo-input text-sm focus:outline-none" placeholder="Dirección"></textarea>
-                        </div>
-                        <button type="submit" class="w-full py-2 rounded-lg text-xs font-semibold text-white neumo-button">
-                            Guardar Cliente
-                        </button>
-                    </form>
-                </section>
+            <div class="kpi-card">
+                <div class="kpi-title">Ingresos en Grúa</div>
+                <div class="kpi-value" id="kpiGrua">0</div>
             </div>
-
-            <!-- COLUMNAS 2 y 3: Módulos 2 y 3 (Recepción, Mapa Base y Checklist Técnico) -->
-            <div class="lg:col-span-2 space-y-6">
-                <section class="neumo-card p-6">
-                    <h2 class="text-xl font-semibold mb-4 text-slate-200">Módulos 2 y 3: Recepción y Mapa Base del Vehículo</h2>
-                    
-                    <form id="orden-form" onsubmit="guardarOrdenServicio(event)" class="space-y-6">
-                        
-                        <!-- Datos Principales de Recepción con Búsqueda Eficiente por Placa -->
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <div>
-                                <label class="block text-xs text-slate-400 mb-1">Código de Orden</label>
-                                <input type="text" id="ord-codigo" readonly class="w-full p-2 rounded-lg neumo-input text-sm font-mono text-emerald-400 focus:outline-none">
-                            </div>
-                            <div>
-                                <label class="block text-xs text-slate-400 mb-1">Placa (Escriba y presione Enter o salir)</label>
-                                <input type="text" id="ord-placa" required onblur="buscarPlacaEnNube(this.value)" class="w-full p-2 rounded-lg neumo-input text-sm uppercase font-mono text-amber-400 focus:outline-none" placeholder="Ej: AAO83NL">
-                            </div>
-                            <div>
-                                <label class="block text-xs text-slate-400 mb-1">Fecha y Hora de Ingreso</label>
-                                <input type="datetime-local" id="ord-fecha" required class="w-full p-2 rounded-lg neumo-input text-xs focus:outline-none">
-                            </div>
-                            <div>
-                                <label class="block text-xs text-slate-400 mb-1">Cliente / Propietario</label>
-                                <input type="text" id="ord-cliente" required class="w-full p-2 rounded-lg neumo-input text-sm focus:outline-none" placeholder="Nombre del cliente">
-                            </div>
-                            <div>
-                                <label class="block text-xs text-slate-400 mb-1">Teléfono</label>
-                                <input type="text" id="ord-telefono" required class="w-full p-2 rounded-lg neumo-input text-sm focus:outline-none" placeholder="Teléfono">
-                            </div>
-                            <div>
-                                <label class="block text-xs text-slate-400 mb-1">E-mail</label>
-                                <input type="email" id="ord-email" class="w-full p-2 rounded-lg neumo-input text-sm focus:outline-none" placeholder="Correo electrónico">
-                            </div>
-                            <div>
-                                <label class="block text-xs text-slate-400 mb-1">Marca</label>
-                                <input type="text" id="ord-marca" required class="w-full p-2 rounded-lg neumo-input text-sm focus:outline-none" placeholder="Hyundai">
-                            </div>
-                            <div>
-                                <label class="block text-xs text-slate-400 mb-1">Modelo</label>
-                                <input type="text" id="ord-modelo" required class="w-full p-2 rounded-lg neumo-input text-sm focus:outline-none" placeholder="Elantra">
-                            </div>
-                            <div>
-                                <label class="block text-xs text-slate-400 mb-1">Año</label>
-                                <input type="text" id="ord-anio" required class="w-full p-2 rounded-lg neumo-input text-sm focus:outline-none" placeholder="2010">
-                            </div>
-                            <div>
-                                <label class="block text-xs text-slate-400 mb-1">Kilometraje</label>
-                                <input type="text" id="ord-km" required class="w-full p-2 rounded-lg neumo-input text-sm focus:outline-none" placeholder="64500">
-                            </div>
-                            <div>
-                                <label class="block text-xs text-slate-400 mb-1">Serial Carrocería (VIN)</label>
-                                <input type="text" id="ord-serial-carroceria" required class="w-full p-2 rounded-lg neumo-input text-sm uppercase font-mono focus:outline-none" placeholder="Serial carrocería">
-                            </div>
-                            <div>
-                                <label class="block text-xs text-slate-400 mb-1">Serial Batería</label>
-                                <input type="text" id="ord-serial-bateria" required class="w-full p-2 rounded-lg neumo-input text-sm uppercase font-mono focus:outline-none" placeholder="Serial batería">
-                            </div>
-                        </div>
-
-                        <!-- Servicios y Mecánico -->
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                                <label class="block text-xs text-slate-400 mb-1">Trabajo / Servicio a Realizar</label>
-                                <textarea id="ord-servicio" rows="3" required class="w-full p-2 rounded-lg neumo-input text-sm focus:outline-none" placeholder="Mantenimiento de radiador, mangueras..."></textarea>
-                            </div>
-                            <div class="space-y-3">
-                                <div>
-                                    <label class="block text-xs text-slate-400 mb-1">Mecánico Asignado</label>
-                                    <input type="text" id="ord-mecanico" required class="w-full p-2 rounded-lg neumo-input text-sm focus:outline-none" value="ANTONIO GUTIERREZ">
-                                </div>
-                                <div>
-                                    <label class="block text-xs text-slate-400 mb-1">Fotografía de Recepción</label>
-                                    <input type="file" id="ord-foto" accept="image/*" class="w-full text-xs text-slate-300 file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-blue-600 file:text-white cursor-pointer">
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- MÓDULO 3: INSPECCIÓN TÉCNICA DETALLADA -->
-                        <div class="p-4 rounded-xl border border-slate-700 bg-slate-900/40 space-y-4">
-                            <h3 class="text-sm font-bold text-blue-400 uppercase tracking-wider">Módulo 3: Inspección Técnica Detallada</h3>
-                            
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
-                                <div class="p-3 bg-slate-900 rounded-lg">
-                                    <span class="font-semibold text-slate-300 block mb-2">1. Sistema de Aceite</span>
-                                    <div class="grid grid-cols-2 gap-2">
-                                        <input type="text" id="chk-aceite-nivel" placeholder="Nivel" class="p-1 neumo-input rounded">
-                                        <input type="text" id="chk-aceite-color" placeholder="Color" class="p-1 neumo-input rounded">
-                                        <input type="text" id="chk-aceite-filtro" placeholder="Filtro" class="p-1 neumo-input rounded">
-                                        <input type="text" id="chk-aceite-fugas" placeholder="Sin fugas (Sí/No)" class="p-1 neumo-input rounded">
-                                    </div>
-                                </div>
-
-                                <div class="p-3 bg-slate-900 rounded-lg">
-                                    <span class="font-semibold text-slate-300 block mb-2">2. Correas y Mangueras</span>
-                                    <div class="grid grid-cols-2 gap-2">
-                                        <input type="text" id="chk-correa-tension" placeholder="Tensión" class="p-1 neumo-input rounded">
-                                        <input type="text" id="chk-correa-grietas" placeholder="Sin grietas (Sí/No)" class="p-1 neumo-input rounded">
-                                    </div>
-                                </div>
-
-                                <div class="p-3 bg-slate-900 rounded-lg">
-                                    <span class="font-semibold text-slate-300 block mb-2">3. Líquido Refrigerante</span>
-                                    <div class="grid grid-cols-3 gap-2">
-                                        <input type="text" id="chk-refrig-nivel" placeholder="Nivel" class="p-1 neumo-input rounded">
-                                        <input type="text" id="chk-refrig-color" placeholder="Color" class="p-1 neumo-input rounded">
-                                        <input type="text" id="chk-refrig-fugas" placeholder="Fugas (Sí/No)" class="p-1 neumo-input rounded">
-                                    </div>
-                                </div>
-
-                                <div class="p-3 bg-slate-900 rounded-lg">
-                                    <span class="font-semibold text-slate-300 block mb-2">4. Batería y Alternador</span>
-                                    <div class="grid grid-cols-2 gap-2">
-                                        <input type="text" id="chk-bat-terminal" placeholder="Terminales limpios" class="p-1 neumo-input rounded">
-                                        <input type="text" id="chk-alt-voltaje" placeholder="Voltaje alternador" class="p-1 neumo-input rounded">
-                                    </div>
-                                </div>
-
-                                <div class="p-3 bg-slate-900 rounded-lg">
-                                    <span class="font-semibold text-slate-300 block mb-2">5. Dirección y Frenos</span>
-                                    <div class="grid grid-cols-2 gap-2">
-                                        <input type="text" id="chk-dir-juego" placeholder="Juego libre dirección" class="p-1 neumo-input rounded">
-                                        <input type="text" id="chk-freno-liga" placeholder="Nivel liga de freno" class="p-1 neumo-input rounded">
-                                    </div>
-                                </div>
-
-                                <div class="p-3 bg-slate-900 rounded-lg">
-                                    <span class="font-semibold text-slate-300 block mb-2">6. Ruedas, Luces y Limpiaparabrisas</span>
-                                    <div class="grid grid-cols-2 gap-2">
-                                        <input type="text" id="chk-ruedas-presion" placeholder="Presión neumática" class="p-1 neumo-input rounded">
-                                        <input type="text" id="chk-luces-ext" placeholder="Luces externas (Sí/No)" class="p-1 neumo-input rounded">
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <button type="submit" class="w-full py-3 rounded-lg font-semibold text-white neumo-button-purple">
-                            Generar y Guardar Orden Completa en la Nube
-                        </button>
-                    </form>
-                </section>
-
-                <!-- PANEL DE GESTIÓN DE BASE DE DATOS -->
-                <section class="neumo-card p-6 space-y-4">
-                    <h2 class="text-xl font-semibold text-slate-200">Gestión de Base de Datos (Importar / Exportar CSV)</h2>
-                    
-                    <div class="p-4 rounded-xl border border-slate-700 bg-slate-900/50 space-y-3">
-                        <label class="block text-xs text-blue-400 font-semibold uppercase">⬆️ Importación Histórica (Subir CSV en Segundo Plano)</label>
-                        <div class="flex flex-col sm:flex-row gap-3">
-                            <input type="file" id="csv-file-input" accept=".csv" class="w-full p-2 rounded-lg neumo-input text-xs text-slate-300 file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-blue-600 file:text-white cursor-pointer">
-                            <button type="button" onclick="procesarCSVHistoricoSeguro()" class="px-4 py-2 rounded-lg text-xs font-semibold text-white neumo-button-purple whitespace-nowrap">
-                                Importar CSV Seguro
-                            </button>
-                        </div>
-                    </div>
-
-                    <div class="p-4 rounded-xl border border-slate-700 bg-slate-900/50 space-y-3">
-                        <label class="block text-xs text-emerald-400 font-semibold uppercase">⬇️ Descargar Respaldos (Exportar CSV)</label>
-                        <div class="flex gap-2">
-                            <button type="button" onclick="exportarClientesCSV()" class="flex-1 py-2 rounded-lg text-xs font-semibold text-white neumo-button-secondary">
-                                📊 Descargar Clientes CSV
-                            </button>
-                            <button type="button" onclick="exportarOrdenesCSV()" class="flex-1 py-2 rounded-lg text-xs font-semibold text-white neumo-button">
-                                📋 Descargar Órdenes CSV
-                            </button>
-                        </div>
-                    </div>
-
-                    <div>
-                        <div class="w-full bg-slate-900 rounded-full h-3 mb-2 overflow-hidden neumo-input">
-                            <div id="progress-bar" class="bg-blue-500 h-full w-0 transition-all duration-300"></div>
-                        </div>
-                        <div id="log-console" class="bg-slate-950 p-3 rounded-lg font-mono text-xs text-emerald-400 h-32 overflow-y-auto neumo-input">
-                            [Sistema Listo] Optimización anti-congelamiento iniciada.
-                        </div>
-                    </div>
-                </section>
+            <div class="kpi-card">
+                <div class="kpi-title">Entregados / Salidas</div>
+                <div class="kpi-value" id="kpiSalidas">0</div>
             </div>
+        </div>
 
-        </main>
+        <div class="input-group" style="margin-bottom: 18px;">
+            <input type="text" id="filtroAdmin" placeholder="Filtrar tabla por placa, cliente, empresa o mecánico..." oninput="filtrarTablaAdmin(this.value)">
+        </div>
+        
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Código</th>
+                        <th>Fecha Ingreso</th>
+                        <th>Cliente / Empresa</th>
+                        <th>Placa / Vehículo</th>
+                        <th>Km</th>
+                        <th>Grúa</th>
+                        <th>Mecánico</th>
+                        <th>Estado</th>
+                        <th>Acción</th>
+                    </tr>
+                </thead>
+                <tbody id="tablaAdminBody">
+                    <tr>
+                        <td colspan="9" style="text-align: center; color: var(--text-muted);">Sin registros de entrada aún.</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
     </div>
+</div>
 
-    <!-- Script Firebase y Lógica -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-app.js";
-        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-auth.js";
-        import { getFirestore, collection, addDoc, getDocs, query, where, limit } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-firestore.js";
+<script>
+    // =========================================================================
+    // 1. CONFIGURACIÓN SUPABASE (Coloca aquí tus credenciales cuando las tengas)
+    // =========================================================================
+    const SUPABASE_URL = 'https://TU-PROYECTO.supabase.co';
+    const SUPABASE_KEY = 'TU-ANON-KEY';
+    const supabaseActivo = !SUPABASE_URL.includes('TU-PROYECTO');
+    const supabaseClient = supabaseActivo ? supabase.createClient(SUPABASE_URL, SUPABASE_KEY) : null;
 
-        const firebaseConfig = {
-            apiKey: "AIzaSyBe96LcGjwrVh6ciDoEbbUwRhfGCOrqBS8",
-            authDomain: "taller-mecanico-c2124.firebaseapp.com",
-            projectId: "taller-mecanico-c2124",
-            storageBucket: "taller-mecanico-c2124.firebasestorage.app",
-            messagingSenderId: "524886950258",
-            appId: "1:524886950258:web:8980e91ab51833e7b49deb",
-            measurementId: "G-TWRKEQBJML"
-        };
+    // =========================================================================
+    // 2. BASE DE DATOS DE CLIENTES PRECARGADA DIRECTAMENTE EN EL CÓDIGO
+    // =========================================================================
+    const CLIENTES_PRECARGADOS = [
+        // Empresas e Instituciones
+        { id: 'c1', tipo_cliente: 'Empresa', cedula_rif: 'EMP-001', nombre_razon_social: 'ZOOM Quintero', telefono: '0414-0000000', correo: '', direccion: 'Agencia Zoom' },
+        { id: 'c2', tipo_cliente: 'Empresa', cedula_rif: 'EMP-002', nombre_razon_social: 'Zoom', telefono: '0414-0000000', correo: '', direccion: 'Sede Principal Zoom' },
+        { id: 'c3', tipo_cliente: 'Empresa', cedula_rif: 'EMP-003', nombre_razon_social: 'Zoom Kervin', telefono: '0414-0000000', correo: '', direccion: 'Oficina Zoom' },
+        { id: 'c4', tipo_cliente: 'Empresa', cedula_rif: 'EMP-004', nombre_razon_social: 'Movilnet', telefono: '0426-5571254', correo: '', direccion: 'Sede Movilnet' },
+        { id: 'c5', tipo_cliente: 'Empresa', cedula_rif: 'EMP-005', nombre_razon_social: 'Movilnet (Flota 2)', telefono: '0416-5430986', correo: '', direccion: 'Sede Movilnet' },
+        { id: 'c6', tipo_cliente: 'Empresa', cedula_rif: 'EMP-006', nombre_razon_social: 'ZAKIPHARMA', telefono: '0414-8245109', correo: '', direccion: 'Laboratorio Zakipharma' },
+        { id: 'c7', tipo_cliente: 'Empresa', cedula_rif: 'EMP-007', nombre_razon_social: 'Embajada de Polonia', telefono: '0414-1251509', correo: '', direccion: 'Sede Diplomática' },
+        { id: 'c8', tipo_cliente: 'Empresa', cedula_rif: 'EMP-008', nombre_razon_social: 'Cerro Verde', telefono: '0412-7198032', correo: '', direccion: 'Complejo Cerro Verde' },
+        { id: 'c9', tipo_cliente: 'Empresa', cedula_rif: 'EMP-009', nombre_razon_social: 'Fontana', telefono: '0414-0000000', correo: '', direccion: 'Empresa Fontana' },
+        { id: 'c10', tipo_cliente: 'Empresa', cedula_rif: 'EMP-010', nombre_razon_social: 'Spacars', telefono: '0424-2371585', correo: '', direccion: 'Sede Spacars' },
 
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
-        let usuarioActual = null;
+        // Personas Naturales
+        { id: 'c11', tipo_cliente: 'Persona', cedula_rif: 'PER-001', nombre_razon_social: 'José Andrés', telefono: '0412-6672767', correo: '', direccion: 'Registrado en taller' },
+        { id: 'c12', tipo_cliente: 'Persona', cedula_rif: 'PER-002', nombre_razon_social: 'Rafael Ferraro', telefono: '0424-9860436', correo: 'rafaelferrarol@gmail.com', direccion: 'Registrado en taller' },
+        { id: 'c13', tipo_cliente: 'Persona', cedula_rif: 'PER-003', nombre_razon_social: 'Gustavo Ferraro', telefono: '0424-9860436', correo: 'rafaelferrarol@gmail.com', direccion: 'Registrado en taller' },
+        { id: 'c14', tipo_cliente: 'Persona', cedula_rif: 'PER-004', nombre_razon_social: 'Oscar Martínez', telefono: '0412-6213311', correo: 'ratagris2007@yahoo.com', direccion: 'Registrado en taller' },
+        { id: 'c15', tipo_cliente: 'Persona', cedula_rif: 'PER-005', nombre_razon_social: 'Rolando Vetencourt', telefono: '0414-1321833', correo: '', direccion: 'Registrado en taller' },
+        { id: 'c16', tipo_cliente: 'Persona', cedula_rif: 'PER-006', nombre_razon_social: 'Jesús', telefono: '0414-1441758', correo: '', direccion: 'Registrado en taller' },
+        { id: 'c17', tipo_cliente: 'Persona', cedula_rif: 'PER-007', nombre_razon_social: 'José Muñoz', telefono: '0414-2474658', correo: '', direccion: 'Registrado en taller' },
+        { id: 'c18', tipo_cliente: 'Persona', cedula_rif: 'PER-008', nombre_razon_social: 'Jesús Vivas', telefono: '0424-2584252', correo: 'jesusenriquevivasr@gmail.com', direccion: 'Registrado en taller' },
+        { id: 'c19', tipo_cliente: 'Persona', cedula_rif: 'PER-009', nombre_razon_social: 'Carlos', telefono: '', correo: '', direccion: 'Registrado en taller' },
+        { id: 'c20', tipo_cliente: 'Persona', cedula_rif: 'PER-010', nombre_razon_social: 'Dr. Ángel', telefono: '', correo: '', direccion: 'Registrado en taller' },
+        { id: 'c21', tipo_cliente: 'Persona', cedula_rif: 'PER-011', nombre_razon_social: 'Sandra Stenta', telefono: '0414-4828072', correo: 'sandrastenta@gmail.com', direccion: 'Registrado en taller' },
+        { id: 'c22', tipo_cliente: 'Persona', cedula_rif: 'PER-012', nombre_razon_social: 'Ángel', telefono: '', correo: '', direccion: 'Registrado en taller' },
+        { id: 'c23', tipo_cliente: 'Persona', cedula_rif: 'PER-013', nombre_razon_social: 'Adrián Carmona', telefono: '0424-1879594', correo: 'Carmonaadrian155@gmail.com', direccion: 'Registrado en taller' },
+        { id: 'c24', tipo_cliente: 'Persona', cedula_rif: 'PER-014', nombre_razon_social: 'Luis Rodríguez', telefono: '0412-8130554', correo: 'luistrolles@gmail.com', direccion: 'Registrado en taller' },
+        { id: 'c25', tipo_cliente: 'Persona', cedula_rif: 'PER-015', nombre_razon_social: 'Andrea', telefono: '0414-2283758', correo: '', direccion: 'Registrado en taller' },
+        { id: 'c26', tipo_cliente: 'Persona', cedula_rif: 'PER-016', nombre_razon_social: 'Samuel', telefono: '', correo: '', direccion: 'Registrado en taller' },
+        { id: 'c27', tipo_cliente: 'Persona', cedula_rif: 'PER-017', nombre_razon_social: 'Enrique', telefono: '', correo: '', direccion: 'Registrado en taller' },
+        { id: 'c28', tipo_cliente: 'Persona', cedula_rif: 'PER-018', nombre_razon_social: 'Aldemaro Moreno', telefono: '0414-3384174', correo: 'aldemaromoreno2@hotmail.com', direccion: 'Registrado en taller' },
+        { id: 'c29', tipo_cliente: 'Persona', cedula_rif: 'PER-019', nombre_razon_social: 'Frank Valera', telefono: '0412-7800424', correo: '', direccion: 'Registrado en taller' },
+        { id: 'c30', tipo_cliente: 'Persona', cedula_rif: 'PER-020', nombre_razon_social: 'José Duarte', telefono: '0424-7714721', correo: '', direccion: 'Registrado en taller' },
+        { id: 'c31', tipo_cliente: 'Persona', cedula_rif: 'PER-021', nombre_razon_social: 'Vicente Siso', telefono: '0414-3292613', correo: 'Vicentesiso@gmail.com', direccion: 'Registrado en taller' },
+        { id: 'c32', tipo_cliente: 'Persona', cedula_rif: 'PER-022', nombre_razon_social: 'Dr. Gabriel', telefono: '', correo: '', direccion: 'Registrado en taller' },
+        { id: 'c33', tipo_cliente: 'Persona', cedula_rif: 'PER-023', nombre_razon_social: 'Maricarmen López', telefono: '0414-2597443', correo: '', direccion: 'Registrado en taller' },
+        { id: 'c34', tipo_cliente: 'Persona', cedula_rif: 'PER-024', nombre_razon_social: 'Rafael', telefono: '0414-2896418', correo: '', direccion: 'Registrado en taller' },
+        { id: 'c35', tipo_cliente: 'Persona', cedula_rif: 'PER-025', nombre_razon_social: 'Antonio', telefono: '0416-8292591', correo: '', direccion: 'Registrado en taller' },
+        { id: 'c36', tipo_cliente: 'Persona', cedula_rif: 'PER-026', nombre_razon_social: 'Luis Agostoni', telefono: '0414-3054057', correo: 'luisragostino@gmail.com', direccion: 'Registrado en taller' },
+        { id: 'c37', tipo_cliente: 'Persona', cedula_rif: 'PER-027', nombre_razon_social: 'José Gallardo', telefono: '0424-8034243', correo: 'Gallardohjosemanuel@gmail.com', direccion: 'Registrado en taller' },
+        { id: 'c38', tipo_cliente: 'Persona', cedula_rif: 'PER-028', nombre_razon_social: 'Yamaly', telefono: '0412-2684716', correo: '', direccion: 'Registrado en taller' },
+        { id: 'c39', tipo_cliente: 'Persona', cedula_rif: 'PER-029', nombre_razon_social: 'Sr. Juan Musso', telefono: '005511979630186', correo: '', direccion: 'Registrado en taller' },
+        { id: 'c40', tipo_cliente: 'Persona', cedula_rif: 'PER-030', nombre_razon_social: 'Bryan Hoires', telefono: '0424-1237227', correo: '', direccion: 'Registrado en taller' },
+        { id: 'c41', tipo_cliente: 'Persona', cedula_rif: 'PER-031', nombre_razon_social: 'Gabriel Pérez Ramírez', telefono: '0412-0123900', correo: 'pedroluis50na@gmail.com', direccion: 'Registrado en taller' },
+        { id: 'c42', tipo_cliente: 'Persona', cedula_rif: 'PER-032', nombre_razon_social: 'Rigoberto Yáñez', telefono: '0416-6069157', correo: '', direccion: 'Registrado en taller' },
+        { id: 'c43', tipo_cliente: 'Persona', cedula_rif: 'PER-033', nombre_razon_social: 'Carlos Atencio', telefono: '', correo: '', direccion: 'Registrado en taller' },
+        { id: 'c44', tipo_cliente: 'Persona', cedula_rif: 'PER-034', nombre_razon_social: 'Manuel', telefono: '', correo: '', direccion: 'Registrado en taller' },
+        { id: 'c45', tipo_cliente: 'Persona', cedula_rif: 'PER-035', nombre_razon_social: 'Rafael Piñero', telefono: '0412-5584072', correo: '', direccion: 'Registrado en taller' },
+        { id: 'c46', tipo_cliente: 'Persona', cedula_rif: 'PER-036', nombre_razon_social: 'Jim', telefono: '0414-1505965', correo: '', direccion: 'Registrado en taller' },
+        { id: 'c47', tipo_cliente: 'Persona', cedula_rif: 'PER-037', nombre_razon_social: 'Gabriel García', telefono: '0424-2430084', correo: '', direccion: 'Registrado en taller' },
+        { id: 'c48', tipo_cliente: 'Persona', cedula_rif: 'PER-038', nombre_razon_social: 'Branford', telefono: '0414-2650410', correo: '', direccion: 'Registrado en taller' },
+        { id: 'c49', tipo_cliente: 'Persona', cedula_rif: 'PER-039', nombre_razon_social: 'Celi Becerra', telefono: '0414-7092618', correo: '', direccion: 'Registrado en taller' },
+        { id: 'c50', tipo_cliente: 'Persona', cedula_rif: 'PER-040', nombre_razon_social: 'Juan Carlos López', telefono: '0424-4611532', correo: '', direccion: 'Registrado en taller' },
+        { id: 'c51', tipo_cliente: 'Persona', cedula_rif: 'PER-041', nombre_razon_social: 'Paolo Caiazzo', telefono: '0414-1383823', correo: 'Paoloocaiazzo@gmail.com', direccion: 'Registrado en taller' },
+        { id: 'c52', tipo_cliente: 'Persona', cedula_rif: 'PER-042', nombre_razon_social: 'Marianela Báez', telefono: '0414-3151769', correo: 'Melabaez@hotmail.com', direccion: 'Registrado en taller' },
+        { id: 'c53', tipo_cliente: 'Persona', cedula_rif: 'PER-043', nombre_razon_social: 'Armando Planchar', telefono: '0412-2118830', correo: 'ajrpm1@gmail.com', direccion: 'Registrado en taller' },
+        { id: 'c54', tipo_cliente: 'Persona', cedula_rif: 'PER-044', nombre_razon_social: 'Ángel Escalona', telefono: '0414-3662706', correo: '', direccion: 'Registrado en taller' },
+        { id: 'c55', tipo_cliente: 'Persona', cedula_rif: 'PER-045', nombre_razon_social: 'Ítalo', telefono: '0412-4109439', correo: '', direccion: 'Registrado en taller' },
+        { id: 'c56', tipo_cliente: 'Persona', cedula_rif: 'PER-046', nombre_razon_social: 'Daniel Freites', telefono: '', correo: '', direccion: 'Registrado en taller' },
+        { id: 'c57', tipo_cliente: 'Persona', cedula_rif: 'PER-047', nombre_razon_social: 'Luisa', telefono: '0414-2166969', correo: '', direccion: 'Registrado en taller' },
+        { id: 'c58', tipo_cliente: 'Persona', cedula_rif: 'PER-048', nombre_razon_social: 'Carlos Osorio', telefono: '', correo: '', direccion: 'Registrado en taller' },
+        { id: 'c59', tipo_cliente: 'Persona', cedula_rif: 'PER-049', nombre_razon_social: 'Marber', telefono: '0414-2490537', correo: '', direccion: 'Registrado en taller' },
+        { id: 'c60', tipo_cliente: 'Persona', cedula_rif: 'PER-050', nombre_razon_social: 'Gabriela Marín', telefono: '0414-2901571', correo: 'Gabymercedesmb@gmail.com', direccion: 'Registrado en taller' },
+        { id: 'c61', tipo_cliente: 'Persona', cedula_rif: 'PER-051', nombre_razon_social: 'Ángel Mosquera', telefono: '0414-2162887', correo: '', direccion: 'Registrado en taller' },
+        { id: 'c62', tipo_cliente: 'Persona', cedula_rif: 'PER-052', nombre_razon_social: 'Luis Peñalver', telefono: '0412-2020750', correo: '', direccion: 'Registrado en taller' },
+        { id: 'c63', tipo_cliente: 'Persona', cedula_rif: 'PER-053', nombre_razon_social: 'Juan Velásquez', telefono: '0414-3233440', correo: 'Juanvelasquezvi@gmail.com', direccion: 'Registrado en taller' },
+        { id: 'c64', tipo_cliente: 'Persona', cedula_rif: 'PER-054', nombre_razon_social: 'Gustavo', telefono: '', correo: '', direccion: 'Registrado en taller' }
+    ];
 
-        onAuthStateChanged(auth, async (user) => {
-            if (user) {
-                usuarioActual = user;
-                document.getElementById('auth-container').classList.add('hidden');
-                document.getElementById('app-container').classList.remove('hidden');
-                document.getElementById('user-display').innerText = user.email;
-                inicializarFormulario();
-                logConsola(`Sesión activa: ${user.email}`);
-            } else {
-                usuarioActual = null;
-                document.getElementById('auth-container').classList.remove('hidden');
-                document.getElementById('app-container').classList.add('hidden');
-            }
-        });
+    // Inicializar almacenamiento local con los clientes precargados si está vacío
+    function obtenerClientes() {
+        const guardados = localStorage.getItem('syntro_clientes');
+        if (!guardados) {
+            localStorage.setItem('syntro_clientes', JSON.stringify(CLIENTES_PRECARGADOS));
+            return CLIENTES_PRECARGADOS;
+        }
+        return JSON.parse(guardados);
+    }
 
-        window.manejarAutenticacion = async function(event) {
-            event.preventDefault();
-            const email = document.getElementById('auth-email').value.trim();
-            const pass = document.getElementById('auth-password').value.trim();
-            try {
-                await signInWithEmailAndPassword(auth, email, pass);
-            } catch (error) {
-                try {
-                    await createUserWithEmailAndPassword(auth, email, pass);
-                    alert("¡Cuenta de operador creada con éxito!");
-                } catch (err) { alert("Error: " + err.message); }
-            }
-        };
+    function obtenerRecepciones() {
+        return JSON.parse(localStorage.getItem('syntro_recepciones') || '[]');
+    }
 
-        window.cerrarSesion = async function() { await signOut(auth); };
+    let clienteSeleccionadoId = null;
 
-        let segundosTotales = 0;
-        setInterval(() => {
-            segundosTotales++;
-            let hrs = Math.floor(segundosTotales / 3600).toString().padStart(2, '0');
-            let mins = Math.floor((segundosTotales % 3600) / 60).toString().padStart(2, '0');
-            let secs = (segundosTotales % 60).toString().padStart(2, '0');
-            document.getElementById('timer').innerText = `${hrs}:${mins}:${secs}`;
-        }, 1000);
+    // Actualizar estado visual de conexión
+    window.addEventListener('DOMContentLoaded', () => {
+        const clientes = obtenerClientes();
+        const badge = document.getElementById('dbStatusBadge');
+        if (supabaseActivo) {
+            badge.innerText = `● Conectado a Supabase (${clientes.length} Clientes base)`;
+        } else {
+            badge.innerText = `● Modo Local / Precargado (${clientes.length} Clientes listos)`;
+        }
+        document.getElementById('kpiClientes').innerText = clientes.length;
+    });
 
-        function inicializarFormulario() {
-            document.getElementById('orden-form').reset();
-            const now = new Date();
-            const anio = now.getFullYear();
-            const mes = (now.getMonth() + 1).toString().padStart(2, '0');
-            const consecutivo = Math.floor(Math.random() * 900) + 100;
-            document.getElementById('ord-codigo').value = `${anio}${mes}${consecutivo}`;
+    // Cambiar entre pestañas
+    function cambiarModulo(vista) {
+        if (vista === 'recepcion') {
+            document.getElementById('viewRecepcion').classList.remove('hidden');
+            document.getElementById('viewAdmin').classList.add('hidden');
+            document.querySelectorAll('.tab-btn')[0].classList.add('active');
+            document.querySelectorAll('.tab-btn')[1].classList.remove('active');
+        } else {
+            document.getElementById('viewRecepcion').classList.add('hidden');
+            document.getElementById('viewAdmin').classList.remove('hidden');
+            document.querySelectorAll('.tab-btn')[1].classList.add('active');
+            document.querySelectorAll('.tab-btn')[0].classList.remove('active');
+            cargarDatosAdmin();
+        }
+    }
 
-            const tzoffset = (now).getTimezoneOffset() * 60000;
-            const localISOTime = (new Date(now - tzoffset)).toISOString().slice(0, 16);
-            document.getElementById('ord-fecha').value = localISOTime;
-            document.getElementById('ord-mecanico').value = "ANTONIO GUTIERREZ";
+    // Buscador Inteligente en tiempo real (Busca en base precargada + nuevos registrados)
+    async function buscarClienteInteligente(query) {
+        const listDiv = document.getElementById('autocompleteList');
+        const texto = query.trim().toLowerCase();
+
+        if (texto.length < 1) {
+            listDiv.style.display = 'none';
+            return;
         }
 
-        // BÚSQUEDA RÁPIDA POR PLACA EN LA NUBE (SIN CONGELAR)
-        window.buscarPlacaEnNube = async function(valorPlaca) {
-            const placaBuscada = valorPlaca.trim().toUpperCase();
-            if (!placaBuscada) return;
+        const clientes = obtenerClientes();
+        const filtrados = clientes.filter(c =>
+            c.nombre_razon_social.toLowerCase().includes(texto) ||
+            c.cedula_rif.toLowerCase().includes(texto) ||
+            (c.telefono && c.telefono.includes(texto))
+        );
 
-            logConsola(`Buscando vehículo con placa ${placaBuscada} en la nube...`);
-            actualizarProgreso(50);
+        if (filtrados.length === 0) {
+            listDiv.innerHTML = `<div class="autocomplete-item" style="color: var(--warning);">No encontrado. Complete los datos abajo para registrarlo por primera vez.</div>`;
+            listDiv.style.display = 'block';
+            return;
+        }
 
-            try {
-                const q = query(collection(db, "ordenes_servicio"), where("placa", "==", placaBuscada), limit(1));
-                const querySnapshot = await getDocs(q);
+        listDiv.innerHTML = '';
+        filtrados.slice(0, 10).forEach(cliente => {
+            const item = document.createElement('div');
+            item.className = 'autocomplete-item';
+            item.innerHTML = `
+                <div>
+                    <strong>${cliente.nombre_razon_social}</strong><br>
+                    <small style="opacity:0.8;">ID: ${cliente.cedula_rif} | Tlf: ${cliente.telefono || 'N/D'}</small>
+                </div>
+                <span class="tipo-tag">${cliente.tipo_cliente}</span>
+            `;
+            item.onclick = () => seleccionarCliente(cliente);
+            listDiv.appendChild(item);
+        });
+        listDiv.style.display = 'block';
+    }
 
-                if (!querySnapshot.empty) {
-                    querySnapshot.forEach((docSnapshot) => {
-                        const v = docSnapshot.data();
-                        document.getElementById('ord-marca').value = v.marca || '';
-                        document.getElementById('ord-modelo').value = v.modelo || '';
-                        document.getElementById('ord-anio').value = v.anio || '';
-                        document.getElementById('ord-km').value = v.km || '';
-                        document.getElementById('ord-serial-carroceria').value = v.serialCarroceria || '';
-                        document.getElementById('ord-serial-bateria').value = v.serialBateria || '';
-                        document.getElementById('ord-cliente').value = v.cliente || '';
-                        document.getElementById('ord-telefono').value = v.telefono || '';
-                        document.getElementById('ord-email').value = v.email || '';
-                        logConsola(`[ENCONTRADO] Datos cargados para la placa ${placaBuscada}`);
-                    });
-                } else {
-                    logConsola(`[NUEVO] La placa ${placaBuscada} no está registrada. Complete los datos.`);
-                }
-                actualizarProgreso(100);
-            } catch (e) {
-                logConsola(`Error al buscar placa: ${e.message}`);
-                actualizarProgreso(0);
-            }
+    function seleccionarCliente(cliente) {
+        clienteSeleccionadoId = cliente.id;
+        document.getElementById('buscador_cliente').value = cliente.nombre_razon_social;
+        document.getElementById('cedula_rif').value = cliente.cedula_rif;
+        document.getElementById('nombre_razon_social').value = cliente.nombre_razon_social;
+        document.getElementById('tipo_cliente').value = cliente.tipo_cliente || 'Persona';
+        document.getElementById('telefono').value = cliente.telefono || '';
+        document.getElementById('correo').value = cliente.correo || '';
+        document.getElementById('direccion').value = cliente.direccion || '';
+        document.getElementById('autocompleteList').style.display = 'none';
+    }
+
+    function limpiarCliente() {
+        clienteSeleccionadoId = null;
+        document.getElementById('buscador_cliente').value = '';
+        document.getElementById('cedula_rif').value = '';
+        document.getElementById('nombre_razon_social').value = '';
+        document.getElementById('telefono').value = '';
+        document.getElementById('correo').value = '';
+        document.getElementById('direccion').value = '';
+        document.getElementById('autocompleteList').style.display = 'none';
+    }
+
+    // Cerrar lista desplegable si se hace clic fuera
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('.input-group')) {
+            document.getElementById('autocompleteList').style.display = 'none';
+        }
+    });
+
+    // Guardar Recepción Completa (Local + Supabase si está configurado)
+    async function guardarRecepcion(e) {
+        e.preventDefault();
+        const pBox = document.getElementById('progressBarBox');
+        const pBar = document.getElementById('progressBar');
+        pBox.style.display = 'block';
+        pBar.style.width = '40%';
+
+        // 1. Guardar o actualizar cliente
+        let clientes = obtenerClientes();
+        const cedulaRif = document.getElementById('cedula_rif').value.trim();
+        const datosCliente = {
+            id: clienteSeleccionadoId || 'c_' + Date.now(),
+            tipo_cliente: document.getElementById('tipo_cliente').value,
+            cedula_rif: cedulaRif,
+            nombre_razon_social: document.getElementById('nombre_razon_social').value.trim(),
+            telefono: document.getElementById('telefono').value.trim(),
+            correo: document.getElementById('correo').value.trim(),
+            direccion: document.getElementById('direccion').value.trim()
         };
 
-        window.guardarOrdenServicio = async function(event) {
-            event.preventDefault();
-            const codigo = document.getElementById('ord-codigo').value.trim();
-            const placa = document.getElementById('ord-placa').value.trim().toUpperCase();
-            const fechaIngreso = document.getElementById('ord-fecha').value;
-            const cliente = document.getElementById('ord-cliente').value.trim();
-            const telefono = document.getElementById('ord-telefono').value.trim();
-            const email = document.getElementById('ord-email').value.trim();
-            const marca = document.getElementById('ord-marca').value.trim();
-            const modelo = document.getElementById('ord-modelo').value.trim();
-            const anio = document.getElementById('ord-anio').value.trim();
-            const km = document.getElementById('ord-km').value.trim();
-            const serialCarroceria = document.getElementById('ord-serial-carroceria').value.trim().toUpperCase();
-            const serialBateria = document.getElementById('ord-serial-bateria').value.trim().toUpperCase();
-            const servicio = document.getElementById('ord-servicio').value.trim();
-            const mecanico = document.getElementById('ord-mecanico').value.trim();
+        const indexExistente = clientes.findIndex(c => c.id === datosCliente.id || c.cedula_rif === cedulaRif);
+        if (indexExistente >= 0) {
+            clientes[indexExistente] = datosCliente;
+        } else {
+            clientes.unshift(datosCliente);
+        }
+        localStorage.setItem('syntro_clientes', JSON.stringify(clientes));
 
-            const checklistTecnico = {
-                aceite: { nivel: document.getElementById('chk-aceite-nivel').value, color: document.getElementById('chk-aceite-color').value, filtro: document.getElementById('chk-aceite-filtro').value, fugas: document.getElementById('chk-aceite-fugas').value },
-                correas: { tension: document.getElementById('chk-correa-tension').value, grietas: document.getElementById('chk-correa-grietas').value },
-                refrigerante: { nivel: document.getElementById('chk-refrig-nivel').value, color: document.getElementById('chk-refrig-color').value, fugas: document.getElementById('chk-refrig-fugas').value },
-                bateriaAlternador: { terminales: document.getElementById('chk-bat-terminal').value, voltajeAlternador: document.getElementById('chk-alt-voltaje').value },
-                direccionFrenos: { juegoLibre: document.getElementById('chk-dir-juego').value, ligaFreno: document.getElementById('chk-freno-liga').value },
-                ruedasLuces: { presionNeumatica: document.getElementById('chk-ruedas-presion').value, lucesExternas: document.getElementById('chk-luces-ext').value }
-            };
+        pBar.style.width = '75%';
 
-            const operador = usuarioActual ? usuarioActual.email : 'sistema';
-
-            logConsola(`Guardando Orden ${codigo} en la nube...`);
-            actualizarProgreso(60);
-
-            try {
-                await addDoc(collection(db, "ordenes_servicio"), {
-                    codigo, placa, fechaIngreso, cliente, telefono, email, marca, modelo, anio, km,
-                    serialCarroceria, serialBateria, servicio, mecanico,
-                    checklistTecnico, registradoPor: operador,
-                    fechaRegistroCloud: new Date().toISOString()
-                });
-
-                actualizarProgreso(100);
-                logConsola(`[ÉXITO] Orden ${codigo} guardada y formulario limpiado.`);
-                alert("¡Orden de servicio guardada con éxito!");
-                inicializarFormulario();
-            } catch (e) {
-                logConsola(`Error: ${e.message}`);
-                alert("Error al guardar en la nube.");
-                actualizarProgreso(0);
-            }
+        // 2. Crear registro de recepción
+        const codigoServicio = '2026' + Math.floor(100000 + Math.random() * 900000);
+        const registro = {
+            codigo_servicio: codigoServicio,
+            ingreso_fecha_hora: new Date().toLocaleString(),
+            salida_fecha_hora: null,
+            cliente: datosCliente,
+            vehiculo: {
+                placa: document.getElementById('placa').value.trim().toUpperCase(),
+                marca: document.getElementById('marca').value.trim(),
+                modelo: document.getElementById('modelo').value.trim(),
+                anio: document.getElementById('anio').value,
+                color: document.getElementById('color').value.trim(),
+                serial_carroceria: document.getElementById('serial_carroceria').value.trim(),
+                serial_bateria: document.getElementById('serial_bateria').value.trim()
+            },
+            kilometraje: parseInt(document.getElementById('kilometraje').value) || 0,
+            ingreso_grua: document.getElementById('ingreso_grua').value,
+            nivel_combustible: document.getElementById('nivel_combustible').value,
+            mecanico_asignado: document.getElementById('mecanico_asignado').value,
+            recibido_por: document.getElementById('recibido_por').value,
+            trabajo_realizar: document.getElementById('trabajo_realizar').value,
+            estado: 'En Taller'
         };
 
-        // IMPORTACIÓN SEGURA Y POR LOTES (NO CONGELA)
-        window.procesarCSVHistoricoSeguro = async function() {
-            const fileInput = document.getElementById('csv-file-input');
-            if (!fileInput.files.length) { alert("Seleccione su archivo CSV histórico."); return; }
-            const file = fileInput.files[0];
-            const reader = new FileReader();
-            const operador = usuarioActual ? usuarioActual.email : 'sistema';
+        // Guardar en Supabase si está activo
+        if (supabaseActivo) {
+            try {
+                const { data: cData } = await supabaseClient
+                    .from('clientes')
+                    .upsert([{
+                        cedula_rif: datosCliente.cedula_rif,
+                        tipo_cliente: datosCliente.tipo_cliente,
+                        nombre_razon_social: datosCliente.nombre_razon_social,
+                        telefono: datosCliente.telefono,
+                        correo: datosCliente.correo,
+                        direccion: datosCliente.direccion
+                    }], { onConflict: 'cedula_rif' })
+                    .select()
+                    .single();
 
-            logConsola("Leyendo archivo CSV de manera segura...");
-            actualizarProgreso(20);
+                if (cData) {
+                    const { data: vData } = await supabaseClient
+                        .from('vehiculos')
+                        .upsert([{
+                            cliente_id: cData.id,
+                            placa: registro.vehiculo.placa,
+                            marca: registro.vehiculo.marca,
+                            modelo: registro.vehiculo.modelo,
+                            anio: registro.vehiculo.anio ? parseInt(registro.vehiculo.anio) : null,
+                            color: registro.vehiculo.color,
+                            serial_carroceria: registro.vehiculo.serial_carroceria,
+                            serial_bateria: registro.vehiculo.serial_bateria
+                        }], { onConflict: 'placa' })
+                        .select()
+                        .single();
 
-            reader.onload = async function(e) {
-                const text = e.target.result;
-                const lineas = text.split('\n');
-                let subidos = 0;
-                
-                for (let i = 1; i < lineas.length; i++) {
-                    const linea = lineas[i].trim();
-                    if (!linea) continue;
-                    
-                    const c = linea.split(',');
-                    if (c.length >= 14 && c[3]) {
-                        try {
-                            await addDoc(collection(db, "ordenes_servicio"), {
-                                codigo: (c[2] || '').replace(/"/g, ''),
-                                placa: (c[3] || '').replace(/"/g, '').trim().toUpperCase(),
-                                marca: (c[5] || '').replace(/"/g, '').trim(),
-                                modelo: (c[6] || '').replace(/"/g, '').trim(),
-                                anio: (c[7] || '').replace(/"/g, '').trim(),
-                                km: (c[8] || '').replace(/"/g, '').trim(),
-                                fechaIngreso: (c[1] || '').replace(/"/g, ''),
-                                serialCarroceria: (c[10] || '').replace(/"/g, '').trim().toUpperCase(),
-                                serialBateria: (c[11] || '').replace(/"/g, '').trim().toUpperCase(),
-                                cliente: (c[12] || '').replace(/"/g, '').trim(),
-                                telefono: (c[13] || '').replace(/"/g, '').trim(),
-                                email: (c[14] || '').replace(/"/g, '').trim(),
-                                servicio: (c[16] || '').replace(/"/g, '').trim(),
-                                registradoPor: operador,
-                                origenCSV: true
-                            });
-                            subidos++;
-                        } catch (err) {}
+                    if (vData) {
+                        await supabaseClient.from('recepcion_vehiculos').insert([{
+                            codigo_servicio: codigoServicio,
+                            vehiculo_id: vData.id,
+                            mecanico_asignado: registro.mecanico_asignado,
+                            kilometraje: registro.kilometraje,
+                            nivel_combustible: registro.nivel_combustible,
+                            ingreso_grua: registro.ingreso_grua === 'SI',
+                            trabajo_realizar: registro.trabajo_realizar,
+                            estado: 'En Recepción'
+                        }]);
                     }
                 }
-                actualizarProgreso(100);
-                logConsola(`[IMPORTACIÓN EXITOSA] ${subidos} registros subidos.`);
-                alert(`¡Importación completada! Se subieron ${subidos} órdenes a Firebase de forma segura.`);
-                fileInput.value = '';
-            };
-            reader.readAsText(file);
-        };
-
-        window.exportarClientesCSV = async function() {
-            try {
-                const querySnapshot = await getDocs(collection(db, "clientes_taller"));
-                let csv = "data:text/csv;charset=utf-8,\uFEFFID,Cedula,Nombre,Telefono,Direccion\n";
-                querySnapshot.forEach(d => {
-                    const dt = d.data();
-                    csv += `"${d.id}","${dt.cedula || ''}","${dt.nombre || ''}","${dt.telefono || ''}","${(dt.direccion || '').replace(/\n/g,' ')}"\n`;
-                });
-                descargarCSV(csv, `Clientes_Syntro.csv`);
-            } catch (e) { alert("Error al exportar."); }
-        };
-
-        window.exportarOrdenesCSV = async function() {
-            try {
-                const querySnapshot = await getDocs(collection(db, "ordenes_servicio"));
-                let csv = "data:text/csv;charset=utf-8,\uFEFFID,Codigo,FechaIngreso,Cliente,Telefono,Email,Placa,Marca,Modelo,Anio,KM,SerialCarroceria,SerialBateria,Mecanico,Servicio\n";
-                querySnapshot.forEach(d => {
-                    const dt = d.data();
-                    csv += `"${d.id}","${dt.codigo || ''}","${dt.fechaIngreso || ''}","${dt.cliente || ''}","${dt.telefono || ''}","${dt.email || ''}","${dt.placa || ''}","${dt.marca || ''}","${dt.modelo || ''}","${dt.anio || ''}","${dt.km || ''}","${dt.serialCarroceria || ''}","${dt.serialBateria || ''}","${dt.mecanico || ''}","${(dt.servicio || '').replace(/\n/g,' ')}"\n`;
-                });
-                descargarCSV(csv, `Ordenes_Syntro.csv`);
-            } catch (e) { alert("Error al exportar."); }
-        };
-
-        function descargarCSV(uri, name) {
-            const link = document.createElement("a");
-            link.setAttribute("href", encodeURI(uri));
-            link.setAttribute("download", name);
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
+            } catch (err) {
+                console.error('Error sincronizando con Supabase:', err);
+            }
         }
 
-        function logConsola(msg) {
-            const c = document.getElementById('log-console');
-            c.innerHTML += `<br>> ${msg}`;
-            c.scrollTop = c.scrollHeight;
+        // Guardar en almacenamiento local
+        const recepciones = obtenerRecepciones();
+        recepciones.unshift(registro);
+        localStorage.setItem('syntro_recepciones', JSON.stringify(recepciones));
+
+        pBar.style.width = '100%';
+        setTimeout(() => {
+            alert(`✅ Vehículo registrado con éxito.\nCódigo de Servicio: ${codigoServicio}\nCliente: ${datosCliente.nombre_razon_social}`);
+            document.getElementById('formRecepcion').reset();
+            limpiarCliente();
+            pBox.style.display = 'none';
+            pBar.style.width = '0%';
+        }, 300);
+    }
+
+    // =========================================================================
+    // 3. PANEL ADMINISTRADOR (MÓDULO 3)
+    // =========================================================================
+    function cargarDatosAdmin() {
+        const clientes = obtenerClientes();
+        const recepciones = obtenerRecepciones();
+
+        document.getElementById('kpiClientes').innerText = clientes.length;
+        document.getElementById('kpiEnTaller').innerText = recepciones.filter(r => r.estado === 'En Taller').length;
+        document.getElementById('kpiGrua').innerText = recepciones.filter(r => r.ingreso_grua === 'SI').length;
+        document.getElementById('kpiSalidas').innerText = recepciones.filter(r => r.estado === 'Entregado').length;
+
+        renderizarTablaAdmin(recepciones);
+    }
+
+    function renderizarTablaAdmin(lista) {
+        const tbody = document.getElementById('tablaAdminBody');
+        if (!lista || lista.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="9" style="text-align: center; color: var(--text-muted); padding: 20px;">Aún no hay ingresos registrados. Registre un vehículo en el Módulo 1 y 2.</td></tr>`;
+            return;
         }
 
-        function actualizarProgreso(p) {
-            document.getElementById('progress-bar').style.width = p + '%';
+        tbody.innerHTML = '';
+        lista.forEach((row, idx) => {
+            const estadoColor = row.estado === 'Entregado' ? 'var(--success)' : 'var(--warning)';
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td><span class="badge">${row.codigo_servicio}</span></td>
+                <td>${row.ingreso_fecha_hora}</td>
+                <td><strong>${row.cliente.nombre_razon_social}</strong><br><small style="color:var(--text-muted)">${row.cliente.cedula_rif}</small></td>
+                <td><strong>${row.vehiculo.placa}</strong> - ${row.vehiculo.marca} ${row.vehiculo.modelo}</td>
+                <td>${row.kilometraje} km</td>
+                <td>${row.ingreso_grua}</td>
+                <td>${row.mecanico_asignado}</td>
+                <td><span style="color: ${estadoColor}; font-weight: 700;">${row.estado}</span></td>
+                <td>
+                    ${row.estado === 'En Taller' 
+                        ? `<button class="btn btn-success" style="padding: 5px 10px; font-size: 0.78rem;" onclick="darSalida(${idx})">Dar Salida</button>` 
+                        : `<small style="color: var(--text-muted);">Salió: ${row.salida_fecha_hora}</small>`}
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    function darSalida(index) {
+        const recepciones = obtenerRecepciones();
+        recepciones[index].estado = 'Entregado';
+        recepciones[index].salida_fecha_hora = new Date().toLocaleString();
+        localStorage.setItem('syntro_recepciones', JSON.stringify(recepciones));
+        cargarDatosAdmin();
+    }
+
+    function filtrarTablaAdmin(texto) {
+        const q = texto.toLowerCase();
+        const recepciones = obtenerRecepciones();
+        const filtrados = recepciones.filter(r =>
+            r.vehiculo.placa.toLowerCase().includes(q) ||
+            r.cliente.nombre_razon_social.toLowerCase().includes(q) ||
+            r.mecanico_asignado.toLowerCase().includes(q) ||
+            r.codigo_servicio.toLowerCase().includes(q)
+        );
+        renderizarTablaAdmin(filtrados);
+    }
+
+    function exportarCSV() {
+        const recepciones = obtenerRecepciones();
+        if (recepciones.length === 0) {
+            alert('No hay datos para exportar.');
+            return;
         }
-    </script>
+        let csv = 'Codigo;Ingreso;Salida;Cliente;Cedula_RIF;Placa;Marca;Modelo;Kilometraje;Grua;Mecanico;Estado\n';
+        recepciones.forEach(r => {
+            csv += `${r.codigo_servicio};${r.ingreso_fecha_hora};${r.salida_fecha_hora || ''};${r.cliente.nombre_razon_social};${r.cliente.cedula_rif};${r.vehiculo.placa};${r.vehiculo.marca};${r.vehiculo.modelo};${r.kilometraje};${r.ingreso_grua};${r.mecanico_asignado};${r.estado}\n`;
+        });
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = `Recepcion_Taller_Syntro_${new Date().toISOString().slice(0,10)}.csv`;
+        link.click();
+    }
+</script>
+
 </body>
 </html>
