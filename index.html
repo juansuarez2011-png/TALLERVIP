@@ -301,7 +301,6 @@
         let timerInterval = null;
         let segundosTranscurridos = 0;
 
-        // Temporizador de sesión y uso
         function iniciarTemporizador() {
             segundosTranscurridos = 0;
             clearInterval(timerInterval);
@@ -379,7 +378,6 @@
             registrarLog("Sesión cerrada.");
         };
 
-        // Buscar cliente en la colección 'clientes_taller'
         window.buscarCliente = async function() {
             const criterio = document.getElementById('criterio-busqueda').value.trim();
             if (!criterio) {
@@ -482,7 +480,6 @@
                 placaSeleccionada = document.getElementById('nuevo-placa').value.trim().toUpperCase();
                 if (placaSeleccionada && !vehiculosClienteActual.includes(placaSeleccionada)) {
                     vehiculosClienteActual.push(placaSeleccionada);
-                    // Actualizar en Firebase el array de vehículos del cliente
                     await updateDoc(doc(db, "clientes_taller", clienteDocIdActual), { vehiculos: vehiculosClienteActual });
                 }
             }
