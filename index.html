@@ -93,9 +93,9 @@
                     <h2 class="text-xl font-semibold mb-4 text-slate-200">Módulo 1: Clientes</h2>
                     
                     <div class="mb-4 p-3 rounded-xl border border-slate-700 bg-slate-900/50">
-                        <label class="block text-xs text-blue-400 font-semibold uppercase mb-1">Buscar Cliente</label>
+                        <label class="block text-xs text-blue-400 font-semibold uppercase mb-1">Buscar Cliente (Cédula, RIF o Nombre)</label>
                         <div class="flex gap-2">
-                            <input type="text" id="criterio-busqueda" class="w-full p-2 rounded-lg neumo-input text-sm focus:outline-none" placeholder="Cédula, RIF o Nombre">
+                            <input type="text" id="criterio-busqueda" class="w-full p-2 rounded-lg neumo-input text-sm focus:outline-none" placeholder="Ej: vfff64s1 o Juan">
                             <button type="button" onclick="buscarCliente()" class="px-3 py-2 rounded-lg text-white font-semibold text-xs neumo-button-secondary">Buscar</button>
                         </div>
                     </div>
@@ -118,7 +118,7 @@
                             <textarea id="direccion" rows="2" required class="w-full p-2 rounded-lg neumo-input text-sm focus:outline-none" placeholder="Dirección"></textarea>
                         </div>
                         <button type="submit" class="w-full py-2 rounded-lg text-xs font-semibold text-white neumo-button">
-                            Guardar Cliente
+                            Guardar / Actualizar Cliente
                         </button>
                     </form>
                 </section>
@@ -279,7 +279,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-app.js";
         import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-auth.js";
-        import { getFirestore, collection, addDoc, getDocs, updateDoc, doc, query, where } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, getDocs, updateDoc, doc } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyBe96LcGjwrVh6ciDoEbbUwRhfGCOrqBS8",
@@ -378,59 +378,68 @@
             registrarLog("Sesión cerrada.");
         };
 
+        // BÚSQUEDA DE CLIENTES DESDE FIREBASE (Cédula, RIF o Nombre)
         window.buscarCliente = async function() {
-            const criterio = document.getElementById('criterio-busqueda').value.trim();
+            const criterio = document.getElementById('criterio-busqueda').value.trim().toLowerCase();
             if (!criterio) {
                 alert("Ingrese una cédula, RIF o nombre para buscar.");
                 return;
             }
-            registrarLog(`Buscando cliente: ${criterio}...`);
+            registrarLog(`Buscando cliente por criterio: "${criterio}"...`);
             actualizarProgreso(40);
             try {
-                const qRef = collection(db, "clientes_taller");
-                const querySnapshot = await getDocs(qRef);
+                const querySnapshot = await getDocs(collection(db, "clientes_taller"));
                 let encontrado = false;
 
                 querySnapshot.forEach((docSnap) => {
                     const data = docSnap.data();
-                    if (data.cedula === criterio || (data.nombre && data.nombre.toLowerCase().includes(criterio.toLowerCase()))) {
+                    const cedulaDB = (data.cedula || "").toLowerCase();
+                    const nombreDB = (data.nombre || "").toLowerCase();
+
+                    // Comprobamos si coincide con cédula/RIF o contiene el nombre
+                    if (cedulaDB === criterio || nombreDB.includes(criterio)) {
                         clienteDocIdActual = docSnap.id;
                         document.getElementById('cedula').value = data.cedula || '';
                         document.getElementById('nombre').value = data.nombre || '';
                         document.getElementById('telefono').value = data.telefono || '';
                         document.getElementById('direccion').value = data.direccion || '';
                         
+                        // Cargar vehículos del cliente en el selector del Módulo 2
                         vehiculosClienteActual = data.vehiculos || [];
                         const selectPlaca = document.getElementById('ord-placa');
-                        selectPlaca.innerHTML = '<option value="">Seleccione vehículo</option>';
+                        selectPlaca.innerHTML = '<option value="">Seleccione vehículo (Placa)</option>';
+                        
                         vehiculosClienteActual.forEach(placa => {
                             selectPlaca.innerHTML += `<option value="${placa}">${placa}</option>`;
                         });
                         selectPlaca.innerHTML += '<option value="NUEVO">➕ Registrar Nuevo Vehículo</option>';
 
                         encontrado = true;
-                        registrarLog(`Cliente encontrado: ${data.nombre} (ID: ${docSnap.id})`);
+                        registrarLog(`¡Cliente encontrado! ${data.nombre} (ID: ${docSnap.id}) con ${vehiculosClienteActual.length} vehículo(s).`);
                     }
                 });
 
                 if (!encontrado) {
-                    registrarLog("Cliente no encontrado. Puede registrar uno nuevo.");
-                    alert("Cliente no encontrado en la base de datos. Complete los datos y guarde.");
+                    registrarLog("Cliente no encontrado en la base de datos.");
+                    alert("Cliente no encontrado. Puede registrarlo completando los datos del Módulo 1.");
                     clienteDocIdActual = null;
+                    document.getElementById('client-form').reset();
+                    document.getElementById('criterio-busqueda').value = criterio;
                 }
                 actualizarProgreso(100);
             } catch (e) {
                 registrarLog("Error al buscar cliente: " + e.message);
+                alert("Error al conectar con Firestore: " + e.message);
                 actualizarProgreso(100);
             }
         };
 
         window.guardarCliente = async function(event) {
             event.preventDefault();
-            const cedula = document.getElementById('cedula').value;
-            const nombre = document.getElementById('nombre').value;
-            const telefono = document.getElementById('telefono').value;
-            const direccion = document.getElementById('direccion').value;
+            const cedula = document.getElementById('cedula').value.trim();
+            const nombre = document.getElementById('nombre').value.trim();
+            const telefono = document.getElementById('telefono').value.trim();
+            const direccion = document.getElementById('direccion').value.trim();
 
             actualizarProgreso(50);
             try {
@@ -446,7 +455,7 @@
 
                 const docRef = await addDoc(collection(db, "clientes_taller"), clienteData);
                 clienteDocIdActual = docRef.id;
-                registrarLog(`Cliente guardado con éxito en Firestore (ID: ${docRef.id})`);
+                registrarLog(`Cliente guardado exitosamente en Firestore (ID: ${docRef.id})`);
                 alert("¡Cliente guardado exitosamente!");
                 actualizarProgreso(100);
             } catch (e) {
@@ -471,7 +480,7 @@
         window.guardarOrdenServicio = async function(event) {
             event.preventDefault();
             if (!clienteDocIdActual) {
-                alert("Primero debe buscar o guardar un cliente antes de emitir una orden.");
+                alert("Primero debe buscar o seleccionar un cliente en el Módulo 1.");
                 return;
             }
 
@@ -481,6 +490,7 @@
                 if (placaSeleccionada && !vehiculosClienteActual.includes(placaSeleccionada)) {
                     vehiculosClienteActual.push(placaSeleccionada);
                     await updateDoc(doc(db, "clientes_taller", clienteDocIdActual), { vehiculos: vehiculosClienteActual });
+                    registrarLog(`Nuevo vehículo (${placaSeleccionada}) agregado al cliente.`);
                 }
             }
 
