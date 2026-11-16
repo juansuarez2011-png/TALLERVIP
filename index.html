@@ -166,50 +166,6 @@
             box-shadow: var(--inset-3d), 0 0 0 3px rgba(56, 189, 248, 0.2);
         }
 
-        .autocomplete-list {
-            position: absolute;
-            top: 100%;
-            left: 0;
-            right: 0;
-            background: #1a2336;
-            border: 1px solid var(--accent);
-            border-radius: 0 0 10px 10px;
-            max-height: 240px;
-            overflow-y: auto;
-            z-index: 1000;
-            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.7);
-            display: none;
-        }
-
-        .autocomplete-item {
-            padding: 11px 14px;
-            cursor: pointer;
-            font-size: 0.9rem;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .autocomplete-item:hover {
-            background: var(--primary);
-            color: white;
-        }
-
-        .tipo-tag {
-            font-size: 0.75rem;
-            padding: 2px 8px;
-            border-radius: 6px;
-            background: rgba(56, 189, 248, 0.15);
-            color: var(--accent);
-            font-weight: 600;
-        }
-
-        .autocomplete-item:hover .tipo-tag {
-            background: rgba(255, 255, 255, 0.2);
-            color: white;
-        }
-
         .checkbox-grid {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
@@ -363,7 +319,7 @@
     <header>
         <div class="brand-area">
             <h1>🛠️ Taller Mecánico Syntro</h1>
-            <span id="dbStatusBadge" class="status-pill">● Base Precargada Activa (64 Clientes)</span>
+            <span id="dbStatusBadge" class="status-pill">● Conectando con Supabase...</span>
         </div>
         <div class="nav-tabs">
             <button class="tab-btn active" onclick="cambiarModulo('recepcion')">Módulo 1 y 2: Recepción</button>
@@ -376,15 +332,17 @@
         <form id="formRecepcion" onsubmit="guardarRecepcion(event)">
             
             <h2>
-                <span>Módulo 1: Identificación del Cliente (Persona o Empresa)</span>
-                <button type="button" class="btn btn-secondary" style="padding: 6px 12px; font-size: 0.8rem;" onclick="limpiarCliente()">+ Nuevo Cliente</button>
+                <span>Módulo 1: Selección o Registro de Cliente (Base de Datos Supabase)</span>
+                <button type="button" class="btn btn-secondary" style="padding: 6px 12px; font-size: 0.8rem;" onclick="prepararNuevoCliente()">+ Registrar Cliente Nuevo</button>
             </h2>
 
             <div class="form-grid">
-                <div class="input-group col-2">
-                    <label>Seleccionar o Escribir Cliente (Persona, Empresa o Cédula/RIF) *</label>
-                    <input type="text" id="buscador_cliente" autocomplete="off" placeholder="Escriba nombre, empresa o cédula/RIF..." oninput="buscarClienteInteligente(this.value)">
-                    <div id="autocompleteList" class="autocomplete-list"></div>
+                <!-- Lista desplegable directa con TODOS los clientes cargados en Supabase -->
+                <div class="input-group col-3">
+                    <label>Lista de Clientes en Base de Datos (Personas y Empresas) *</label>
+                    <select id="listaClientesDB" onchange="cargarDatosClienteDesdeLista(this.value)">
+                        <option value="">-- Cargando clientes desde Supabase... --</option>
+                    </select>
                 </div>
 
                 <div class="input-group">
@@ -415,7 +373,7 @@
                     <input type="email" id="correo" placeholder="cliente@correo.com">
                 </div>
 
-                <div class="input-group">
+                <div class="input-group col-3">
                     <label>Dirección *</label>
                     <input type="text" id="direccion" required placeholder="Dirección fiscal o habitación">
                 </div>
@@ -522,8 +480,8 @@
             </div>
 
             <div class="actions-row">
-                <button type="reset" class="btn btn-secondary" onclick="limpiarCliente()">Limpiar Formulario</button>
-                <button type="submit" class="btn btn-success">Guardar Recepción en Base de Datos</button>
+                <button type="reset" class="btn btn-secondary" onclick="prepararNuevoCliente()">Limpiar Formulario</button>
+                <button type="submit" class="btn btn-success">Guardar Recepción en Supabase</button>
             </div>
         </form>
     </div>
@@ -536,8 +494,8 @@
 
         <div class="kpi-grid">
             <div class="kpi-card">
-                <div class="kpi-title">Clientes Registrados</div>
-                <div class="kpi-value" id="kpiClientes">64</div>
+                <div class="kpi-title">Clientes en Supabase</div>
+                <div class="kpi-value" id="kpiClientes">0</div>
             </div>
             <div class="kpi-card">
                 <div class="kpi-title">Vehículos en Taller</div>
@@ -570,7 +528,7 @@
                 </thead>
                 <tbody id="tablaAdminBody">
                     <tr>
-                        <td colspan="9" style="text-align: center; color: var(--text-muted);">Sin registros de entrada aún.</td>
+                        <td colspan="9" style="text-align: center; color: var(--text-muted);">Cargando registros desde Supabase...</td>
                     </tr>
                 </tbody>
             </table>
@@ -580,112 +538,87 @@
 
 <script>
     // =========================================================================
-    // 1. CONFIGURACIÓN SUPABASE
+    // 1. CREDENCIALES SUPABASE (Reemplaza con tu URL y Key reales de Supabase)
     // =========================================================================
     const SUPABASE_URL = 'https://TU-PROYECTO.supabase.co';
     const SUPABASE_KEY = 'TU-ANON-KEY';
-    const supabaseActivo = !SUPABASE_URL.includes('TU-PROYECTO');
-    const supabaseClient = supabaseActivo ? supabase.createClient(SUPABASE_URL, SUPABASE_KEY) : null;
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    // =========================================================================
-    // 2. BASE DE DATOS DE CLIENTES PRECARGADA (64 CLIENTES)
-    // =========================================================================
-    const CLIENTES_PRECARGADOS = [
-        // Empresas e Instituciones
-        { id: 'c1', tipo_cliente: 'Empresa', cedula_rif: 'EMP-001', nombre_razon_social: 'ZOOM Quintero', telefono: '0414-0000000', correo: '', direccion: 'Agencia Zoom' },
-        { id: 'c2', tipo_cliente: 'Empresa', cedula_rif: 'EMP-002', nombre_razon_social: 'Zoom', telefono: '0414-0000000', correo: '', direccion: 'Sede Principal Zoom' },
-        { id: 'c3', tipo_cliente: 'Empresa', cedula_rif: 'EMP-003', nombre_razon_social: 'Zoom Kervin', telefono: '0414-0000000', correo: '', direccion: 'Oficina Zoom' },
-        { id: 'c4', tipo_cliente: 'Empresa', cedula_rif: 'EMP-004', nombre_razon_social: 'Movilnet', telefono: '0426-5571254', correo: '', direccion: 'Sede Movilnet' },
-        { id: 'c5', tipo_cliente: 'Empresa', cedula_rif: 'EMP-005', nombre_razon_social: 'Movilnet (Flota 2)', telefono: '0416-5430986', correo: '', direccion: 'Sede Movilnet' },
-        { id: 'c6', tipo_cliente: 'Empresa', cedula_rif: 'EMP-006', nombre_razon_social: 'ZAKIPHARMA', telefono: '0414-8245109', correo: '', direccion: 'Laboratorio Zakipharma' },
-        { id: 'c7', tipo_cliente: 'Empresa', cedula_rif: 'EMP-007', nombre_razon_social: 'Embajada de Polonia', telefono: '0414-1251509', correo: '', direccion: 'Sede Diplomática' },
-        { id: 'c8', tipo_cliente: 'Empresa', cedula_rif: 'EMP-008', nombre_razon_social: 'Cerro Verde', telefono: '0412-7198032', correo: '', direccion: 'Complejo Cerro Verde' },
-        { id: 'c9', tipo_cliente: 'Empresa', cedula_rif: 'EMP-009', nombre_razon_social: 'Fontana', telefono: '0414-0000000', correo: '', direccion: 'Empresa Fontana' },
-        { id: 'c10', tipo_cliente: 'Empresa', cedula_rif: 'EMP-010', nombre_razon_social: 'Spacars', telefono: '0424-2371585', correo: '', direccion: 'Sede Spacars' },
-
-        // Personas Naturales
-        { id: 'c11', tipo_cliente: 'Persona', cedula_rif: 'PER-001', nombre_razon_social: 'José Andrés', telefono: '0412-6672767', correo: '', direccion: 'Registrado en taller' },
-        { id: 'c12', tipo_cliente: 'Persona', cedula_rif: 'PER-002', nombre_razon_social: 'Rafael Ferraro', telefono: '0424-9860436', correo: 'rafaelferrarol@gmail.com', direccion: 'Registrado en taller' },
-        { id: 'c13', tipo_cliente: 'Persona', cedula_rif: 'PER-003', nombre_razon_social: 'Gustavo Ferraro', telefono: '0424-9860436', correo: 'rafaelferrarol@gmail.com', direccion: 'Registrado en taller' },
-        { id: 'c14', tipo_cliente: 'Persona', cedula_rif: 'PER-004', nombre_razon_social: 'Oscar Martínez', telefono: '0412-6213311', correo: 'ratagris2007@yahoo.com', direccion: 'Registrado en taller' },
-        { id: 'c15', tipo_cliente: 'Persona', cedula_rif: 'PER-005', nombre_razon_social: 'Rolando Vetencourt', telefono: '0414-1321833', correo: '', direccion: 'Registrado en taller' },
-        { id: 'c16', tipo_cliente: 'Persona', cedula_rif: 'PER-006', nombre_razon_social: 'Jesús', telefono: '0414-1441758', correo: '', direccion: 'Registrado en taller' },
-        { id: 'c17', tipo_cliente: 'Persona', cedula_rif: 'PER-007', nombre_razon_social: 'José Muñoz', telefono: '0414-2474658', correo: '', direccion: 'Registrado en taller' },
-        { id: 'c18', tipo_cliente: 'Persona', cedula_rif: 'PER-008', nombre_razon_social: 'Jesús Vivas', telefono: '0424-2584252', correo: 'jesusenriquevivasr@gmail.com', direccion: 'Registrado en taller' },
-        { id: 'c19', tipo_cliente: 'Persona', cedula_rif: 'PER-009', nombre_razon_social: 'Carlos', telefono: '', correo: '', direccion: 'Registrado en taller' },
-        { id: 'c20', tipo_cliente: 'Persona', cedula_rif: 'PER-010', nombre_razon_social: 'Dr. Ángel', telefono: '', correo: '', direccion: 'Registrado en taller' },
-        { id: 'c21', tipo_cliente: 'Persona', cedula_rif: 'PER-011', nombre_razon_social: 'Sandra Stenta', telefono: '0414-4828072', correo: 'sandrastenta@gmail.com', direccion: 'Registrado en taller' },
-        { id: 'c22', tipo_cliente: 'Persona', cedula_rif: 'PER-012', nombre_razon_social: 'Ángel', telefono: '', correo: '', direccion: 'Registrado en taller' },
-        { id: 'c23', tipo_cliente: 'Persona', cedula_rif: 'PER-013', nombre_razon_social: 'Adrián Carmona', telefono: '0424-1879594', correo: 'Carmonaadrian155@gmail.com', direccion: 'Registrado en taller' },
-        { id: 'c24', tipo_cliente: 'Persona', cedula_rif: 'PER-014', nombre_razon_social: 'Luis Rodríguez', telefono: '0412-8130554', correo: 'luistrolles@gmail.com', direccion: 'Registrado en taller' },
-        { id: 'c25', tipo_cliente: 'Persona', cedula_rif: 'PER-015', nombre_razon_social: 'Andrea', telefono: '0414-2283758', correo: '', direccion: 'Registrado en taller' },
-        { id: 'c26', tipo_cliente: 'Persona', cedula_rif: 'PER-016', nombre_razon_social: 'Samuel', telefono: '', correo: '', direccion: 'Registrado en taller' },
-        { id: 'c27', tipo_cliente: 'Persona', cedula_rif: 'PER-017', nombre_razon_social: 'Enrique', telefono: '', correo: '', direccion: 'Registrado en taller' },
-        { id: 'c28', tipo_cliente: 'Persona', cedula_rif: 'PER-018', nombre_razon_social: 'Aldemaro Moreno', telefono: '0414-3384174', correo: 'aldemaromoreno2@hotmail.com', direccion: 'Registrado en taller' },
-        { id: 'c29', tipo_cliente: 'Persona', cedula_rif: 'PER-019', nombre_razon_social: 'Frank Valera', telefono: '0412-7800424', correo: '', direccion: 'Registrado en taller' },
-        { id: 'c30', tipo_cliente: 'Persona', cedula_rif: 'PER-020', nombre_razon_social: 'José Duarte', telefono: '0424-7714721', correo: '', direccion: 'Registrado en taller' },
-        { id: 'c31', tipo_cliente: 'Persona', cedula_rif: 'PER-021', nombre_razon_social: 'Vicente Siso', telefono: '0414-3292613', correo: 'Vicentesiso@gmail.com', direccion: 'Registrado en taller' },
-        { id: 'c32', tipo_cliente: 'Persona', cedula_rif: 'PER-022', nombre_razon_social: 'Dr. Gabriel', telefono: '', correo: '', direccion: 'Registrado en taller' },
-        { id: 'c33', tipo_cliente: 'Persona', cedula_rif: 'PER-023', nombre_razon_social: 'Maricarmen López', telefono: '0414-2597443', correo: '', direccion: 'Registrado en taller' },
-        { id: 'c34', tipo_cliente: 'Persona', cedula_rif: 'PER-024', nombre_razon_social: 'Rafael', telefono: '0414-2896418', correo: '', direccion: 'Registrado en taller' },
-        { id: 'c35', tipo_cliente: 'Persona', cedula_rif: 'PER-025', nombre_razon_social: 'Antonio', telefono: '0416-8292591', correo: '', direccion: 'Registrado en taller' },
-        { id: 'c36', tipo_cliente: 'Persona', cedula_rif: 'PER-026', nombre_razon_social: 'Luis Agostoni', telefono: '0414-3054057', correo: 'luisragostino@gmail.com', direccion: 'Registrado en taller' },
-        { id: 'c37', tipo_cliente: 'Persona', cedula_rif: 'PER-027', nombre_razon_social: 'José Gallardo', telefono: '0424-8034243', correo: 'Gallardohjosemanuel@gmail.com', direccion: 'Registrado en taller' },
-        { id: 'c38', tipo_cliente: 'Persona', cedula_rif: 'PER-028', nombre_razon_social: 'Yamaly', telefono: '0412-2684716', correo: '', direccion: 'Registrado en taller' },
-        { id: 'c39', tipo_cliente: 'Persona', cedula_rif: 'PER-029', nombre_razon_social: 'Sr. Juan Musso', telefono: '005511979630186', correo: '', direccion: 'Registrado en taller' },
-        { id: 'c40', tipo_cliente: 'Persona', cedula_rif: 'PER-030', nombre_razon_social: 'Bryan Hoires', telefono: '0424-1237227', correo: '', direccion: 'Registrado en taller' },
-        { id: 'c41', tipo_cliente: 'Persona', cedula_rif: 'PER-031', nombre_razon_social: 'Gabriel Pérez Ramírez', telefono: '0412-0123900', correo: 'pedroluis50na@gmail.com', direccion: 'Registrado en taller' },
-        { id: 'c42', tipo_cliente: 'Persona', cedula_rif: 'PER-032', nombre_razon_social: 'Rigoberto Yáñez', telefono: '0416-6069157', correo: '', direccion: 'Registrado en taller' },
-        { id: 'c43', tipo_cliente: 'Persona', cedula_rif: 'PER-033', nombre_razon_social: 'Carlos Atencio', telefono: '', correo: '', direccion: 'Registrado en taller' },
-        { id: 'c44', tipo_cliente: 'Persona', cedula_rif: 'PER-034', nombre_razon_social: 'Manuel', telefono: '', correo: '', direccion: 'Registrado en taller' },
-        { id: 'c45', tipo_cliente: 'Persona', cedula_rif: 'PER-035', nombre_razon_social: 'Rafael Piñero', telefono: '0412-5584072', correo: '', direccion: 'Registrado en taller' },
-        { id: 'c46', tipo_cliente: 'Persona', cedula_rif: 'PER-036', nombre_razon_social: 'Jim', telefono: '0414-1505965', correo: '', direccion: 'Registrado en taller' },
-        { id: 'c47', tipo_cliente: 'Persona', cedula_rif: 'PER-037', nombre_razon_social: 'Gabriel García', telefono: '0424-2430084', correo: '', direccion: 'Registrado en taller' },
-        { id: 'c48', tipo_cliente: 'Persona', cedula_rif: 'PER-038', nombre_razon_social: 'Branford', telefono: '0414-2650410', correo: '', direccion: 'Registrado en taller' },
-        { id: 'c49', tipo_cliente: 'Persona', cedula_rif: 'PER-039', nombre_razon_social: 'Celi Becerra', telefono: '0414-7092618', correo: '', direccion: 'Registrado en taller' },
-        { id: 'c50', tipo_cliente: 'Persona', cedula_rif: 'PER-040', nombre_razon_social: 'Juan Carlos López', telefono: '0424-4611532', correo: '', direccion: 'Registrado en taller' },
-        { id: 'c51', tipo_cliente: 'Persona', cedula_rif: 'PER-041', nombre_razon_social: 'Paolo Caiazzo', telefono: '0414-1383823', correo: 'Paoloocaiazzo@gmail.com', direccion: 'Registrado en taller' },
-        { id: 'c52', tipo_cliente: 'Persona', cedula_rif: 'PER-042', nombre_razon_social: 'Marianela Báez', telefono: '0414-3151769', correo: 'Melabaez@hotmail.com', direccion: 'Registrado en taller' },
-        { id: 'c53', tipo_cliente: 'Persona', cedula_rif: 'PER-043', nombre_razon_social: 'Armando Planchar', telefono: '0412-2118830', correo: 'ajrpm1@gmail.com', direccion: 'Registrado en taller' },
-        { id: 'c54', tipo_cliente: 'Persona', cedula_rif: 'PER-044', nombre_razon_social: 'Ángel Escalona', telefono: '0414-3662706', correo: '', direccion: 'Registrado en taller' },
-        { id: 'c55', tipo_cliente: 'Persona', cedula_rif: 'PER-045', nombre_razon_social: 'Ítalo', telefono: '0412-4109439', correo: '', direccion: 'Registrado en taller' },
-        { id: 'c56', tipo_cliente: 'Persona', cedula_rif: 'PER-046', nombre_razon_social: 'Daniel Freites', telefono: '', correo: '', direccion: 'Registrado en taller' },
-        { id: 'c57', tipo_cliente: 'Persona', cedula_rif: 'PER-047', nombre_razon_social: 'Luisa', telefono: '0414-2166969', correo: '', direccion: 'Registrado en taller' },
-        { id: 'c58', tipo_cliente: 'Persona', cedula_rif: 'PER-048', nombre_razon_social: 'Carlos Osorio', telefono: '', correo: '', direccion: 'Registrado en taller' },
-        { id: 'c59', tipo_cliente: 'Persona', cedula_rif: 'PER-049', nombre_razon_social: 'Marber', telefono: '0414-2490537', correo: '', direccion: 'Registrado en taller' },
-        { id: 'c60', tipo_cliente: 'Persona', cedula_rif: 'PER-050', nombre_razon_social: 'Gabriela Marín', telefono: '0414-2901571', correo: 'Gabymercedesmb@gmail.com', direccion: 'Registrado en taller' },
-        { id: 'c61', tipo_cliente: 'Persona', cedula_rif: 'PER-051', nombre_razon_social: 'Ángel Mosquera', telefono: '0414-2162887', correo: '', direccion: 'Registrado en taller' },
-        { id: 'c62', tipo_cliente: 'Persona', cedula_rif: 'PER-052', nombre_razon_social: 'Luis Peñalver', telefono: '0412-2020750', correo: '', direccion: 'Registrado en taller' },
-        { id: 'c63', tipo_cliente: 'Persona', cedula_rif: 'PER-053', nombre_razon_social: 'Juan Velásquez', telefono: '0414-3233440', correo: 'Juanvelasquezvi@gmail.com', direccion: 'Registrado en taller' },
-        { id: 'c64', tipo_cliente: 'Persona', cedula_rif: 'PER-054', nombre_razon_social: 'Gustavo', telefono: '', correo: '', direccion: 'Registrado en taller' }
-    ];
-
-    function obtenerClientes() {
-        const guardados = localStorage.getItem('syntro_clientes');
-        if (!guardados) {
-            localStorage.setItem('syntro_clientes', JSON.stringify(CLIENTES_PRECARGADOS));
-            return CLIENTES_PRECARGADOS;
-        }
-        return JSON.parse(guardados);
-    }
-
-    function obtenerRecepciones() {
-        return JSON.parse(localStorage.getItem('syntro_recepciones') || '[]');
-    }
-
+    let clientesDB = []; // Almacena la lista descargada directamente de Supabase
     let clienteSeleccionadoId = null;
 
-    window.addEventListener('DOMContentLoaded', () => {
-        const clientes = obtenerClientes();
-        const badge = document.getElementById('dbStatusBadge');
-        if (supabaseActivo) {
-            badge.innerText = `● Conectado a Supabase (${clientes.length} Clientes)`;
-        } else {
-            badge.innerText = `● Base Precargada Activa (${clientes.length} Clientes)`;
-        }
-        document.getElementById('kpiClientes').innerText = clientes.length;
+    // =========================================================================
+    // 2. CARGA INICIAL DE LA LISTA DE CLIENTES DESDE SUPABASE
+    // =========================================================================
+    window.addEventListener('DOMContentLoaded', async () => {
+        await cargarListaClientesSupabase();
     });
 
+    async function cargarListaClientesSupabase() {
+        const badge = document.getElementById('dbStatusBadge');
+        const selectLista = document.getElementById('listaClientesDB');
+
+        const { data, error } = await supabaseClient
+            .from('clientes')
+            .select('*')
+            .order('nombre_razon_social', { ascending: true });
+
+        if (error) {
+            console.error('Error al leer tabla clientes:', error);
+            badge.style.color = 'var(--danger)';
+            badge.innerText = '● Error de conexión con Supabase (Revisa URL/Key o RLS)';
+            selectLista.innerHTML = `<option value="">-- Error cargando lista de clientes --</option>`;
+            return;
+        }
+
+        clientesDB = data || [];
+        badge.style.color = 'var(--success)';
+        badge.innerText = `● Conectado a Supabase (${clientesDB.length} clientes disponibles)`;
+        document.getElementById('kpiClientes').innerText = clientesDB.length;
+
+        // Poblar la lista desplegable con TODOS los clientes de tu tabla Supabase
+        selectLista.innerHTML = `<option value="">-- Seleccione un cliente existente (${clientesDB.length} registrados) o registre uno nuevo --</option>`;
+        clientesDB.forEach(cliente => {
+            const option = document.createElement('option');
+            option.value = cliente.id;
+            option.textContent = `${cliente.nombre_razon_social} | ID: ${cliente.cedula_rif} | Tlf: ${cliente.telefono || 'S/N'} (${cliente.tipo_cliente || 'Cliente'})`;
+            selectLista.appendChild(option);
+        });
+    }
+
+    // Al seleccionar un cliente de la lista desplegable de Supabase, llena sus datos
+    function cargarDatosClienteDesdeLista(clienteId) {
+        if (!clienteId) {
+            prepararNuevoCliente();
+            return;
+        }
+
+        const cliente = clientesDB.find(c => String(c.id) === String(clienteId));
+        if (cliente) {
+            clienteSeleccionadoId = cliente.id;
+            document.getElementById('cedula_rif').value = cliente.cedula_rif || '';
+            document.getElementById('nombre_razon_social').value = cliente.nombre_razon_social || '';
+            document.getElementById('tipo_cliente').value = cliente.tipo_cliente || 'Persona';
+            document.getElementById('telefono').value = cliente.telefono || '';
+            document.getElementById('correo').value = cliente.correo || '';
+            document.getElementById('direccion').value = cliente.direccion || '';
+        }
+    }
+
+    function prepararNuevoCliente() {
+        clienteSeleccionadoId = null;
+        document.getElementById('listaClientesDB').value = '';
+        document.getElementById('cedula_rif').value = '';
+        document.getElementById('nombre_razon_social').value = '';
+        document.getElementById('tipo_cliente').value = 'Persona';
+        document.getElementById('telefono').value = '';
+        document.getElementById('correo').value = '';
+        document.getElementById('direccion').value = '';
+    }
+
+    // =========================================================================
+    // 3. NAVEGACIÓN ENTRE MÓDULOS
+    // =========================================================================
     function cambiarModulo(vista) {
         if (vista === 'recepcion') {
             document.getElementById('viewRecepcion').classList.remove('hidden');
@@ -697,231 +630,189 @@
             document.getElementById('viewAdmin').classList.remove('hidden');
             document.querySelectorAll('.tab-btn')[1].classList.add('active');
             document.querySelectorAll('.tab-btn')[0].classList.remove('active');
-            cargarDatosAdmin();
+            cargarDatosAdminSupabase();
         }
     }
 
-    // Lista desplegable inteligente con coincidencias inmediatas
-    function buscarClienteInteligente(query) {
-        const listDiv = document.getElementById('autocompleteList');
-        const texto = query.trim().toLowerCase();
-
-        if (texto.length < 1) {
-            listDiv.style.display = 'none';
-            return;
-        }
-
-        const clientes = obtenerClientes();
-        const filtrados = clientes.filter(c =>
-            c.nombre_razon_social.toLowerCase().includes(texto) ||
-            c.cedula_rif.toLowerCase().includes(texto) ||
-            (c.telefono && c.telefono.includes(texto))
-        );
-
-        if (filtrados.length === 0) {
-            listDiv.innerHTML = `<div class="autocomplete-item" style="color: var(--warning);">Cliente no encontrado. Complete los datos abajo para registrarlo por primera vez.</div>`;
-            listDiv.style.display = 'block';
-            return;
-        }
-
-        listDiv.innerHTML = '';
-        filtrados.slice(0, 12).forEach(cliente => {
-            const item = document.createElement('div');
-            item.className = 'autocomplete-item';
-            item.innerHTML = `
-                <div>
-                    <strong>${cliente.nombre_razon_social}</strong><br>
-                    <small style="opacity:0.8;">ID: ${cliente.cedula_rif} | Tlf: ${cliente.telefono || 'N/D'}</small>
-                </div>
-                <span class="tipo-tag">${cliente.tipo_cliente}</span>
-            `;
-            item.onclick = () => seleccionarCliente(cliente);
-            listDiv.appendChild(item);
-        });
-        listDiv.style.display = 'block';
-    }
-
-    function seleccionarCliente(cliente) {
-        clienteSeleccionadoId = cliente.id;
-        document.getElementById('buscador_cliente').value = cliente.nombre_razon_social;
-        document.getElementById('cedula_rif').value = cliente.cedula_rif;
-        document.getElementById('nombre_razon_social').value = cliente.nombre_razon_social;
-        document.getElementById('tipo_cliente').value = cliente.tipo_cliente || 'Persona';
-        document.getElementById('telefono').value = cliente.telefono || '';
-        document.getElementById('correo').value = cliente.correo || '';
-        document.getElementById('direccion').value = cliente.direccion || '';
-        document.getElementById('autocompleteList').style.display = 'none';
-    }
-
-    function limpiarCliente() {
-        clienteSeleccionadoId = null;
-        document.getElementById('buscador_cliente').value = '';
-        document.getElementById('cedula_rif').value = '';
-        document.getElementById('nombre_razon_social').value = '';
-        document.getElementById('telefono').value = '';
-        document.getElementById('correo').value = '';
-        document.getElementById('direccion').value = '';
-        document.getElementById('autocompleteList').style.display = 'none';
-    }
-
-    document.addEventListener('click', (e) => {
-        if (!e.target.closest('.input-group')) {
-            document.getElementById('autocompleteList').style.display = 'none';
-        }
-    });
-
+    // =========================================================================
+    // 4. GUARDAR CLIENTE (SI ES NUEVO) + VEHÍCULO + CHEQUEO EN SUPABASE
+    // =========================================================================
     async function guardarRecepcion(e) {
         e.preventDefault();
 
-        let clientes = obtenerClientes();
         const cedulaRif = document.getElementById('cedula_rif').value.trim();
-        const datosCliente = {
-            id: clienteSeleccionadoId || 'c_' + Date.now(),
-            tipo_cliente: document.getElementById('tipo_cliente').value,
+        const payloadCliente = {
             cedula_rif: cedulaRif,
+            tipo_cliente: document.getElementById('tipo_cliente').value,
             nombre_razon_social: document.getElementById('nombre_razon_social').value.trim(),
             telefono: document.getElementById('telefono').value.trim(),
             correo: document.getElementById('correo').value.trim(),
             direccion: document.getElementById('direccion').value.trim()
         };
 
-        const indexExistente = clientes.findIndex(c => c.id === datosCliente.id || c.cedula_rif === cedulaRif);
-        if (indexExistente >= 0) {
-            clientes[indexExistente] = datosCliente;
-        } else {
-            clientes.unshift(datosCliente);
-        }
-        localStorage.setItem('syntro_clientes', JSON.stringify(clientes));
+        // 1. Insertar o actualizar cliente en Supabase
+        const { data: cData, error: cError } = await supabaseClient
+            .from('clientes')
+            .upsert([payloadCliente], { onConflict: 'cedula_rif' })
+            .select()
+            .single();
 
-        const codigoServicio = '2026' + Math.floor(100000 + Math.random() * 900000);
-        const registro = {
-            codigo_servicio: codigoServicio,
-            ingreso_fecha_hora: new Date().toLocaleString(),
-            salida_fecha_hora: null,
-            cliente: datosCliente,
-            vehiculo: {
-                placa: document.getElementById('placa').value.trim().toUpperCase(),
-                marca: document.getElementById('marca').value.trim(),
-                modelo: document.getElementById('modelo').value.trim(),
-                anio: document.getElementById('anio').value,
-                color: document.getElementById('color').value.trim(),
-                serial_carroceria: document.getElementById('serial_carroceria').value.trim(),
-                serial_bateria: document.getElementById('serial_bateria').value.trim()
-            },
-            kilometraje: parseInt(document.getElementById('kilometraje').value) || 0,
-            ingreso_grua: document.getElementById('ingreso_grua').value,
-            nivel_combustible: document.getElementById('nivel_combustible').value,
-            mecanico_asignado: document.getElementById('mecanico_asignado').value,
-            recibido_por: document.getElementById('recibido_por').value,
-            trabajo_realizar: document.getElementById('trabajo_realizar').value,
-            estado: 'En Taller'
+        if (cError) {
+            alert('Error al guardar el cliente en Supabase: ' + cError.message);
+            return;
+        }
+
+        // 2. Insertar o actualizar vehículo en Supabase
+        const placaVehiculo = document.getElementById('placa').value.trim().toUpperCase();
+        const payloadVehiculo = {
+            cliente_id: cData.id,
+            placa: placaVehiculo,
+            marca: document.getElementById('marca').value.trim(),
+            modelo: document.getElementById('modelo').value.trim(),
+            anio: document.getElementById('anio').value ? parseInt(document.getElementById('anio').value) : null,
+            color: document.getElementById('color').value.trim(),
+            serial_carroceria: document.getElementById('serial_carroceria').value.trim(),
+            serial_bateria: document.getElementById('serial_bateria').value.trim()
         };
 
-        if (supabaseActivo) {
-            try {
-                const { data: cData } = await supabaseClient
-                    .from('clientes')
-                    .upsert([{
-                        cedula_rif: datosCliente.cedula_rif,
-                        tipo_cliente: datosCliente.tipo_cliente,
-                        nombre_razon_social: datosCliente.nombre_razon_social,
-                        telefono: datosCliente.telefono,
-                        correo: datosCliente.correo,
-                        direccion: datosCliente.direccion
-                    }], { onConflict: 'cedula_rif' })
-                    .select()
-                    .single();
+        const { data: vData, error: vError } = await supabaseClient
+            .from('vehiculos')
+            .upsert([payloadVehiculo], { onConflict: 'placa' })
+            .select()
+            .single();
 
-                if (cData) {
-                    const { data: vData } = await supabaseClient
-                        .from('vehiculos')
-                        .upsert([{
-                            cliente_id: cData.id,
-                            placa: registro.vehiculo.placa,
-                            marca: registro.vehiculo.marca,
-                            modelo: registro.vehiculo.modelo,
-                            anio: registro.vehiculo.anio ? parseInt(registro.vehiculo.anio) : null,
-                            color: registro.vehiculo.color,
-                            serial_carroceria: registro.vehiculo.serial_carroceria,
-                            serial_bateria: registro.vehiculo.serial_bateria
-                        }], { onConflict: 'placa' })
-                        .select()
-                        .single();
-
-                    if (vData) {
-                        await supabaseClient.from('recepcion_vehiculos').insert([{
-                            codigo_servicio: codigoServicio,
-                            vehiculo_id: vData.id,
-                            mecanico_asignado: registro.mecanico_asignado,
-                            kilometraje: registro.kilometraje,
-                            nivel_combustible: registro.nivel_combustible,
-                            ingreso_grua: registro.ingreso_grua === 'SI',
-                            trabajo_realizar: registro.trabajo_realizar,
-                            estado: 'En Recepción'
-                        }]);
-                    }
-                }
-            } catch (err) {
-                console.error('Error sincronizando con Supabase:', err);
-            }
+        if (vError) {
+            alert('Error al guardar el vehículo en Supabase: ' + vError.message);
+            return;
         }
 
-        const recepciones = obtenerRecepciones();
-        recepciones.unshift(registro);
-        localStorage.setItem('syntro_recepciones', JSON.stringify(recepciones));
+        // 3. Insertar chequeo de recepción en Supabase
+        const codigoServicio = '2026' + Math.floor(100000 + Math.random() * 900000);
+        const payloadRecepcion = {
+            codigo_servicio: codigoServicio,
+            vehiculo_id: vData.id,
+            mecanico_asignado: document.getElementById('mecanico_asignado').value,
+            kilometraje: parseInt(document.getElementById('kilometraje').value) || 0,
+            nivel_combustible: document.getElementById('nivel_combustible').value,
+            ingreso_grua: document.getElementById('ingreso_grua').value === 'SI',
+            trabajo_realizar: document.getElementById('trabajo_realizar').value,
+            gato: document.getElementById('check_gato').checked,
+            herramientas: document.getElementById('check_herramientas').checked,
+            triangulo: document.getElementById('check_triangulo').checked,
+            neumatico_repuesto: document.getElementById('check_repuesto').checked,
+            estereo: document.getElementById('check_estereo').checked,
+            antena: document.getElementById('check_antena').checked,
+            emblemas: document.getElementById('check_emblemas').checked,
+            alfombras: document.getElementById('check_alfombras').checked,
+            cables: document.getElementById('check_cables').checked,
+            tazas_rines: document.getElementById('check_tazas').checked,
+            luces_advertencia: document.getElementById('check_luces').checked,
+            estado: 'En Recepción'
+        };
 
-        alert(`✅ Vehículo registrado con éxito.\nCódigo de Servicio: ${codigoServicio}\nCliente: ${datosCliente.nombre_razon_social}`);
+        const { error: rError } = await supabaseClient
+            .from('recepcion_vehiculos')
+            .insert([payloadRecepcion]);
+
+        if (rError) {
+            alert('Error al guardar la recepción en Supabase: ' + rError.message);
+            return;
+        }
+
+        alert(`✅ Recepción guardada en Supabase.\nCódigo de Servicio: ${codigoServicio}\nCliente: ${cData.nombre_razon_social}`);
         document.getElementById('formRecepcion').reset();
-        limpiarCliente();
+        prepararNuevoCliente();
+        await cargarListaClientesSupabase(); // Refresca la lista con el cliente recién agregado
     }
 
     // =========================================================================
-    // 3. PANEL ADMINISTRADOR (MÓDULO 3)
+    // 5. PANEL ADMINISTRADOR CON DATOS REALES DE SUPABASE
     // =========================================================================
-    function cargarDatosAdmin() {
-        const clientes = obtenerClientes();
-        const recepciones = obtenerRecepciones();
-
-        document.getElementById('kpiClientes').innerText = clientes.length;
-        document.getElementById('kpiEnTaller').innerText = recepciones.filter(r => r.estado === 'En Taller').length;
-        document.getElementById('kpiGrua').innerText = recepciones.filter(r => r.ingreso_grua === 'SI').length;
-        document.getElementById('kpiSalidas').innerText = recepciones.filter(r => r.estado === 'Entregado').length;
-
+    async function cargarDatosAdminSupabase() {
         const tbody = document.getElementById('tablaAdminBody');
-        if (!recepciones || recepciones.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="9" style="text-align: center; color: var(--text-muted); padding: 20px;">Aún no hay ingresos registrados.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="9" style="text-align: center; color: var(--text-muted);">Consultando Supabase...</td></tr>`;
+
+        const { data, error } = await supabaseClient
+            .from('recepcion_vehiculos')
+            .select(`
+                id,
+                codigo_servicio,
+                ingreso_fecha_hora,
+                salida_fecha_hora,
+                kilometraje,
+                ingreso_grua,
+                mecanico_asignado,
+                estado,
+                vehiculos (
+                    placa,
+                    marca,
+                    modelo,
+                    clientes (
+                        nombre_razon_social,
+                        cedula_rif
+                    )
+                )
+            `)
+            .order('ingreso_fecha_hora', { ascending: false });
+
+        if (error) {
+            tbody.innerHTML = `<tr><td colspan="9" style="text-align: center; color: var(--danger);">Error al leer datos: ${error.message}</td></tr>`;
+            return;
+        }
+
+        const lista = data || [];
+        document.getElementById('kpiClientes').innerText = clientesDB.length;
+        document.getElementById('kpiEnTaller').innerText = lista.filter(r => r.estado !== 'Entregado').length;
+        document.getElementById('kpiGrua').innerText = lista.filter(r => r.ingreso_grua === true).length;
+        document.getElementById('kpiSalidas').innerText = lista.filter(r => r.estado === 'Entregado').length;
+
+        if (lista.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="9" style="text-align: center; color: var(--text-muted); padding: 20px;">No hay vehículos ingresados todavía en la tabla recepcion_vehiculos.</td></tr>`;
             return;
         }
 
         tbody.innerHTML = '';
-        recepciones.forEach((row, idx) => {
+        lista.forEach(row => {
+            const clienteNombre = row.vehiculos?.clientes?.nombre_razon_social || 'N/D';
+            const clienteDoc = row.vehiculos?.clientes?.cedula_rif || '';
+            const vehiculoDesc = `${row.vehiculos?.placa || ''} - ${row.vehiculos?.marca || ''} ${row.vehiculos?.modelo || ''}`;
+            const fechaIngreso = new Date(row.ingreso_fecha_hora).toLocaleString();
             const estadoColor = row.estado === 'Entregado' ? 'var(--success)' : 'var(--warning)';
+
             const tr = document.createElement('tr');
             tr.innerHTML = `
                 <td><span class="badge">${row.codigo_servicio}</span></td>
-                <td>${row.ingreso_fecha_hora}</td>
-                <td><strong>${row.cliente.nombre_razon_social}</strong><br><small style="color:var(--text-muted)">${row.cliente.cedula_rif}</small></td>
-                <td><strong>${row.vehiculo.placa}</strong> - ${row.vehiculo.marca} ${row.vehiculo.modelo}</td>
+                <td>${fechaIngreso}</td>
+                <td><strong>${clienteNombre}</strong><br><small style="color:var(--text-muted)">${clienteDoc}</small></td>
+                <td>${vehiculoDesc}</td>
                 <td>${row.kilometraje} km</td>
-                <td>${row.ingreso_grua}</td>
+                <td>${row.ingreso_grua ? 'SI' : 'NO'}</td>
                 <td>${row.mecanico_asignado}</td>
                 <td><span style="color: ${estadoColor}; font-weight: 700;">${row.estado}</span></td>
                 <td>
-                    ${row.estado === 'En Taller' 
-                        ? `<button class="btn btn-success" style="padding: 5px 10px; font-size: 0.78rem;" onclick="darSalida(${idx})">Dar Salida</button>` 
-                        : `<small style="color: var(--text-muted);">Salió: ${row.salida_fecha_hora}</small>`}
+                    ${row.estado !== 'Entregado'
+                        ? `<button class="btn btn-success" style="padding: 5px 10px; font-size: 0.78rem;" onclick="marcarSalidaSupabase('${row.id}')">Dar Salida</button>`
+                        : `<small style="color: var(--text-muted);">Salió: ${new Date(row.salida_fecha_hora).toLocaleString()}</small>`}
                 </td>
             `;
             tbody.appendChild(tr);
         });
     }
 
-    function darSalida(index) {
-        const recepciones = obtenerRecepciones();
-        recepciones[index].estado = 'Entregado';
-        recepciones[index].salida_fecha_hora = new Date().toLocaleString();
-        localStorage.setItem('syntro_recepciones', JSON.stringify(recepciones));
-        cargarDatosAdmin();
+    async function marcarSalidaSupabase(recepcionId) {
+        const { error } = await supabaseClient
+            .from('recepcion_vehiculos')
+            .update({
+                estado: 'Entregado',
+                salida_fecha_hora: new Date().toISOString()
+            })
+            .eq('id', recepcionId);
+
+        if (error) {
+            alert('Error al actualizar salida: ' + error.message);
+            return;
+        }
+        await cargarDatosAdminSupabase();
     }
 </script>
 
