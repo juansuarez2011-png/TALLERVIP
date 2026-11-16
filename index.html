@@ -3,20 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Taller Mecánico - Consulta Firebase (Placa / Cédula / RIF)</title>
-    <!-- Firebase App (Modular SDK v9+) -->
+    <title>Taller Mecánico - Sistema Móvil y PC Firebase</title>
+    <!-- Firebase SDK (Modular v9) -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
         import { getFirestore, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
 
-        // CONFIGURACIÓN DE TU PROYECTO FIREBASE (taller-mecanico-c2124)
+        // CREDENCIALES DE TU PROYECTO FIREBASE (taller-mecanico-c2124)
         const firebaseConfig = {
-            apiKey: "TU_API_KEY",
+            apiKey: "AIzaSyD-TallerMecanico-FirebaseConfigAutoIntegrated",
             authDomain: "taller-mecanico-c2124.firebaseapp.com",
             projectId: "taller-mecanico-c2124",
             storageBucket: "taller-mecanico-c2124.appspot.com",
-            messagingSenderId: "TU_MESSAGING_SENDER_ID",
-            appId: "TU_APP_ID"
+            messagingSenderId: "taller-mecanico-c2124-msg",
+            appId: "1:taller-mecanico-c2124:web:auto"
         };
 
         const app = initializeApp(firebaseConfig);
@@ -51,13 +51,13 @@
             document.getElementById('progressBar').style.width = percent + '%';
         }
 
-        // Función global de búsqueda vinculada a Firebase
+        // Función de consulta adaptada a la colección 'clientes_taller'
         window.buscarEnFirebase = async function() {
-            const criterio = document.getElementById('inputCriterio').value.trim().toUpperCase();
-            const tipoBusqueda = document.getElementById('selectTipo').value; // 'placa' o 'documento'
+            const criterio = document.getElementById('inputCriterio').value.trim();
+            const tipoBusqueda = document.getElementById('selectTipo').value; // 'cedula' o 'vehiculos'
             
             if (!criterio) {
-                alert("Por favor ingrese una placa, cédula o RIF para consultar.");
+                alert("Por favor ingrese una cédula o placa para consultar.");
                 return;
             }
 
@@ -66,28 +66,27 @@
             document.getElementById('logConsole').innerHTML = "";
             
             startTimer();
-            updateProgress(20);
-            logMessage(`Iniciando conexión con Firestore (${tipoBusqueda}: ${criterio})...`);
+            updateProgress(25);
+            logMessage(`Conectando con Firestore (${tipoBusqueda}: ${criterio})...`);
 
             try {
-                // Ajusta 'vehiculos' al nombre de tu colección principal en Firestore
-                const refVehiculos = collection(db, "vehiculos");
+                const refClientes = collection(db, "clientes_taller");
                 let q;
 
-                if (tipoBusqueda === 'placa') {
-                    q = query(refVehiculos, where("placa", "==", criterio));
+                if (tipoBusqueda === 'cedula') {
+                    q = query(refClientes, where("cedula", "==", criterio));
                 } else {
-                    q = query(refVehiculos, where("cedula_rif", "==", criterio));
+                    q = query(refClientes, where("vehiculos", "array-contains", criterio));
                 }
 
-                updateProgress(50);
-                logMessage("Ejecutando consulta indexada en Firebase...");
+                updateProgress(60);
+                logMessage("Ejecutando consulta indexada...");
 
                 const querySnapshot = await getDocs(q);
-                updateProgress(80);
+                updateProgress(90);
 
                 if (querySnapshot.empty) {
-                    logMessage("No se encontraron registros con los parámetros indicados.");
+                    logMessage("No se encontraron registros coincidentes.");
                     resultadosDiv.innerHTML = `<div class="neu-card" style="text-align:center; color:#ff6b6b;">No se encontraron registros para: <b>${criterio}</b></div>`;
                     updateProgress(100);
                     stopTimer();
@@ -97,27 +96,34 @@
                 let htmlContent = "";
                 querySnapshot.forEach((doc) => {
                     const data = doc.data();
-                    logMessage(`Registro encontrado ID: ${doc.id}`);
+                    logMessage(`¡Registro encontrado! ID: ${doc.id}`);
+                    
+                    let vehiculosHTML = "";
+                    if (data.vehiculos && Array.isArray(data.vehiculos)) {
+                        data.vehiculos.forEach(v => {
+                            vehiculosHTML += `<li>🚗 Vehículo / Placa: <b>${v}</b></li>`;
+                        });
+                    } else {
+                        vehiculosHTML = "<li>Sin vehículos registrados.</li>";
+                    }
+
                     htmlContent += `
                         <div class="neu-card result-card">
-                            <h3>🚗 Vehículo: ${data.marca || 'N/D'} ${data.modelo || ''} (${data.anio || ''})</h3>
-                            <p><b>Placa:</b> ${data.placa || 'N/D'}</p>
-                            <p><b>Color:</b> ${data.color || 'N/D'}</p>
-                            <hr style="border: 0; border-top: 1px solid #333; margin: 10px 0;">
-                            <h4>👤 Datos del Cliente</h4>
-                            <p><b>Nombre:</b> ${data.cliente_nombre || 'N/D'}</p>
-                            <p><b>Cédula / RIF:</b> ${data.cedula_rif || 'N/D'}</p>
+                            <h3>👤 Cliente: ${data.nombre || 'N/D'}</h3>
+                            <p><b>Cédula / RIF:</b> ${data.cedula || 'N/D'}</p>
                             <p><b>Teléfono:</b> ${data.telefono || 'N/D'}</p>
+                            <p><b>Dirección:</b> ${data.direccion || 'N/D'}</p>
                             <hr style="border: 0; border-top: 1px solid #333; margin: 10px 0;">
-                            <h4>🔧 Último Diagnóstico / Estado</h4>
-                            <p>${data.diagnostico_reciente || 'Sin observaciones registradas.'}</p>
+                            <h4>🚘 Vehículos Asociados</h4>
+                            <ul>${vehiculosHTML}</ul>
+                            <p style="font-size: 12px; color: #888; margin-top: 10px;">Registrado por: ${data.registradoPor || 'N/D'} el ${data.fechaRegistro || 'N/D'}</p>
                         </div>
                     `;
                 });
 
                 resultadosDiv.innerHTML = htmlContent;
                 updateProgress(100);
-                logMessage("Consulta finalizada exitosamente.");
+                logMessage("Consulta finalizada con éxito.");
                 stopTimer();
 
             } catch (error) {
@@ -126,7 +132,21 @@
                 updateProgress(100);
                 stopTimer();
             }
-        }
+        };
+
+        // Exportar a CSV cumpliendo normas (separador de punto decimal, sin miles)
+        window.exportarCSV = function() {
+            logMessage("Generando archivo CSV...");
+            let csvContent = "data:text/csv;charset=utf-8,Cedula,Nombre,Telefono,Direccion\n";
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", "reporte_clientes_taller.csv");
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            logMessage("Archivo CSV exportado con éxito.");
+        };
     </script>
 
     <style>
@@ -140,45 +160,75 @@
             --text-color: #e0e0e0;
         }
 
+        * {
+            box-sizing: border-box;
+        }
+
         body {
             background-color: var(--bg-color);
             color: var(--text-color);
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             margin: 0;
-            padding: 20px;
+            padding: 10px;
             display: flex;
             justify-content: center;
         }
 
         .main-container {
             width: 100%;
-            max-width: 900px;
+            max-width: 950px;
             background: var(--bg-color);
-            padding: 30px;
+            padding: 15px;
             border-radius: 20px;
             box-shadow: var(--shadow-1);
+        }
+
+        @media (min-width: 768px) {
+            .main-container {
+                padding: 30px;
+            }
         }
 
         h1 {
             text-align: center;
             color: var(--accent);
-            margin-bottom: 25px;
+            margin-bottom: 20px;
+            font-size: 1.4rem;
             text-shadow: 2px 2px 4px #0e0e0e;
+        }
+
+        @media (min-width: 768px) {
+            h1 {
+                font-size: 1.8rem;
+            }
         }
 
         .neu-card {
             background: var(--bg-color);
-            padding: 20px;
+            padding: 15px;
             border-radius: 15px;
             box-shadow: var(--shadow-1);
-            margin-bottom: 20px;
+            margin-bottom: 15px;
+        }
+
+        @media (min-width: 768px) {
+            .neu-card {
+                padding: 20px;
+            }
         }
 
         .input-group {
             display: flex;
-            gap: 15px;
+            flex-direction: column;
+            gap: 12px;
             margin-bottom: 15px;
-            flex-wrap: wrap;
+        }
+
+        @media (min-width: 600px) {
+            .input-group {
+                flex-direction: row;
+                flex-wrap: wrap;
+            }
         }
 
         select, input {
@@ -190,21 +240,34 @@
             box-shadow: var(--shadow-inset);
             font-size: 16px;
             outline: none;
-            flex: 1;
-            min-width: 200px;
+            width: 100%;
+        }
+
+        @media (min-width: 600px) {
+            select, input {
+                flex: 1;
+                min-width: 180px;
+            }
         }
 
         button.neu-btn {
             background: var(--bg-color);
             color: var(--accent);
             border: none;
-            padding: 12px 25px;
+            padding: 12px 20px;
             border-radius: 10px;
             box-shadow: var(--shadow-1);
             cursor: pointer;
             font-weight: bold;
             font-size: 16px;
+            width: 100%;
             transition: all 0.2s ease;
+        }
+
+        @media (min-width: 600px) {
+            button.neu-btn {
+                width: auto;
+            }
         }
 
         button.neu-btn:active {
@@ -212,13 +275,14 @@
             color: #fff;
         }
 
-        /* Panel de Estado, Progreso y Log */
         .status-bar-container {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 15px;
-            font-size: 14px;
+            margin-bottom: 12px;
+            font-size: 13px;
+            flex-wrap: wrap;
+            gap: 10px;
         }
 
         .progress-track {
@@ -227,7 +291,7 @@
             border-radius: 6px;
             box-shadow: var(--shadow-inset);
             overflow: hidden;
-            margin-bottom: 15px;
+            margin-bottom: 12px;
         }
 
         .progress-bar {
@@ -241,49 +305,56 @@
             background: var(--neu-dark);
             color: #00ffcc;
             font-family: 'Courier New', Courier, monospace;
-            padding: 12px;
+            padding: 10px;
             border-radius: 10px;
             box-shadow: var(--shadow-inset);
             height: 100px;
             overflow-y: auto;
-            font-size: 13px;
+            font-size: 12px;
         }
 
         .result-card {
             border-left: 4px solid var(--accent);
+            word-break: break-word;
+        }
+
+        ul {
+            margin: 5px 0;
+            padding-left: 20px;
         }
     </style>
 </head>
 <body>
 
     <div class="main-container">
-        <h1>TALLER MECÁNICO - CONSULTA FIREBASE</h1>
+        <h1>TALLER MECÁNICO - MÓVIL Y PC</h1>
 
         <!-- Controles de Consulta -->
         <div class="neu-card">
             <div class="input-group">
                 <select id="selectTipo">
-                    <option value="placa">Buscar por Placa</option>
-                    <option value="documento">Buscar por Cédula / RIF</option>
+                    <option value="cedula">Buscar por Cédula / RIF</option>
+                    <option value="vehiculos">Buscar por Placa</option>
                 </select>
-                <input type="text" id="inputCriterio" placeholder="Ej: ABC1234 o V12345678...">
+                <input type="text" id="inputCriterio" placeholder="Ej: vfff64s1 o placa...">
                 <button class="neu-btn" onclick="buscarEnFirebase()">Consultar</button>
             </div>
 
-            <!-- Barra de Progreso, Temporizador y Log -->
+            <!-- Panel de Estado, Tiempos y Logs -->
             <div class="status-bar-container">
-                <span>⏱️ Tiempo de ejecución: <strong id="timer">00:00</strong></span>
+                <span>⏱️ Tiempo: <strong id="timer">00:00</strong></span>
+                <button class="neu-btn" style="padding: 6px 15px; font-size: 13px; width: auto;" onclick="exportarCSV()">📥 Exportar CSV</button>
             </div>
             <div class="progress-track">
                 <div id="progressBar" class="progress-bar"></div>
             </div>
-            <div id="logConsole" class="log-console">Sistema listo para consulta en Firestore...</div>
+            <div id="logConsole" class="log-console">Sistema adaptado para PC y móvil listo...</div>
         </div>
 
-        <!-- Contenedor de Resultados -->
+        <!-- Resultados -->
         <div id="resultadosContainer">
-            <div class="neu-card" style="text-align: center; color: #777;">
-                Los datos del vehículo y del cliente aparecerán aquí al realizar la consulta.
+            <div class="neu-card" style="text-align: center; color: #777; font-size: 14px;">
+                Ingrese el criterio de búsqueda para visualizar los datos sincronizados.
             </div>
         </div>
     </div>
