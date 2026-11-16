@@ -3,1273 +3,733 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Taller Mecánico Syntro - Gestión Integral (Firebase)</title>
-    <!-- Firebase SDK v10 (Compat para ejecución directa en HTML sin compilador) -->
-    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+    <title>Taller Mecánico Syntro - Sistema Cloud Integral</title>
+    <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        :root {
-            --bg-color: #0b0f19;
-            --card-bg: #151c2c;
-            --surface-3d: #1a2336;
-            --primary: #2563eb;
-            --primary-hover: #1d4ed8;
-            --accent: #38bdf8;
-            --text-main: #f8fafc;
-            --text-muted: #94a3b8;
-            --border: #2a3752;
-            --success: #10b981;
-            --warning: #f59e0b;
-            --danger: #ef4444;
-            --shadow-3d: 8px 8px 16px #060910, -4px -4px 12px #1e2840;
-            --inset-3d: inset 4px 4px 8px #070a12, inset -2px -2px 6px #202b44;
-        }
-
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-        }
-
         body {
-            background-color: var(--bg-color);
-            color: var(--text-main);
-            min-height: 100vh;
-            padding: 15px;
+            background-color: #0f172a;
+            color: #f8fafc;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
-
-        .wrapper {
-            max-width: 1320px;
-            margin: 0 auto;
-        }
-
-        header {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: space-between;
-            align-items: center;
-            gap: 15px;
-            background: var(--card-bg);
-            border: 1px solid var(--border);
-            padding: 20px 26px;
-            border-radius: 16px;
-            box-shadow: var(--shadow-3d);
-            margin-bottom: 22px;
-        }
-
-        .brand-area h1 {
-            font-size: 1.45rem;
-            color: var(--accent);
-            letter-spacing: 0.4px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .status-row {
-            display: flex;
-            flex-wrap: wrap;
-            align-items: center;
-            gap: 10px;
-            margin-top: 6px;
-        }
-
-        .status-pill {
-            font-size: 0.78rem;
-            padding: 4px 10px;
-            border-radius: 20px;
-            background: rgba(16, 185, 129, 0.15);
-            color: var(--success);
-            border: 1px solid rgba(16, 185, 129, 0.35);
-            display: inline-block;
-        }
-
-        .nav-tabs {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-        }
-
-        .tab-btn {
-            background: var(--surface-3d);
-            border: 1px solid var(--border);
-            color: var(--text-muted);
-            padding: 10px 18px;
-            border-radius: 10px;
-            font-weight: 600;
-            cursor: pointer;
-            box-shadow: 4px 4px 8px #070a11, -2px -2px 6px #202a42;
-            transition: all 0.2s ease;
-        }
-
-        .tab-btn:hover {
-            color: var(--text-main);
-        }
-
-        .tab-btn.active {
-            background: linear-gradient(145deg, #2563eb, #1d4ed8);
-            color: white;
-            border-color: #3b82f6;
-            box-shadow: 0 4px 15px rgba(37, 99, 235, 0.45);
-        }
-
-        .card {
-            background: var(--card-bg);
-            border: 1px solid var(--border);
-            border-radius: 16px;
-            padding: 26px;
-            box-shadow: var(--shadow-3d);
-            margin-bottom: 22px;
-        }
-
-        h2 {
-            font-size: 1.15rem;
-            color: var(--accent);
-            margin-bottom: 18px;
-            border-bottom: 1px solid var(--border);
-            padding-bottom: 10px;
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: space-between;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .form-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 16px;
-        }
-
-        .col-2 { grid-column: span 2; }
-        .col-3 { grid-column: span 3; }
-
-        .input-group {
-            display: flex;
-            flex-direction: column;
-            position: relative;
-        }
-
-        label {
-            font-size: 0.84rem;
-            color: var(--text-muted);
-            margin-bottom: 6px;
-            font-weight: 600;
-        }
-
-        input, select, textarea {
-            background: #0a0e17;
-            border: 1px solid var(--border);
-            border-radius: 10px;
-            padding: 11px 14px;
-            color: var(--text-main);
-            font-size: 0.94rem;
-            box-shadow: var(--inset-3d);
-            transition: all 0.2s ease;
-            width: 100%;
-        }
-
-        input:focus, select:focus, textarea:focus {
-            border-color: var(--accent);
-            outline: none;
-            box-shadow: var(--inset-3d), 0 0 0 3px rgba(56, 189, 248, 0.2);
-        }
-
-        /* Autocompletado inteligente */
-        .autocomplete-list {
-            position: absolute;
-            top: 100%;
-            left: 0;
-            right: 0;
+        .neumo-card {
             background: #1e293b;
-            border: 1px solid var(--accent);
-            border-radius: 0 0 10px 10px;
-            max-height: 220px;
-            overflow-y: auto;
-            z-index: 100;
-            display: none;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.7);
+            box-shadow: 8px 8px 16px #0b1120, -8px -8px 16px #314159;
+            border-radius: 1rem;
         }
-
-        .autocomplete-item {
-            padding: 10px 14px;
-            cursor: pointer;
-            font-size: 0.88rem;
-            border-bottom: 1px solid rgba(255,255,255,0.06);
-        }
-
-        .autocomplete-item:hover {
-            background: var(--primary);
-            color: white;
-        }
-
-        .checkbox-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 12px;
-            background: #0a0e17;
-            padding: 16px;
-            border-radius: 12px;
-            border: 1px solid var(--border);
-            box-shadow: var(--inset-3d);
-        }
-
-        .checkbox-item {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 0.88rem;
-            cursor: pointer;
-            user-select: none;
-        }
-
-        .checkbox-item input {
-            width: 18px;
-            height: 18px;
-            accent-color: var(--primary);
-            box-shadow: none;
-        }
-
-        .btn {
-            background: linear-gradient(145deg, #2563eb, #1d4ed8);
-            color: white;
+        .neumo-input {
+            background: #0f172a;
+            box-shadow: inset 4px 4px 8px #0b1120, inset -4px -4px 8px #314159;
             border: none;
-            border-radius: 10px;
-            padding: 11px 20px;
-            font-weight: 700;
-            cursor: pointer;
-            box-shadow: 4px 4px 10px #060910;
-            transition: transform 0.15s ease, box-shadow 0.15s ease;
-            font-size: 0.9rem;
+            color: #ffffff;
         }
-
-        .btn:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 6px 15px rgba(37, 99, 235, 0.4);
+        .neumo-button {
+            background: #3b82f6;
+            box-shadow: 4px 4px 8px #1d4ed8, -4px -4px 8px #60a5fa;
+            transition: all 0.2s ease;
         }
-
-        .btn-success {
-            background: linear-gradient(145deg, #10b981, #059669);
+        .neumo-button:active {
+            box-shadow: inset 2px 2px 4px #1d4ed8, inset -2px -2px 4px #60a5fa;
         }
-
-        .btn-warning {
-            background: linear-gradient(145deg, #f59e0b, #d97706);
-            color: #0b0f19;
+        .neumo-button-secondary {
+            background: #059669;
+            box-shadow: 4px 4px 8px #047857, -4px -4px 8px #10b981;
         }
-
-        .btn-secondary {
-            background: var(--surface-3d);
-            border: 1px solid var(--border);
-            color: var(--text-main);
+        .neumo-button-purple {
+            background: #7c3aed;
+            box-shadow: 4px 4px 8px #5b21b6, -4px -4px 8px #8b5cf6;
         }
-
-        .actions-row {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: flex-end;
-            margin-top: 22px;
-            gap: 12px;
-        }
-
-        .kpi-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 16px;
-            margin-bottom: 22px;
-        }
-
-        .kpi-card {
-            background: var(--surface-3d);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 16px;
-            box-shadow: 4px 4px 10px #070a11;
-        }
-
-        .kpi-title {
-            font-size: 0.78rem;
-            color: var(--text-muted);
-            text-transform: uppercase;
-        }
-
-        .kpi-value {
-            font-size: 1.65rem;
-            font-weight: 700;
-            color: var(--accent);
-            margin-top: 6px;
-        }
-
-        .table-wrapper {
-            overflow-x: auto;
-            border-radius: 10px;
-            border: 1px solid var(--border);
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 0.86rem;
-        }
-
-        th, td {
-            padding: 11px 13px;
-            text-align: left;
-            border-bottom: 1px solid var(--border);
-        }
-
-        th {
-            background: #1a2336;
-            color: var(--accent);
-            font-weight: 600;
-            white-space: nowrap;
-        }
-
-        tr:hover {
-            background: rgba(56, 189, 248, 0.05);
-        }
-
-        .badge {
-            background: rgba(37, 99, 235, 0.2);
-            color: var(--accent);
-            padding: 4px 8px;
-            border-radius: 6px;
-            font-size: 0.78rem;
-            border: 1px solid rgba(37, 99, 235, 0.4);
-            white-space: nowrap;
-        }
-
-        /* Consola de Progreso, Temporizador y Log */
-        .console-box {
-            background: #070a12;
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 16px;
-            margin-top: 20px;
-            box-shadow: var(--inset-3d);
-        }
-
-        .console-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 10px;
-            font-size: 0.85rem;
-            color: var(--accent);
-            font-weight: 600;
-        }
-
-        .progress-track {
-            width: 100%;
-            height: 10px;
-            background: #1e293b;
-            border-radius: 999px;
-            overflow: hidden;
-            margin-bottom: 12px;
-        }
-
-        .progress-fill {
-            height: 100%;
-            width: 0%;
-            background: linear-gradient(90deg, var(--primary), var(--accent));
-            transition: width 0.25s ease;
-        }
-
-        .log-output {
-            font-family: 'Consolas', monospace;
-            font-size: 0.8rem;
-            color: #cbd5e1;
-            max-height: 140px;
-            overflow-y: auto;
-            line-height: 1.45;
-        }
-
-        .hidden { display: none !important; }
-
-        @media (max-width: 900px) {
-            .form-grid { grid-template-columns: repeat(2, 1fr); }
-            .col-2, .col-3 { grid-column: span 2; }
-            .checkbox-grid { grid-template-columns: repeat(2, 1fr); }
-            .kpi-grid { grid-template-columns: repeat(2, 1fr); }
-        }
-
-        @media (max-width: 600px) {
-            .form-grid { grid-template-columns: 1fr; }
-            .col-2, .col-3 { grid-column: span 1; }
-            .checkbox-grid { grid-template-columns: 1fr; }
-            .kpi-grid { grid-template-columns: 1fr; }
-            header { padding: 15px; }
+        .neumo-button-red {
+            background: #dc2626;
+            box-shadow: 4px 4px 8px #991b1b, -4px -4px 8px #ef4444;
         }
     </style>
 </head>
-<body>
+<body class="p-4 md:p-6 min-h-screen flex flex-col justify-between">
 
-<div class="wrapper">
-    <header>
-        <div class="brand-area">
-            <h1>🛠️ Taller Mecánico Syntro</h1>
-            <div class="status-row">
-                <span id="dbStatusBadge" class="status-pill">● Conectando con Firebase (taller-mecanico-c2124)...</span>
-                <span id="timerDisplay" class="badge">⏱️ 00:00</span>
-            </div>
+    <!-- PANTALLA DE LOGIN -->
+    <div id="auth-container" class="max-w-md mx-auto my-auto w-full neumo-card p-8">
+        <div class="text-center mb-6">
+            <h1 class="text-2xl font-bold text-blue-400">Taller Mecánico Syntro</h1>
+            <p class="text-xs text-slate-400 mt-1">Acceso Autorizado Operadores</p>
         </div>
-        <div class="nav-tabs">
-            <button class="tab-btn active" onclick="cambiarModulo('recepcion')">Módulo 1 y 2: Recepción</button>
-            <button class="tab-btn" onclick="cambiarModulo('admin')">Módulo 3: Panel Administrador</button>
-            <button class="tab-btn" onclick="cambiarModulo('config')">⚙️ Firebase & Carga CSV</button>
-        </div>
-    </header>
-
-    <!-- MÓDULO 1 Y 2: RECEPCIÓN Y CHEQUEO -->
-    <div id="viewRecepcion" class="card">
-        <form id="formRecepcion" onsubmit="guardarRecepcion(event)">
-            
-            <h2>
-                <span>Módulo 1: Selección o Búsqueda de Cliente</span>
-                <button type="button" class="btn btn-secondary" style="padding: 6px 12px; font-size: 0.8rem;" onclick="prepararNuevoCliente()">+ Limpiar / Nuevo Cliente</button>
-            </h2>
-
-            <div class="form-grid">
-                <div class="input-group col-3">
-                    <label>Seleccionar Cliente Registrado en Firebase (o escriba abajo para buscar/crear) *</label>
-                    <select id="listaClientesDB" onchange="cargarDatosClienteDesdeLista(this.value)">
-                        <option value="">-- Cargando clientes desde Firebase... --</option>
-                    </select>
-                </div>
-
-                <div class="input-group">
-                    <label>Buscar / Cédula o RIF *</label>
-                    <input type="text" id="cedula_rif" required placeholder="Ej: V-12345678 / J-00000000" oninput="buscarClienteEnVivo(this.value)">
-                    <div id="autocompleteCliente" class="autocomplete-list"></div>
-                </div>
-
-                <div class="input-group col-2">
-                    <label>Nombre Completo / Razón Social *</label>
-                    <input type="text" id="nombre_razon_social" required placeholder="Escriba nombre o empresa..." oninput="buscarClienteEnVivo(this.value)">
-                </div>
-
-                <div class="input-group">
-                    <label>Tipo de Cliente</label>
-                    <select id="tipo_cliente">
-                        <option value="Persona">Persona Natural</option>
-                        <option value="Empresa">Empresa / Institución</option>
-                    </select>
-                </div>
-
-                <div class="input-group">
-                    <label>Teléfono *</label>
-                    <input type="text" id="telefono" required placeholder="Ej: 0412-6672767">
-                </div>
-
-                <div class="input-group">
-                    <label>Correo Electrónico</label>
-                    <input type="email" id="correo" placeholder="cliente@correo.com">
-                </div>
-
-                <div class="input-group col-3">
-                    <label>Dirección *</label>
-                    <input type="text" id="direccion" required placeholder="Dirección fiscal o habitación">
-                </div>
+        <form onsubmit="manejarAutenticacion(event)" class="space-y-4">
+            <div>
+                <label class="block text-sm text-slate-400 mb-1">Correo Electrónico</label>
+                <input type="email" id="auth-email" required class="w-full p-3 rounded-lg neumo-input focus:outline-none" placeholder="taller@syntro.com">
             </div>
-
-            <!-- MÓDULO 2: CHEQUEO DEL VEHÍCULO -->
-            <h2 style="margin-top: 30px;">
-                <span>Módulo 2: Chequeo de Entrada del Vehículo (Búsqueda automática por Placa)</span>
-            </h2>
-            <div class="form-grid">
-                <div class="input-group">
-                    <label>Placa (Escriba para buscar historial) *</label>
-                    <input type="text" id="placa" required placeholder="Ej: AAO83NL" style="text-transform: uppercase;" oninput="buscarVehiculoPorPlaca(this.value)">
-                    <div id="autocompletePlaca" class="autocomplete-list"></div>
-                </div>
-
-                <div class="input-group">
-                    <label>Marca *</label>
-                    <input type="text" id="marca" required placeholder="Ej: Toyota, Hyundai, Ford">
-                </div>
-
-                <div class="input-group">
-                    <label>Modelo *</label>
-                    <input type="text" id="modelo" required placeholder="Ej: Hilux, Aveo, Explorer">
-                </div>
-
-                <div class="input-group">
-                    <label>Año</label>
-                    <input type="number" id="anio" placeholder="Ej: 2015">
-                </div>
-
-                <div class="input-group">
-                    <label>Kilometraje *</label>
-                    <input type="number" id="kilometraje" required placeholder="Ej: 125000">
-                </div>
-
-                <div class="input-group">
-                    <label>Color</label>
-                    <input type="text" id="color" placeholder="Ej: Blanco">
-                </div>
-
-                <div class="input-group">
-                    <label>Serial de Carrocería (VIN)</label>
-                    <input type="text" id="serial_carroceria" placeholder="Serial carrocería">
-                </div>
-
-                <div class="input-group">
-                    <label>Serial de Batería</label>
-                    <input type="text" id="serial_bateria" placeholder="Ej: 12V45AH / 24MR">
-                </div>
-
-                <div class="input-group">
-                    <label>Ingreso en Grúa *</label>
-                    <select id="ingreso_grua">
-                        <option value="NO">NO</option>
-                        <option value="SI">SI</option>
-                    </select>
-                </div>
-
-                <div class="input-group">
-                    <label>Nivel de Combustible *</label>
-                    <select id="nivel_combustible">
-                        <option value="Vacío">Vacío</option>
-                        <option value="1/4">1/4</option>
-                        <option value="1/2" selected>1/2</option>
-                        <option value="3/4">3/4</option>
-                        <option value="Lleno">Lleno</option>
-                    </select>
-                </div>
-
-                <div class="input-group">
-                    <label>Mecánico Asignado *</label>
-                    <select id="mecanico_asignado">
-                        <option value="ANTONIO GUTIERREZ">ANTONIO GUTIERREZ</option>
-                        <option value="BOGGIA DIAZ">BOGGIA DIAZ</option>
-                        <option value="DARWING SUÁREZ">DARWING SUÁREZ</option>
-                        <option value="JOSÉ ESCALONA">JOSÉ ESCALONA</option>
-                    </select>
-                </div>
-
-                <div class="input-group">
-                    <label>Recibido por (Administrador)</label>
-                    <input type="text" id="recibido_por" value="Juan Suárez" required>
-                </div>
-
-                <div class="input-group col-3">
-                    <label>Trabajo / Servicio a Realizar (Falla Reportada) *</label>
-                    <textarea id="trabajo_realizar" rows="3" required placeholder="Describa detalladamente los trabajos o fallas reportadas..."></textarea>
-                </div>
-
-                <div class="input-group col-3">
-                    <label>Chequeo de Inventario y Accesorios</label>
-                    <div class="checkbox-grid">
-                        <label class="checkbox-item"><input type="checkbox" id="check_gato" checked> Gato</label>
-                        <label class="checkbox-item"><input type="checkbox" id="check_herramientas" checked> Herramientas</label>
-                        <label class="checkbox-item"><input type="checkbox" id="check_triangulo" checked> Triángulo</label>
-                        <label class="checkbox-item"><input type="checkbox" id="check_repuesto" checked> Neumático Repuesto</label>
-                        <label class="checkbox-item"><input type="checkbox" id="check_estereo" checked> Estéreo</label>
-                        <label class="checkbox-item"><input type="checkbox" id="check_antena" checked> Antena</label>
-                        <label class="checkbox-item"><input type="checkbox" id="check_emblemas" checked> Emblemas</label>
-                        <label class="checkbox-item"><input type="checkbox" id="check_alfombras" checked> Alfombras</label>
-                        <label class="checkbox-item"><input type="checkbox" id="check_cables" checked> Cables</label>
-                        <label class="checkbox-item"><input type="checkbox" id="check_tazas" checked> Tazas / Rines</label>
-                        <label class="checkbox-item"><input type="checkbox" id="check_luces"> Luces Advertencia</label>
-                    </div>
-                </div>
+            <div>
+                <label class="block text-sm text-slate-400 mb-1">Contraseña</label>
+                <input type="password" id="auth-password" required class="w-full p-3 rounded-lg neumo-input focus:outline-none" placeholder="••••••••">
             </div>
-
-            <div class="actions-row">
-                <button type="reset" class="btn btn-secondary" onclick="prepararNuevoCliente()">Limpiar Formulario</button>
-                <button type="submit" class="btn btn-success">💾 Guardar Recepción en Firebase</button>
-            </div>
+            <button type="submit" class="w-full py-3 rounded-lg font-semibold text-white neumo-button">
+                Iniciar Sesión / Registrarse
+            </button>
         </form>
     </div>
 
-    <!-- MÓDULO 3: PANEL ADMINISTRADOR -->
-    <div id="viewAdmin" class="card hidden">
-        <h2>
-            <span>Módulo 3: Panel Administrador - Control de Entradas y Salidas</span>
-            <div style="display:flex; gap:10px;">
-                <input type="text" id="filtroAdmin" placeholder="🔍 Filtrar por placa, cliente o código..." style="width: 260px; padding: 7px 12px;" oninput="filtrarTablaAdmin(this.value)">
-                <button type="button" class="btn btn-secondary" style="padding: 7px 14px; font-size:0.82rem;" onclick="exportarCSVRespaldo()">📥 Exportar CSV</button>
+    <!-- APLICACIÓN PRINCIPAL -->
+    <div id="app-container" class="max-w-7xl mx-auto w-full hidden">
+        <header class="flex flex-col md:flex-row justify-between items-center mb-8 p-4 neumo-card gap-4">
+            <div>
+                <h1 class="text-2xl font-bold text-blue-400">Taller Mecánico Syntro</h1>
+                <p class="text-xs text-slate-400">Operador Activo: <span id="user-display" class="text-emerald-400 font-mono"></span></p>
             </div>
-        </h2>
+            <div class="flex items-center gap-6">
+                <div class="text-center md:text-right">
+                    <div id="timer" class="text-lg font-mono text-emerald-400">00:00:00</div>
+                    <div id="sync-status" class="text-xs text-emerald-400">Cloud Sincronizado</div>
+                </div>
+                <button onclick="cerrarSesion()" class="px-4 py-2 rounded-lg text-xs font-semibold text-white neumo-button-red">
+                    Salir
+                </button>
+            </div>
+        </header>
 
-        <div class="kpi-grid">
-            <div class="kpi-card">
-                <div class="kpi-title">Clientes Registrados</div>
-                <div class="kpi-value" id="kpiClientes">0</div>
+        <main class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            
+            <!-- COLUMNA 1: Módulo 1 - Clientes -->
+            <div class="space-y-6">
+                <section class="neumo-card p-6">
+                    <h2 class="text-xl font-semibold mb-4 text-slate-200">Módulo 1: Clientes</h2>
+                    
+                    <div class="mb-4 p-3 rounded-xl border border-slate-700 bg-slate-900/50 space-y-2">
+                        <label class="block text-xs text-blue-400 font-semibold uppercase">Buscar Cliente</label>
+                        <div class="flex gap-2">
+                            <input type="text" id="criterio-busqueda" class="w-full p-2 rounded-lg neumo-input text-sm focus:outline-none" placeholder="Cédula, RIF o Nombre">
+                            <button type="button" onclick="buscarCliente()" class="px-3 py-2 rounded-lg text-white font-semibold text-xs neumo-button-secondary">Buscar</button>
+                        </div>
+                        <div id="resultados-busqueda" class="max-h-36 overflow-y-auto space-y-1 text-xs"></div>
+                    </div>
+
+                    <form id="client-form" onsubmit="guardarCliente(event)" class="space-y-3">
+                        <div>
+                            <label class="block text-xs text-slate-400 mb-1">Cédula o RIF</label>
+                            <input type="text" id="cedula" required class="w-full p-2 rounded-lg neumo-input text-sm focus:outline-none" placeholder="V-12345678">
+                        </div>
+                        <div>
+                            <label class="block text-xs text-slate-400 mb-1">Nombre y Apellido</label>
+                            <input type="text" id="nombre" required class="w-full p-2 rounded-lg neumo-input text-sm focus:outline-none" placeholder="Juan Suárez">
+                        </div>
+                        <div>
+                            <label class="block text-xs text-slate-400 mb-1">Teléfono</label>
+                            <input type="text" id="telefono" required class="w-full p-2 rounded-lg neumo-input text-sm focus:outline-none" placeholder="0414-1234567">
+                        </div>
+                        <div>
+                            <label class="block text-xs text-slate-400 mb-1">Dirección</label>
+                            <textarea id="direccion" rows="2" required class="w-full p-2 rounded-lg neumo-input text-sm focus:outline-none" placeholder="Dirección"></textarea>
+                        </div>
+                        <div class="flex gap-2">
+                            <button type="submit" class="flex-1 py-2 rounded-lg text-xs font-semibold text-white neumo-button">
+                                Guardar Cliente
+                            </button>
+                            <button type="button" onclick="limpiarFormularioCliente()" class="px-3 py-2 rounded-lg text-xs font-semibold text-slate-300 bg-slate-800 hover:bg-slate-700">
+                                Nuevo
+                            </button>
+                        </div>
+                    </form>
+
+                    <!-- Importación rápida de CSV de clientes a Firebase -->
+                    <div class="mt-5 pt-4 border-t border-slate-700">
+                        <label class="block text-xs text-purple-400 font-semibold uppercase mb-2">Carga Masiva de Clientes (CSV)</label>
+                        <input type="file" id="csv-clientes-file" accept=".csv,.txt" class="w-full text-xs text-slate-300 mb-2 file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-purple-600 file:text-white cursor-pointer">
+                        <button type="button" onclick="importarClientesCSV()" class="w-full py-2 rounded-lg text-xs font-semibold text-white neumo-button-purple">
+                            📥 Subir Clientes CSV a Firebase
+                        </button>
+                    </div>
+                </section>
             </div>
-            <div class="kpi-card">
-                <div class="kpi-title">Vehículos en Taller</div>
-                <div class="kpi-value" id="kpiEnTaller">0</div>
+
+            <!-- COLUMNAS 2 y 3: Recepción, Vehículos, Chequeo Técnico y Exportación -->
+            <div class="lg:col-span-2 space-y-6">
+                <section class="neumo-card p-6">
+                    <h2 class="text-xl font-semibold mb-4 text-slate-200">Módulos 2 y 3: Recepción y Chequeo Técnico</h2>
+                    
+                    <form id="orden-form" onsubmit="guardarOrdenServicio(event)" class="space-y-6">
+                        
+                        <!-- Datos de la Orden y Selección / Registro de Vehículo -->
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div>
+                                <label class="block text-xs text-slate-400 mb-1">Código de Orden (Automático)</label>
+                                <input type="text" id="ord-codigo" readonly class="w-full p-2 rounded-lg neumo-input text-sm font-mono text-emerald-400 focus:outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-xs text-slate-400 mb-1">Vehículo (Placa)</label>
+                                <select id="ord-placa" onchange="manejarSeleccionPlaca()" class="w-full p-2 rounded-lg neumo-input text-sm focus:outline-none">
+                                    <option value="">Seleccione cliente primero</option>
+                                    <option value="NUEVO">➕ Registrar Nuevo Vehículo</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs text-slate-400 mb-1">Kilometraje</label>
+                                <input type="text" id="ord-km" required class="w-full p-2 rounded-lg neumo-input text-sm focus:outline-none" placeholder="Ej: 64500">
+                            </div>
+                            <div id="div-nuevo-placa" class="hidden">
+                                <label class="block text-xs text-slate-400 mb-1">Placa (Si es nuevo)</label>
+                                <input type="text" id="nuevo-placa" class="w-full p-2 rounded-lg neumo-input text-sm uppercase focus:outline-none" placeholder="Ej: AAO83NL">
+                            </div>
+                            <div>
+                                <label class="block text-xs text-slate-400 mb-1">Marca</label>
+                                <input type="text" id="ord-marca" required class="w-full p-2 rounded-lg neumo-input text-sm focus:outline-none" placeholder="Hyundai">
+                            </div>
+                            <div>
+                                <label class="block text-xs text-slate-400 mb-1">Modelo</label>
+                                <input type="text" id="ord-modelo" required class="w-full p-2 rounded-lg neumo-input text-sm focus:outline-none" placeholder="Elantra">
+                            </div>
+                            <div>
+                                <label class="block text-xs text-slate-400 mb-1">Año</label>
+                                <input type="text" id="ord-anio" required class="w-full p-2 rounded-lg neumo-input text-sm focus:outline-none" placeholder="2010">
+                            </div>
+                        </div>
+
+                        <!-- Servicios y Personal -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs text-slate-400 mb-1">Trabajo / Servicio a Realizar</label>
+                                <textarea id="ord-servicio" rows="3" required class="w-full p-2 rounded-lg neumo-input text-sm focus:outline-none" placeholder="Mantenimiento de radiador, mangueras..."></textarea>
+                            </div>
+                            <div class="space-y-3">
+                                <div>
+                                    <label class="block text-xs text-slate-400 mb-1">Mecánico Asignado</label>
+                                    <input type="text" id="ord-mecanico" required class="w-full p-2 rounded-lg neumo-input text-sm focus:outline-none" placeholder="ANTONIO GUTIERREZ">
+                                </div>
+                                <div>
+                                    <label class="block text-xs text-slate-400 mb-1">Fotografía de Recepción</label>
+                                    <input type="file" id="ord-foto" accept="image/*" class="w-full text-xs text-slate-300 file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-blue-600 file:text-white cursor-pointer">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- MÓDULO 3: CHECKLIST TÉCNICO DETALLADO -->
+                        <div class="p-4 rounded-xl border border-slate-700 bg-slate-900/40 space-y-4">
+                            <h3 class="text-sm font-bold text-blue-400 uppercase tracking-wider">Módulo 3: Inspección Técnica Detallada</h3>
+                            
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+                                <div class="p-3 bg-slate-900 rounded-lg">
+                                    <span class="font-semibold text-slate-300 block mb-2">1. Sistema de Aceite</span>
+                                    <div class="grid grid-cols-2 gap-2">
+                                        <input type="text" id="chk-aceite-nivel" placeholder="Nivel" class="p-1 neumo-input rounded">
+                                        <input type="text" id="chk-aceite-color" placeholder="Color" class="p-1 neumo-input rounded">
+                                        <input type="text" id="chk-aceite-filtro" placeholder="Filtro" class="p-1 neumo-input rounded">
+                                        <input type="text" id="chk-aceite-fugas" placeholder="Sin fugas (Sí/No)" class="p-1 neumo-input rounded">
+                                    </div>
+                                </div>
+
+                                <div class="p-3 bg-slate-900 rounded-lg">
+                                    <span class="font-semibold text-slate-300 block mb-2">2. Correas y Mangueras</span>
+                                    <div class="grid grid-cols-2 gap-2">
+                                        <input type="text" id="chk-correa-tension" placeholder="Tensión" class="p-1 neumo-input rounded">
+                                        <input type="text" id="chk-correa-grietas" placeholder="Sin grietas (Sí/No)" class="p-1 neumo-input rounded">
+                                    </div>
+                                </div>
+
+                                <div class="p-3 bg-slate-900 rounded-lg">
+                                    <span class="font-semibold text-slate-300 block mb-2">3. Líquido Refrigerante</span>
+                                    <div class="grid grid-cols-3 gap-2">
+                                        <input type="text" id="chk-refrig-nivel" placeholder="Nivel" class="p-1 neumo-input rounded">
+                                        <input type="text" id="chk-refrig-color" placeholder="Color" class="p-1 neumo-input rounded">
+                                        <input type="text" id="chk-refrig-fugas" placeholder="Fugas (Sí/No)" class="p-1 neumo-input rounded">
+                                    </div>
+                                </div>
+
+                                <div class="p-3 bg-slate-900 rounded-lg">
+                                    <span class="font-semibold text-slate-300 block mb-2">4. Batería y Alternador</span>
+                                    <div class="grid grid-cols-2 gap-2">
+                                        <input type="text" id="chk-bat-terminal" placeholder="Terminales limpios" class="p-1 neumo-input rounded">
+                                        <input type="text" id="chk-alt-voltaje" placeholder="Voltaje alternador" class="p-1 neumo-input rounded">
+                                    </div>
+                                </div>
+
+                                <div class="p-3 bg-slate-900 rounded-lg">
+                                    <span class="font-semibold text-slate-300 block mb-2">5. Dirección y Frenos</span>
+                                    <div class="grid grid-cols-2 gap-2">
+                                        <input type="text" id="chk-dir-juego" placeholder="Juego libre dirección" class="p-1 neumo-input rounded">
+                                        <input type="text" id="chk-freno-liga" placeholder="Nivel liga de freno" class="p-1 neumo-input rounded">
+                                    </div>
+                                </div>
+
+                                <div class="p-3 bg-slate-900 rounded-lg">
+                                    <span class="font-semibold text-slate-300 block mb-2">6. Ruedas, Luces y Limpiaparabrisas</span>
+                                    <div class="grid grid-cols-2 gap-2">
+                                        <input type="text" id="chk-ruedas-presion" placeholder="Presión neumática" class="p-1 neumo-input rounded">
+                                        <input type="text" id="chk-luces-ext" placeholder="Luces externas (Sí/No)" class="p-1 neumo-input rounded">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="w-full py-3 rounded-lg font-semibold text-white neumo-button-purple">
+                            Generar y Guardar Orden Completa en la Nube
+                        </button>
+                    </form>
+                </section>
+
+                <!-- Bitácora y Panel de Exportación a CSV -->
+                <section class="neumo-card p-6 space-y-4">
+                    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
+                        <h2 class="text-xl font-semibold text-slate-200">Bitácora y Exportación de Datos</h2>
+                        <div class="flex gap-2 w-full md:w-auto">
+                            <button type="button" onclick="exportarClientesCSV()" class="flex-1 md:flex-none px-3 py-2 rounded-lg text-xs font-semibold text-white neumo-button-secondary">
+                                📊 Exportar Clientes CSV
+                            </button>
+                            <button type="button" onclick="exportarOrdenesCSV()" class="flex-1 md:flex-none px-3 py-2 rounded-lg text-xs font-semibold text-white neumo-button">
+                                📋 Exportar Órdenes CSV
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="w-full bg-slate-900 rounded-full h-3 overflow-hidden neumo-input">
+                        <div id="progress-bar" class="bg-blue-500 h-full w-0 transition-all duration-300"></div>
+                    </div>
+                    
+                    <div id="log-console" class="bg-slate-950 p-3 rounded-lg font-mono text-xs text-emerald-400 h-36 overflow-y-auto neumo-input">
+                        [Sistema Listo] Módulos de Clientes, Recepción, Chequeo Técnico y Exportación activos.
+                    </div>
+                </section>
             </div>
-            <div class="kpi-card">
-                <div class="kpi-title">Ingresos en Grúa</div>
-                <div class="kpi-value" id="kpiGrua">0</div>
-            </div>
-            <div class="kpi-card">
-                <div class="kpi-title">Entregados / Salidas</div>
-                <div class="kpi-value" id="kpiSalidas">0</div>
-            </div>
-        </div>
-        
-        <div class="table-wrapper">
-            <table>
-                <thead>
-                    <tr>
-                        <th>Código</th>
-                        <th>Fecha Ingreso</th>
-                        <th>Cliente / Empresa</th>
-                        <th>Placa / Vehículo</th>
-                        <th>Km</th>
-                        <th>Grúa</th>
-                        <th>Mecánico</th>
-                        <th>Estado</th>
-                        <th>Acción</th>
-                    </tr>
-                </thead>
-                <tbody id="tablaAdminBody">
-                    <tr>
-                        <td colspan="9" style="text-align: center; color: var(--text-muted);">Cargando registros desde Firebase...</td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
+
+        </main>
     </div>
 
-    <!-- MÓDULO 4: CONEXIÓN FIREBASE Y CARGA MASIVA CSV -->
-    <div id="viewConfig" class="card hidden">
-        <h2>⚙️ Configuración de Firebase (`taller-mecanico-c2124`) e Importación de Clientes CSV</h2>
-        
-        <div class="form-grid" style="margin-bottom: 24px;">
-            <div class="input-group">
-                <label>API Key de Firebase *</label>
-                <input type="text" id="fb_apiKey" placeholder="AIzaSy...">
-            </div>
-            <div class="input-group">
-                <label>Auth Domain *</label>
-                <input type="text" id="fb_authDomain" value="taller-mecanico-c2124.firebaseapp.com">
-            </div>
-            <div class="input-group">
-                <label>Project ID *</label>
-                <input type="text" id="fb_projectId" value="taller-mecanico-c2124">
-            </div>
-            <div class="input-group">
-                <label>Storage Bucket</label>
-                <input type="text" id="fb_storageBucket" value="taller-mecanico-c2124.appspot.com">
-            </div>
-            <div class="input-group">
-                <label>Messaging Sender ID</label>
-                <input type="text" id="fb_messagingSenderId" placeholder="Ej: 123456789012">
-            </div>
-            <div class="input-group">
-                <label>App ID</label>
-                <input type="text" id="fb_appId" placeholder="1:123456789012:web:...">
-            </div>
-            <div class="col-3" style="display:flex; justify-content:flex-end; gap:10px;">
-                <button type="button" class="btn btn-primary" onclick="guardarYConectarFirebase()">🔗 Guardar Credenciales y Conectar Firebase</button>
-            </div>
-        </div>
+    <!-- Script Firebase y Lógica -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-app.js";
+        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-auth.js";
+        import { getFirestore, collection, addDoc, getDocs, updateDoc, doc, query, where } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-firestore.js";
 
-        <h2>📂 Cargar Clientes y Órdenes desde Archivo CSV (`Orden_de_Servicio`)</h2>
-        <div class="form-grid">
-            <div class="input-group col-2">
-                <label>Seleccionar Archivo CSV de Clientes / Órdenes de Servicio *</label>
-                <input type="file" id="archivoCSVInput" accept=".csv,.txt">
-            </div>
-            <div class="input-group" style="justify-content: flex-end;">
-                <button type="button" class="btn btn-warning" onclick="procesarArchivoCSV()">🚀 Cargar Todos los Clientes a Firebase</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- CONSOLA DE REGISTRO, PROGRESO Y TEMPORIZADOR -->
-    <div class="console-box">
-        <div class="console-header">
-            <span>📟 Consola de Operaciones en Tiempo Real</span>
-            <span id="progressText">Listo (0%)</span>
-        </div>
-        <div class="progress-track">
-            <div id="progressBar" class="progress-fill"></div>
-        </div>
-        <div id="logConsole" class="log-output"></div>
-    </div>
-</div>
-
-<script>
-    // =========================================================================
-    // 1. UTILIDADES DE LOG, PROGRESO Y TEMPORIZADOR
-    // =========================================================================
-    let timerSeconds = 0;
-    setInterval(() => {
-        timerSeconds++;
-        const mins = String(Math.floor(timerSeconds / 60)).padStart(2, '0');
-        const secs = String(timerSeconds % 60).padStart(2, '0');
-        document.getElementById('timerDisplay').innerText = `⏱️ ${mins}:${secs}`;
-    }, 1000);
-
-    function registrarLog(mensaje, tipo = 'info') {
-        const logDiv = document.getElementById('logConsole');
-        const hora = new Date().toLocaleTimeString();
-        const color = tipo === 'error' ? '#ef4444' : tipo === 'ok' ? '#10b981' : '#38bdf8';
-        logDiv.innerHTML += `<div><span style="color:#64748b">[${hora}]</span> <span style="color:${color}">${mensaje}</span></div>`;
-        logDiv.scrollTop = logDiv.scrollHeight;
-    }
-
-    function actualizarProgreso(porcentaje, texto) {
-        document.getElementById('progressBar').style.width = `${porcentaje}%`;
-        document.getElementById('progressText').innerText = `${texto} (${porcentaje}%)`;
-    }
-
-    // =========================================================================
-    // 2. INICIALIZACIÓN DE FIREBASE (taller-mecanico-c2124) + RESPALDO LOCAL
-    // =========================================================================
-    let db = null;
-    let firebaseConectado = false;
-    let clientesCache = [];
-    let vehiculosCache = [];
-    let recepcionesCache = [];
-
-    const DEFAULT_FIREBASE_CONFIG = {
-        apiKey: localStorage.getItem('syntro_fb_apiKey') || '',
-        authDomain: localStorage.getItem('syntro_fb_authDomain') || 'taller-mecanico-c2124.firebaseapp.com',
-        projectId: localStorage.getItem('syntro_fb_projectId') || 'taller-mecanico-c2124',
-        storageBucket: localStorage.getItem('syntro_fb_storageBucket') || 'taller-mecanico-c2124.appspot.com',
-        messagingSenderId: localStorage.getItem('syntro_fb_messagingSenderId') || '',
-        appId: localStorage.getItem('syntro_fb_appId') || ''
-    };
-
-    window.addEventListener('DOMContentLoaded', async () => {
-        document.getElementById('fb_apiKey').value = DEFAULT_FIREBASE_CONFIG.apiKey;
-        document.getElementById('fb_authDomain').value = DEFAULT_FIREBASE_CONFIG.authDomain;
-        document.getElementById('fb_projectId').value = DEFAULT_FIREBASE_CONFIG.projectId;
-        document.getElementById('fb_storageBucket').value = DEFAULT_FIREBASE_CONFIG.storageBucket;
-        document.getElementById('fb_messagingSenderId').value = DEFAULT_FIREBASE_CONFIG.messagingSenderId;
-        document.getElementById('fb_appId').value = DEFAULT_FIREBASE_CONFIG.appId;
-
-        cargarCacheLocal();
-        await inicializarFirebase();
-    });
-
-    function cargarCacheLocal() {
-        clientesCache = JSON.parse(localStorage.getItem('syntro_clientes') || '[]');
-        vehiculosCache = JSON.parse(localStorage.getItem('syntro_vehiculos') || '[]');
-        recepcionesCache = JSON.parse(localStorage.getItem('syntro_recepciones') || '[]');
-        renderizarDesplegableClientes();
-        renderizarTablaAdmin(recepcionesCache);
-    }
-
-    function guardarCacheLocal() {
-        localStorage.setItem('syntro_clientes', JSON.stringify(clientesCache));
-        localStorage.setItem('syntro_vehiculos', JSON.stringify(vehiculosCache));
-        localStorage.setItem('syntro_recepciones', JSON.stringify(recepcionesCache));
-    }
-
-    async function guardarYConectarFirebase() {
-        const cfg = {
-            apiKey: document.getElementById('fb_apiKey').value.trim(),
-            authDomain: document.getElementById('fb_authDomain').value.trim(),
-            projectId: document.getElementById('fb_projectId').value.trim(),
-            storageBucket: document.getElementById('fb_storageBucket').value.trim(),
-            messagingSenderId: document.getElementById('fb_messagingSenderId').value.trim(),
-            appId: document.getElementById('fb_appId').value.trim()
-        };
-        if (!cfg.apiKey || !cfg.projectId) {
-            alert('Por favor ingresa al menos el API Key y Project ID de Firebase.');
-            return;
-        }
-        localStorage.setItem('syntro_fb_apiKey', cfg.apiKey);
-        localStorage.setItem('syntro_fb_authDomain', cfg.authDomain);
-        localStorage.setItem('syntro_fb_projectId', cfg.projectId);
-        localStorage.setItem('syntro_fb_storageBucket', cfg.storageBucket);
-        localStorage.setItem('syntro_fb_messagingSenderId', cfg.messagingSenderId);
-        localStorage.setItem('syntro_fb_appId', cfg.appId);
-        location.reload();
-    }
-
-    async function inicializarFirebase() {
-        const badge = document.getElementById('dbStatusBadge');
-        if (!DEFAULT_FIREBASE_CONFIG.apiKey) {
-            badge.style.color = 'var(--warning)';
-            badge.innerText = `● Modo Local Activo (${clientesCache.length} clientes) — Configura API Key en pestaña ⚙️ Firebase`;
-            registrarLog('Firebase sin API Key configurada. Trabajando con almacenamiento local sincronizable.', 'info');
-            actualizarProgreso(100, 'Listo en modo local');
-            return;
-        }
-
-        try {
-            actualizarProgreso(25, 'Autenticando en Firebase...');
-            if (!firebase.apps.length) {
-                firebase.initializeApp(DEFAULT_FIREBASE_CONFIG);
-            }
-            await firebase.auth().signInAnonymously().catch(() => {});
-            db = firebase.firestore();
-            firebaseConectado = true;
-            registrarLog(`Conectado exitosamente a Firebase (${DEFAULT_FIREBASE_CONFIG.projectId}).`, 'ok');
-            await sincronizarDesdeFirebase();
-        } catch (err) {
-            firebaseConectado = false;
-            badge.style.color = 'var(--danger)';
-            badge.innerText = '● Error de conexión Firebase (Usando respaldo local)';
-            registrarLog('Error conectando a Firebase: ' + err.message, 'error');
-            actualizarProgreso(100, 'Respaldo local activo');
-        }
-    }
-
-    async function sincronizarDesdeFirebase() {
-        if (!firebaseConectado || !db) return;
-        const badge = document.getElementById('dbStatusBadge');
-        try {
-            actualizarProgreso(50, 'Descargando clientes de Firestore...');
-            const snapClientes = await db.collection('clientes').get();
-            if (!snapClientes.empty) {
-                clientesCache = snapClientes.docs.map(d => ({ id: d.id, ...d.data() }));
-            }
-
-            actualizarProgreso(75, 'Descargando vehículos y órdenes...');
-            const snapVehiculos = await db.collection('vehiculos').get();
-            if (!snapVehiculos.empty) {
-                vehiculosCache = snapVehiculos.docs.map(d => ({ id: d.id, ...d.data() }));
-            }
-
-            const snapRecepciones = await db.collection('recepcion_vehiculos').orderBy('ingreso_fecha_hora', 'desc').get();
-            if (!snapRecepciones.empty) {
-                recepcionesCache = snapRecepciones.docs.map(d => ({ id: d.id, ...d.data() }));
-            }
-
-            guardarCacheLocal();
-            renderizarDesplegableClientes();
-            renderizarTablaAdmin(recepcionesCache);
-
-            badge.style.color = 'var(--success)';
-            badge.innerText = `● Firebase Conectado (${clientesCache.length} clientes | ${vehiculosCache.length} vehículos)`;
-            registrarLog(`Sincronización completa: ${clientesCache.length} clientes, ${vehiculosCache.length} vehículos, ${recepcionesCache.length} órdenes.`, 'ok');
-            actualizarProgreso(100, 'Sincronizado con Firebase');
-        } catch (err) {
-            registrarLog('Aviso al leer colecciones Firestore: ' + err.message, 'error');
-            actualizarProgreso(100, 'Listo');
-        }
-    }
-
-    // =========================================================================
-    // 3. BÚSQUEDA INTELIGENTE POR CLIENTE Y POR PLACA
-    // =========================================================================
-    function renderizarDesplegableClientes() {
-        const select = document.getElementById('listaClientesDB');
-        const ordenados = [...clientesCache].sort((a, b) => (a.nombre_razon_social || '').localeCompare(b.nombre_razon_social || ''));
-        select.innerHTML = `<option value="">-- Seleccione un cliente (${ordenados.length} registrados) o registre uno nuevo --</option>`;
-        ordenados.forEach((c, idx) => {
-            const opt = document.createElement('option');
-            opt.value = c.cedula_rif || idx;
-            opt.textContent = `${c.nombre_razon_social} | ID: ${c.cedula_rif || 'S/D'} | Tlf: ${c.telefono || 'S/N'}`;
-            select.appendChild(opt);
-        });
-        document.getElementById('kpiClientes').innerText = clientesCache.length;
-    }
-
-    function cargarDatosClienteDesdeLista(val) {
-        if (!val) {
-            prepararNuevoCliente();
-            return;
-        }
-        const c = clientesCache.find(item => String(item.cedula_rif) === String(val));
-        if (c) llenarCamposCliente(c);
-    }
-
-    function llenarCamposCliente(c) {
-        document.getElementById('cedula_rif').value = c.cedula_rif || '';
-        document.getElementById('nombre_razon_social').value = c.nombre_razon_social || '';
-        document.getElementById('tipo_cliente').value = c.tipo_cliente || 'Persona';
-        document.getElementById('telefono').value = c.telefono || '';
-        document.getElementById('correo').value = c.correo || '';
-        document.getElementById('direccion').value = c.direccion || '';
-    }
-
-    function prepararNuevoCliente() {
-        document.getElementById('listaClientesDB').value = '';
-        document.getElementById('cedula_rif').value = '';
-        document.getElementById('nombre_razon_social').value = '';
-        document.getElementById('tipo_cliente').value = 'Persona';
-        document.getElementById('telefono').value = '';
-        document.getElementById('correo').value = '';
-        document.getElementById('direccion').value = '';
-        document.getElementById('autocompleteCliente').style.display = 'none';
-    }
-
-    function buscarClienteEnVivo(query) {
-        const box = document.getElementById('autocompleteCliente');
-        const q = (query || '').trim().toLowerCase();
-        if (q.length < 2) {
-            box.style.display = 'none';
-            return;
-        }
-        const coincidencias = clientesCache.filter(c =>
-            (c.cedula_rif || '').toLowerCase().includes(q) ||
-            (c.nombre_razon_social || '').toLowerCase().includes(q)
-        ).slice(0, 8);
-
-        if (coincidencias.length === 0) {
-            box.style.display = 'none';
-            return;
-        }
-
-        box.innerHTML = '';
-        coincidencias.forEach(c => {
-            const div = document.createElement('div');
-            div.className = 'autocomplete-item';
-            div.innerHTML = `<strong>${c.nombre_razon_social}</strong> (${c.cedula_rif || 'S/D'}) — Tlf: ${c.telefono || 'S/N'}`;
-            div.onclick = () => {
-                llenarCamposCliente(c);
-                box.style.display = 'none';
-            };
-            box.appendChild(div);
-        });
-        box.style.display = 'block';
-    }
-
-    function buscarVehiculoPorPlaca(query) {
-        const box = document.getElementById('autocompletePlaca');
-        const q = (query || '').trim().toUpperCase();
-        if (q.length < 2) {
-            box.style.display = 'none';
-            return;
-        }
-
-        const coincidencias = vehiculosCache.filter(v => (v.placa || '').toUpperCase().includes(q)).slice(0, 8);
-        if (coincidencias.length === 0) {
-            box.style.display = 'none';
-            return;
-        }
-
-        box.innerHTML = '';
-        coincidencias.forEach(v => {
-            const div = document.createElement('div');
-            div.className = 'autocomplete-item';
-            div.innerHTML = `🚗 <strong>${v.placa}</strong> — ${v.marca || ''} ${v.modelo || ''} (${v.cliente_nombre || 'Sin dueño'})`;
-            div.onclick = () => {
-                document.getElementById('placa').value = v.placa || '';
-                document.getElementById('marca').value = v.marca || '';
-                document.getElementById('modelo').value = v.modelo || '';
-                document.getElementById('anio').value = v.anio || '';
-                document.getElementById('color').value = v.color || '';
-                document.getElementById('serial_carroceria').value = v.serial_carroceria || '';
-                document.getElementById('serial_bateria').value = v.serial_bateria || '';
-                if (v.cliente_cedula) {
-                    const dueno = clientesCache.find(c => c.cedula_rif === v.cliente_cedula);
-                    if (dueno) llenarCamposCliente(dueno);
-                }
-                registrarLog(`Vehículo placa ${v.placa} autocompletado desde historial.`, 'ok');
-                box.style.display = 'none';
-            };
-            box.appendChild(div);
-        });
-        box.style.display = 'block';
-    }
-
-    // =========================================================================
-    // 4. GUARDAR RECEPCIÓN EN FIREBASE Y RESPALDO LOCAL
-    // =========================================================================
-    async function guardarRecepcion(e) {
-        e.preventDefault();
-        actualizarProgreso(30, 'Guardando recepción...');
-
-        const cedulaRif = document.getElementById('cedula_rif').value.trim().toUpperCase();
-        const nombreCliente = document.getElementById('nombre_razon_social').value.trim();
-        const placa = document.getElementById('placa').value.trim().toUpperCase();
-        const codigoServicio = '2026-' + Math.floor(100000 + Math.random() * 900000);
-
-        const clienteObj = {
-            cedula_rif: cedulaRif,
-            nombre_razon_social: nombreCliente,
-            tipo_cliente: document.getElementById('tipo_cliente').value,
-            telefono: document.getElementById('telefono').value.trim(),
-            correo: document.getElementById('correo').value.trim(),
-            direccion: document.getElementById('direccion').value.trim(),
-            actualizado_en: new Date().toISOString()
+        const firebaseConfig = {
+            apiKey: "AIzaSyBe96LcGjwrVh6ciDoEbbUwRhfGCOrqBS8",
+            authDomain: "taller-mecanico-c2124.firebaseapp.com",
+            projectId: "taller-mecanico-c2124",
+            storageBucket: "taller-mecanico-c2124.firebasestorage.app",
+            messagingSenderId: "524886950258",
+            appId: "1:524886950258:web:8980e91ab51833e7b49deb",
+            measurementId: "G-TWRKEQBJML"
         };
 
-        const vehiculoObj = {
-            placa: placa,
-            marca: document.getElementById('marca').value.trim(),
-            modelo: document.getElementById('modelo').value.trim(),
-            anio: document.getElementById('anio').value || '',
-            color: document.getElementById('color').value.trim(),
-            serial_carroceria: document.getElementById('serial_carroceria').value.trim(),
-            serial_bateria: document.getElementById('serial_bateria').value.trim(),
-            cliente_cedula: cedulaRif,
-            cliente_nombre: nombreCliente
-        };
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        let clienteDocIdActual = null;
+        let usuarioActual = null;
+        let vehiculosClienteActual = [];
+        let todosLosClientesCache = [];
 
-        const recepcionObj = {
-            codigo_servicio: codigoServicio,
-            ingreso_fecha_hora: new Date().toISOString(),
-            cliente_cedula: cedulaRif,
-            cliente_nombre: nombreCliente,
-            placa: placa,
-            vehiculo_desc: `${vehiculoObj.marca} ${vehiculoObj.modelo}`,
-            kilometraje: parseInt(document.getElementById('kilometraje').value) || 0,
-            ingreso_grua: document.getElementById('ingreso_grua').value === 'SI',
-            nivel_combustible: document.getElementById('nivel_combustible').value,
-            mecanico_asignado: document.getElementById('mecanico_asignado').value,
-            recibido_por: document.getElementById('recibido_por').value,
-            trabajo_realizar: document.getElementById('trabajo_realizar').value,
-            accesorios: {
-                gato: document.getElementById('check_gato').checked,
-                herramientas: document.getElementById('check_herramientas').checked,
-                triangulo: document.getElementById('check_triangulo').checked,
-                repuesto: document.getElementById('check_repuesto').checked,
-                estereo: document.getElementById('check_estereo').checked,
-                antena: document.getElementById('check_antena').checked,
-                emblemas: document.getElementById('check_emblemas').checked,
-                alfombras: document.getElementById('check_alfombras').checked,
-                cables: document.getElementById('check_cables').checked,
-                tazas: document.getElementById('check_tazas').checked,
-                luces: document.getElementById('check_luces').checked
-            },
-            estado: 'En Taller'
-        };
+        // Temporizador de sesión
+        let segundos = 0;
+        setInterval(() => {
+            segundos++;
+            const hrs = String(Math.floor(segundos / 3600)).padStart(2, '0');
+            const mins = String(Math.floor((segundos % 3600) / 60)).padStart(2, '0');
+            const secs = String(segundos % 60).padStart(2, '0');
+            const timerEl = document.getElementById('timer');
+            if (timerEl) timerEl.innerText = `${hrs}:${mins}:${secs}`;
+        }, 1000);
 
-        // Actualizar caché en memoria
-        const idxC = clientesCache.findIndex(c => c.cedula_rif === cedulaRif);
-        if (idxC >= 0) clientesCache[idxC] = clienteObj; else clientesCache.push(clienteObj);
+        function log(msg) {
+            const consoleEl = document.getElementById('log-console');
+            const time = new Date().toLocaleTimeString();
+            consoleEl.innerHTML += `\n[${time}] ${msg}`;
+            consoleEl.scrollTop = consoleEl.scrollHeight;
+        }
 
-        const idxV = vehiculosCache.findIndex(v => v.placa === placa);
-        if (idxV >= 0) vehiculosCache[idxV] = vehiculoObj; else vehiculosCache.push(vehiculoObj);
+        function setProgress(pct) {
+            document.getElementById('progress-bar').style.width = `${pct}%`;
+        }
 
-        recepcionesCache.unshift(recepcionObj);
-        guardarCacheLocal();
+        function generarCodigoOrden() {
+            const ahora = new Date();
+            const anio = ahora.getFullYear();
+            const rand = Math.floor(100000 + Math.random() * 900000);
+            document.getElementById('ord-codigo').value = `ORD-${anio}-${rand}`;
+        }
 
-        // Guardar en Firebase si está conectado
-        if (firebaseConectado && db) {
+        // Autenticación
+        window.manejarAutenticacion = async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('auth-email').value.trim();
+            const password = document.getElementById('auth-password').value;
             try {
-                actualizarProgreso(70, 'Sincronizando con Firestore...');
-                await db.collection('clientes').doc(cedulaRif.replace(/[^a-zA-Z0-9]/g, '_')).set(clienteObj, { merge: true });
-                await db.collection('vehiculos').doc(placa.replace(/[^a-zA-Z0-9]/g, '_')).set(vehiculoObj, { merge: true });
-                await db.collection('recepcion_vehiculos').doc(codigoServicio).set(recepcionObj);
-                registrarLog(`Orden ${codigoServicio} (Placa ${placa}) guardada en Firebase.`, 'ok');
-            } catch (err) {
-                registrarLog('Guardado localmente. Error al subir a Firebase: ' + err.message, 'error');
-            }
-        } else {
-            registrarLog(`Orden ${codigoServicio} (Placa ${placa}) guardada en memoria local.`, 'ok');
-        }
-
-        renderizarDesplegableClientes();
-        renderizarTablaAdmin(recepcionesCache);
-        actualizarProgreso(100, 'Recepción completada');
-        alert(`✅ Vehículo registrado con éxito.\nCódigo de Servicio: ${codigoServicio}\nPlaca: ${placa}\nCliente: ${nombreCliente}`);
-        document.getElementById('formRecepcion').reset();
-        prepararNuevoCliente();
-    }
-
-    // =========================================================================
-    // 5. IMPORTACIÓN MASIVA DE TU ARCHIVO CSV (Orden_de_Servicio)
-    // =========================================================================
-    async function procesarArchivoCSV() {
-        const input = document.getElementById('archivoCSVInput');
-        if (!input.files || input.files.length === 0) {
-            alert('Por favor selecciona primero tu archivo CSV (Orden_de_Servicio - entrega y salida.csv).');
-            return;
-        }
-
-        const archivo = input.files[0];
-        const texto = await archivo.text();
-        const lineas = texto.split(/\r?\n/).filter(l => l.trim().length > 0);
-        if (lineas.length < 2) {
-            alert('El archivo CSV está vacío o no tiene filas de datos.');
-            return;
-        }
-
-        const separador = lineas[0].includes(';') ? ';' : ',';
-        const cabeceras = parsearLineaCSV(lineas[0], separador).map(h => h.trim().toLowerCase());
-        registrarLog(`Leyendo archivo "${archivo.name}" (${lineas.length - 1} filas detectadas)...`, 'info');
-
-        let nuevosClientes = 0;
-        let nuevosVehiculos = 0;
-
-        for (let i = 1; i < lineas.length; i++) {
-            const cols = parsearLineaCSV(lineas[i], separador);
-            const fila = {};
-            cabeceras.forEach((h, idx) => { fila[h] = (cols[idx] || '').trim(); });
-
-            const nombre = fila['cliente'] || fila['nombre'] || fila['nombre_razon_social'] || fila['razon social'] || '';
-            const cedula = (fila['cedula'] || fila['rif'] || fila['cedula_rif'] || fila['ci'] || `CLI-${i}`).toUpperCase();
-            const telefono = fila['telefono'] || fila['celular'] || fila['tlf'] || '';
-            const correo = fila['correo'] || fila['email'] || '';
-            const direccion = fila['direccion'] || 'Maracaibo, Zulia';
-            const placa = (fila['placa'] || '').toUpperCase();
-            const marca = fila['marca'] || '';
-            const modelo = fila['modelo'] || '';
-            const anio = fila['año'] || fila['anio'] || '';
-
-            if (nombre && !clientesCache.some(c => c.cedula_rif === cedula && c.nombre_razon_social === nombre)) {
-                const cObj = {
-                    cedula_rif: cedula,
-                    nombre_razon_social: nombre,
-                    tipo_cliente: cedula.startsWith('J') || cedula.startsWith('G') ? 'Empresa' : 'Persona',
-                    telefono: telefono,
-                    correo: correo,
-                    direccion: direccion
-                };
-                clientesCache.push(cObj);
-                nuevosClientes++;
-
-                if (firebaseConectado && db) {
-                    await db.collection('clientes').doc(cedula.replace(/[^a-zA-Z0-9]/g, '_') + '_' + i).set(cObj, { merge: true });
+                await signInWithEmailAndPassword(auth, email, password);
+            } catch (error) {
+                if (error.code === 'auth/user-not-found' || error.code === 'auth/invalid-credential') {
+                    try {
+                        await createUserWithEmailAndPassword(auth, email, password);
+                        log(`Nuevo operador registrado: ${email}`);
+                    } catch (regErr) {
+                        alert("Error de acceso: " + regErr.message);
+                    }
+                } else {
+                    alert("Error de autenticación: " + error.message);
                 }
             }
+        };
 
-            if (placa && !vehiculosCache.some(v => v.placa === placa)) {
-                const vObj = {
-                    placa: placa,
+        window.cerrarSesion = async () => {
+            await signOut(auth);
+        };
+
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                usuarioActual = user;
+                document.getElementById('auth-container').classList.add('hidden');
+                document.getElementById('app-container').classList.remove('hidden');
+                document.getElementById('user-display').innerText = user.email;
+                generarCodigoOrden();
+                await cargarCacheClientes();
+            } else {
+                usuarioActual = null;
+                document.getElementById('auth-container').classList.remove('hidden');
+                document.getElementById('app-container').classList.add('hidden');
+            }
+        });
+
+        async function cargarCacheClientes() {
+            try {
+                setProgress(30);
+                const snap = await getDocs(collection(db, "clientes"));
+                todosLosClientesCache = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+                log(`Sincronizados ${todosLosClientesCache.length} clientes desde Cloud Firestore.`);
+                setProgress(100);
+            } catch (err) {
+                log(`Error cargando clientes: ${err.message}`);
+            }
+        }
+
+        // Módulo 1: Buscar, Seleccionar y Guardar Cliente
+        window.buscarCliente = async () => {
+            const criterio = document.getElementById('criterio-busqueda').value.trim().toLowerCase();
+            const resDiv = document.getElementById('resultados-busqueda');
+            resDiv.innerHTML = '';
+
+            if (!criterio) {
+                await cargarCacheClientes();
+                return;
+            }
+
+            if (todosLosClientesCache.length === 0) {
+                await cargarCacheClientes();
+            }
+
+            const filtrados = todosLosClientesCache.filter(c =>
+                (c.cedula || '').toLowerCase().includes(criterio) ||
+                (c.nombre || '').toLowerCase().includes(criterio)
+            );
+
+            if (filtrados.length === 0) {
+                resDiv.innerHTML = `<div class="text-slate-400 p-1">No se encontraron coincidencias.</div>`;
+                log(`Búsqueda "${criterio}": 0 resultados.`);
+                return;
+            }
+
+            log(`Búsqueda "${criterio}": ${filtrados.length} cliente(s) encontrado(s).`);
+            filtrados.forEach(cliente => {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'w-full text-left p-2 rounded bg-slate-800 hover:bg-blue-900/60 text-slate-200 transition flex justify-between';
+                btn.innerHTML = `<span><strong>${cliente.nombre}</strong></span><span class="text-blue-400 font-mono">${cliente.cedula}</span>`;
+                btn.onclick = () => seleccionarCliente(cliente);
+                resDiv.appendChild(btn);
+            });
+        };
+
+        async function seleccionarCliente(cliente) {
+            clienteDocIdActual = cliente.id;
+            document.getElementById('cedula').value = cliente.cedula || '';
+            document.getElementById('nombre').value = cliente.nombre || '';
+            document.getElementById('telefono').value = cliente.telefono || '';
+            document.getElementById('direccion').value = cliente.direccion || '';
+            document.getElementById('resultados-busqueda').innerHTML = '';
+            log(`Cliente seleccionado: ${cliente.nombre} (${cliente.cedula})`);
+            await cargarVehiculosCliente(cliente.cedula);
+        }
+
+        window.limpiarFormularioCliente = () => {
+            clienteDocIdActual = null;
+            document.getElementById('client-form').reset();
+            document.getElementById('resultados-busqueda').innerHTML = '';
+            const selectPlaca = document.getElementById('ord-placa');
+            selectPlaca.innerHTML = `<option value="">Seleccione cliente primero</option><option value="NUEVO">➕ Registrar Nuevo Vehículo</option>`;
+        };
+
+        window.guardarCliente = async (e) => {
+            e.preventDefault();
+            setProgress(25);
+            const datosCliente = {
+                cedula: document.getElementById('cedula').value.trim().toUpperCase(),
+                nombre: document.getElementById('nombre').value.trim(),
+                telefono: document.getElementById('telefono').value.trim(),
+                direccion: document.getElementById('direccion').value.trim(),
+                actualizadoPor: usuarioActual ? usuarioActual.email : 'operador',
+                fechaActualizacion: new Date().toISOString()
+            };
+
+            try {
+                if (clienteDocIdActual) {
+                    await updateDoc(doc(db, "clientes", clienteDocIdActual), datosCliente);
+                    log(`Cliente actualizado en Cloud: ${datosCliente.nombre}`);
+                } else {
+                    const existente = todosLosClientesCache.find(c => c.cedula === datosCliente.cedula);
+                    if (existente) {
+                        clienteDocIdActual = existente.id;
+                        await updateDoc(doc(db, "clientes", clienteDocIdActual), datosCliente);
+                        log(`Cliente existente actualizado: ${datosCliente.nombre}`);
+                    } else {
+                        const docRef = await addDoc(collection(db, "clientes"), datosCliente);
+                        clienteDocIdActual = docRef.id;
+                        log(`Nuevo cliente guardado en Cloud: ${datosCliente.nombre}`);
+                    }
+                }
+                setProgress(75);
+                await cargarCacheClientes();
+                await cargarVehiculosCliente(datosCliente.cedula);
+                setProgress(100);
+            } catch (err) {
+                log(`Error guardando cliente: ${err.message}`);
+                alert("Error al guardar cliente: " + err.message);
+            }
+        };
+
+        // Módulo 2: Vehículos por Cliente y Selección de Placa
+        async function cargarVehiculosCliente(cedulaCliente) {
+            const selectPlaca = document.getElementById('ord-placa');
+            selectPlaca.innerHTML = `<option value="">Cargando vehículos...</option>`;
+            try {
+                const q = query(collection(db, "vehiculos"), where("clienteCedula", "==", cedulaCliente));
+                const snap = await getDocs(q);
+                vehiculosClienteActual = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+
+                selectPlaca.innerHTML = `<option value="">-- Seleccione Placa (${vehiculosClienteActual.length}) --</option>`;
+                vehiculosClienteActual.forEach(v => {
+                    const opt = document.createElement('option');
+                    opt.value = v.placa;
+                    opt.textContent = `${v.placa} - ${v.marca} ${v.modelo} (${v.anio})`;
+                    selectPlaca.appendChild(opt);
+                });
+                const optNuevo = document.createElement('option');
+                optNuevo.value = "NUEVO";
+                optNuevo.textContent = "➕ Registrar Nuevo Vehículo";
+                selectPlaca.appendChild(optNuevo);
+
+                if (vehiculosClienteActual.length === 0) {
+                    selectPlaca.value = "NUEVO";
+                    manejarSeleccionPlaca();
+                }
+            } catch (err) {
+                log(`Error cargando vehículos: ${err.message}`);
+            }
+        }
+
+        window.manejarSeleccionPlaca = () => {
+            const val = document.getElementById('ord-placa').value;
+            const divNuevo = document.getElementById('div-nuevo-placa');
+            const inputNuevo = document.getElementById('nuevo-placa');
+
+            if (val === "NUEVO") {
+                divNuevo.classList.remove('hidden');
+                inputNuevo.classList.remove('hidden');
+                inputNuevo.required = true;
+                document.getElementById('ord-marca').value = '';
+                document.getElementById('ord-modelo').value = '';
+                document.getElementById('ord-anio').value = '';
+            } else {
+                divNuevo.classList.add('hidden');
+                inputNuevo.classList.add('hidden');
+                inputNuevo.required = false;
+                const veh = vehiculosClienteActual.find(v => v.placa === val);
+                if (veh) {
+                    document.getElementById('ord-marca').value = veh.marca || '';
+                    document.getElementById('ord-modelo').value = veh.modelo || '';
+                    document.getElementById('ord-anio').value = veh.anio || '';
+                    log(`Vehículo cargado: ${veh.placa} (${veh.marca} ${veh.modelo})`);
+                }
+            }
+        };
+
+        // Guardar Orden Completa + Vehículo (si es nuevo)
+        window.guardarOrdenServicio = async (e) => {
+            e.preventDefault();
+            setProgress(20);
+
+            const cedulaCliente = document.getElementById('cedula').value.trim().toUpperCase();
+            const nombreCliente = document.getElementById('nombre').value.trim();
+
+            if (!cedulaCliente || !nombreCliente) {
+                alert("Por favor seleccione o registre primero un cliente en el Módulo 1.");
+                return;
+            }
+
+            const seleccionPlaca = document.getElementById('ord-placa').value;
+            const placaFinal = seleccionPlaca === "NUEVO"
+                ? document.getElementById('nuevo-placa').value.trim().toUpperCase()
+                : seleccionPlaca.trim().toUpperCase();
+
+            if (!placaFinal) {
+                alert("Debe seleccionar una placa o ingresar la placa del nuevo vehículo.");
+                return;
+            }
+
+            const marca = document.getElementById('ord-marca').value.trim();
+            const modelo = document.getElementById('ord-modelo').value.trim();
+            const anio = document.getElementById('ord-anio').value.trim();
+
+            try {
+                // Si el vehículo es nuevo, guardarlo en la colección vehiculos
+                if (seleccionPlaca === "NUEVO") {
+                    await addDoc(collection(db, "vehiculos"), {
+                        clienteCedula: cedulaCliente,
+                        clienteNombre: nombreCliente,
+                        placa: placaFinal,
+                        marca: marca,
+                        modelo: modelo,
+                        anio: anio,
+                        fechaRegistro: new Date().toISOString()
+                    });
+                    log(`Nuevo vehículo registrado: ${placaFinal} (${marca} ${modelo})`);
+                }
+
+                setProgress(55);
+
+                const ordenData = {
+                    codigoOrden: document.getElementById('ord-codigo').value,
+                    fechaIngreso: new Date().toISOString(),
+                    operador: usuarioActual ? usuarioActual.email : 'operador',
+                    clienteCedula: cedulaCliente,
+                    clienteNombre: nombreCliente,
+                    clienteTelefono: document.getElementById('telefono').value.trim(),
+                    placa: placaFinal,
                     marca: marca,
                     modelo: modelo,
                     anio: anio,
-                    cliente_cedula: cedula,
-                    cliente_nombre: nombre
+                    kilometraje: document.getElementById('ord-km').value.trim(),
+                    servicio: document.getElementById('ord-servicio').value.trim(),
+                    mecanico: document.getElementById('ord-mecanico').value.trim(),
+                    inspeccionTecnica: {
+                        aceiteNivel: document.getElementById('chk-aceite-nivel').value.trim(),
+                        aceiteColor: document.getElementById('chk-aceite-color').value.trim(),
+                        aceiteFiltro: document.getElementById('chk-aceite-filtro').value.trim(),
+                        aceiteFugas: document.getElementById('chk-aceite-fugas').value.trim(),
+                        correaTension: document.getElementById('chk-correa-tension').value.trim(),
+                        correaGrietas: document.getElementById('chk-correa-grietas').value.trim(),
+                        refrigNivel: document.getElementById('chk-refrig-nivel').value.trim(),
+                        refrigColor: document.getElementById('chk-refrig-color').value.trim(),
+                        refrigFugas: document.getElementById('chk-refrig-fugas').value.trim(),
+                        batTerminal: document.getElementById('chk-bat-terminal').value.trim(),
+                        altVoltaje: document.getElementById('chk-alt-voltaje').value.trim(),
+                        dirJuego: document.getElementById('chk-dir-juego').value.trim(),
+                        frenoLiga: document.getElementById('chk-freno-liga').value.trim(),
+                        ruedasPresion: document.getElementById('chk-ruedas-presion').value.trim(),
+                        lucesExt: document.getElementById('chk-luces-ext').value.trim()
+                    },
+                    estado: "En Proceso"
                 };
-                vehiculosCache.push(vObj);
-                nuevosVehiculos++;
 
-                if (firebaseConectado && db) {
-                    await db.collection('vehiculos').doc(placa.replace(/[^a-zA-Z0-9]/g, '_')).set(vObj, { merge: true });
+                await addDoc(collection(db, "ordenes"), ordenData);
+                setProgress(100);
+                log(`Orden ${ordenData.codigoOrden} (Placa ${placaFinal}) guardada exitosamente.`);
+                alert(`Orden ${ordenData.codigoOrden} guardada en Cloud Firestore.`);
+
+                document.getElementById('orden-form').reset();
+                generarCodigoOrden();
+                await cargarVehiculosCliente(cedulaCliente);
+            } catch (err) {
+                log(`Error guardando orden: ${err.message}`);
+                alert("Error al guardar la orden: " + err.message);
+            }
+        };
+
+        // Importar Clientes CSV a Firebase
+        window.importarClientesCSV = async () => {
+            const fileInput = document.getElementById('csv-clientes-file');
+            if (!fileInput.files || fileInput.files.length === 0) {
+                alert("Seleccione primero el archivo CSV de clientes.");
+                return;
+            }
+
+            const file = fileInput.files[0];
+            const text = await file.text();
+            const lines = text.split(/\r?\n/).filter(l => l.trim().length > 0);
+            if (lines.length < 2) {
+                alert("El archivo CSV no contiene registros válidos.");
+                return;
+            }
+
+            const sep = lines[0].includes(';') ? ';' : ',';
+            const headers = lines[0].split(sep).map(h => h.replace(/"/g, '').trim().toLowerCase());
+            log(`Iniciando importación de ${lines.length - 1} filas desde ${file.name}...`);
+
+            let agregados = 0;
+            const cedulasExistentes = new Set(todosLosClientesCache.map(c => (c.cedula || '').toUpperCase()));
+
+            for (let i = 1; i < lines.length; i++) {
+                const cols = lines[i].split(sep).map(c => c.replace(/"/g, '').trim());
+                const row = {};
+                headers.forEach((h, idx) => { row[h] = cols[idx] || ''; });
+
+                const cedula = (row['cedula'] || row['rif'] || row['cedula_rif'] || row['ci'] || `CLI-${i}`).toUpperCase();
+                const nombre = row['nombre'] || row['cliente'] || row['nombre_razon_social'] || row['razon social'] || '';
+                const telefono = row['telefono'] || row['celular'] || row['tlf'] || '';
+                const direccion = row['direccion'] || 'Maracaibo';
+
+                if (nombre && !cedulasExistentes.has(cedula)) {
+                    await addDoc(collection(db, "clientes"), {
+                        cedula,
+                        nombre,
+                        telefono,
+                        direccion,
+                        fechaImportacion: new Date().toISOString()
+                    });
+                    cedulasExistentes.add(cedula);
+                    agregados++;
+                }
+
+                if (i % 10 === 0 || i === lines.length - 1) {
+                    setProgress(Math.round((i / (lines.length - 1)) * 100));
                 }
             }
 
-            if (i % 15 === 0 || i === lineas.length - 1) {
-                const pct = Math.round((i / (lineas.length - 1)) * 100);
-                actualizarProgreso(pct, `Importando registros (${i}/${lineas.length - 1})`);
-            }
+            await cargarCacheClientes();
+            log(`Importación finalizada: ${agregados} clientes nuevos subidos a Firebase.`);
+            alert(`Importación completada: ${agregados} clientes nuevos agregados.`);
+        };
+
+        // Exportación a CSV (sin separadores de miles)
+        function descargarCSV(nombreArchivo, filas) {
+            const contenido = filas.map(fila =>
+                fila.map(val => `"${String(val ?? '').replace(/"/g, '""')}"`).join(',')
+            ).join('\n');
+            const blob = new Blob([contenido], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = nombreArchivo;
+            a.click();
+            URL.revokeObjectURL(url);
         }
 
-        guardarCacheLocal();
-        renderizarDesplegableClientes();
-        registrarLog(`Importación finalizada: +${nuevosClientes} clientes y +${nuevosVehiculos} vehículos cargados.`, 'ok');
-        alert(`✅ Importación completada:\n• ${nuevosClientes} clientes agregados\n• ${nuevosVehiculos} vehículos con placa indexados`);
-    }
+        window.exportarClientesCSV = async () => {
+            setProgress(40);
+            await cargarCacheClientes();
+            const filas = [['Cedula_RIF', 'Nombre', 'Telefono', 'Direccion']];
+            todosLosClientesCache.forEach(c => {
+                filas.push([c.cedula, c.nombre, c.telefono, c.direccion]);
+            });
+            descargarCSV(`Clientes_Syntro_${new Date().toISOString().slice(0,10)}.csv`, filas);
+            setProgress(100);
+            log(`Exportados ${todosLosClientesCache.length} clientes a CSV.`);
+        };
 
-    function parsearLineaCSV(linea, sep) {
-        const res = [];
-        let actual = '';
-        let enComillas = false;
-        for (let i = 0; i < linea.length; i++) {
-            const ch = linea[i];
-            if (ch === '"') {
-                enComillas = !enComillas;
-            } else if (ch === sep && !enComillas) {
-                res.push(actual);
-                actual = '';
-            } else {
-                actual += ch;
-            }
-        }
-        res.push(actual);
-        return res;
-    }
-
-    // =========================================================================
-    // 6. PANEL ADMINISTRADOR Y NAVEGACIÓN
-    // =========================================================================
-    function cambiarModulo(vista) {
-        document.getElementById('viewRecepcion').classList.add('hidden');
-        document.getElementById('viewAdmin').classList.add('hidden');
-        document.getElementById('viewConfig').classList.add('hidden');
-
-        const btns = document.querySelectorAll('.tab-btn');
-        btns.forEach(b => b.classList.remove('active'));
-
-        if (vista === 'recepcion') {
-            document.getElementById('viewRecepcion').classList.remove('hidden');
-            btns[0].classList.add('active');
-        } else if (vista === 'admin') {
-            document.getElementById('viewAdmin').classList.remove('hidden');
-            btns[1].classList.add('active');
-            renderizarTablaAdmin(recepcionesCache);
-        } else {
-            document.getElementById('viewConfig').classList.remove('hidden');
-            btns[2].classList.add('active');
-        }
-    }
-
-    function renderizarTablaAdmin(lista) {
-        const tbody = document.getElementById('tablaAdminBody');
-        document.getElementById('kpiClientes').innerText = clientesCache.length;
-        document.getElementById('kpiEnTaller').innerText = recepcionesCache.filter(r => r.estado !== 'Entregado').length;
-        document.getElementById('kpiGrua').innerText = recepcionesCache.filter(r => r.ingreso_grua).length;
-        document.getElementById('kpiSalidas').innerText = recepcionesCache.filter(r => r.estado === 'Entregado').length;
-
-        if (!lista || lista.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="9" style="text-align: center; color: var(--text-muted); padding: 20px;">No hay vehículos registrados todavía.</td></tr>`;
-            return;
-        }
-
-        tbody.innerHTML = '';
-        lista.forEach(row => {
-            const fecha = new Date(row.ingreso_fecha_hora).toLocaleString();
-            const colorEstado = row.estado === 'Entregado' ? 'var(--success)' : 'var(--warning)';
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td><span class="badge">${row.codigo_servicio}</span></td>
-                <td>${fecha}</td>
-                <td><strong>${row.cliente_nombre || 'N/D'}</strong><br><small style="color:var(--text-muted)">${row.cliente_cedula || ''}</small></td>
-                <td><strong>${row.placa || ''}</strong> — ${row.vehiculo_desc || ''}</td>
-                <td>${row.kilometraje || 0} km</td>
-                <td>${row.ingreso_grua ? 'SI' : 'NO'}</td>
-                <td>${row.mecanico_asignado || ''}</td>
-                <td><span style="color: ${colorEstado}; font-weight: 700;">${row.estado}</span></td>
-                <td>
-                    ${row.estado !== 'Entregado'
-                        ? `<button class="btn btn-success" style="padding: 5px 10px; font-size: 0.78rem;" onclick="darSalidaVehiculo('${row.codigo_servicio}')">Dar Salida</button>`
-                        : `<small style="color: var(--text-muted);">Entregado</small>`}
-                </td>
-            `;
-            tbody.appendChild(tr);
-        });
-    }
-
-    async function darSalidaVehiculo(codigo) {
-        const idx = recepcionesCache.findIndex(r => r.codigo_servicio === codigo);
-        if (idx < 0) return;
-        recepcionesCache[idx].estado = 'Entregado';
-        recepcionesCache[idx].salida_fecha_hora = new Date().toISOString();
-        guardarCacheLocal();
-
-        if (firebaseConectado && db) {
-            await db.collection('recepcion_vehiculos').doc(codigo).update({
-                estado: 'Entregado',
-                salida_fecha_hora: recepcionesCache[idx].salida_fecha_hora
-            }).catch(() => {});
-        }
-        registrarLog(`Vehículo de orden ${codigo} marcado como Entregado.`, 'ok');
-        renderizarTablaAdmin(recepcionesCache);
-    }
-
-    function filtrarTablaAdmin(texto) {
-        const q = (texto || '').trim().toLowerCase();
-        if (!q) {
-            renderizarTablaAdmin(recepcionesCache);
-            return;
-        }
-        const filtrada = recepcionesCache.filter(r =>
-            (r.placa || '').toLowerCase().includes(q) ||
-            (r.cliente_nombre || '').toLowerCase().includes(q) ||
-            (r.codigo_servicio || '').toLowerCase().includes(q)
-        );
-        renderizarTablaAdmin(filtrada);
-    }
-
-    function exportarCSVRespaldo() {
-        const filas = [['Codigo', 'Fecha', 'Cliente', 'Cedula_RIF', 'Placa', 'Vehiculo', 'Kilometraje', 'Mecanico', 'Estado']];
-        recepcionesCache.forEach(r => {
-            filas.push([r.codigo_servicio, r.ingreso_fecha_hora, r.cliente_nombre, r.cliente_cedula, r.placa, r.vehiculo_desc, r.kilometraje, r.mecanico_asignado, r.estado]);
-        });
-        const csv = filas.map(f => f.map(v => `"${String(v || '').replace(/"/g, '""')}"`).join(',')).join('\n');
-        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `Taller_Syntro_Respaldo_${new Date().toISOString().slice(0,10)}.csv`;
-        a.click();
-    }
-</script>
+        window.exportarOrdenesCSV = async () => {
+            setProgress(40);
+            const snap = await getDocs(collection(db, "ordenes"));
+            const filas = [['Codigo_Orden', 'Fecha', 'Cedula_RIF', 'Cliente', 'Placa', 'Marca', 'Modelo', 'Anio', 'Kilometraje', 'Servicio', 'Mecanico', 'Estado']];
+            snap.docs.forEach(d => {
+                const o = d.data();
+                filas.push([o.codigoOrden, o.fechaIngreso, o.clienteCedula, o.clienteNombre, o.placa, o.marca, o.modelo, o.anio, o.kilometraje, o.servicio, o.mecanico, o.estado]);
+            });
+            descargarCSV(`Ordenes_Syntro_${new Date().toISOString().slice(0,10)}.csv`, filas);
+            setProgress(100);
+            log(`Exportadas ${snap.docs.length} órdenes de servicio a CSV.`);
+        };
+    </script>
 </body>
 </html>
