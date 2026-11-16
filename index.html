@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Taller Mecánico Syntro - Sistema Cloud Integral</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
     <style>
         body {
             background-color: #0f172a;
@@ -38,16 +39,20 @@
             background: #7c3aed;
             box-shadow: 4px 4px 8px #5b21b6, -4px -4px 8px #8b5cf6;
         }
+        .neumo-button-amber {
+            background: #d97706;
+            box-shadow: 4px 4px 8px #92400e, -4px -4px 8px #f59e0b;
+        }
         .neumo-button-red {
             background: #dc2626;
             box-shadow: 4px 4px 8px #991b1b, -4px -4px 8px #ef4444;
         }
     </style>
 </head>
-<body class="p-4 md:p-6 min-h-screen flex flex-col justify-between">
+<body class="p-3 sm:p-4 md:p-6 min-h-screen flex flex-col justify-between">
 
     <!-- PANTALLA DE LOGIN -->
-    <div id="auth-container" class="max-w-md mx-auto my-auto w-full neumo-card p-8">
+    <div id="auth-container" class="max-w-md mx-auto my-auto w-full neumo-card p-6 sm:p-8">
         <div class="text-center mb-6">
             <h1 class="text-2xl font-bold text-blue-400">Taller Mecánico Syntro</h1>
             <p class="text-xs text-slate-400 mt-1">Acceso Autorizado Operadores</p>
@@ -69,16 +74,19 @@
 
     <!-- APLICACIÓN PRINCIPAL -->
     <div id="app-container" class="max-w-7xl mx-auto w-full hidden">
-        <header class="flex flex-col md:flex-row justify-between items-center mb-8 p-4 neumo-card gap-4">
-            <div>
-                <h1 class="text-2xl font-bold text-blue-400">Taller Mecánico Syntro</h1>
+        <header class="flex flex-col md:flex-row justify-between items-center mb-6 p-4 neumo-card gap-4">
+            <div class="text-center md:text-left">
+                <h1 class="text-xl sm:text-2xl font-bold text-blue-400">Taller Mecánico Syntro</h1>
                 <p class="text-xs text-slate-400">Operador Activo: <span id="user-display" class="text-emerald-400 font-mono"></span></p>
             </div>
-            <div class="flex items-center gap-6">
+            <div class="flex flex-wrap items-center justify-center gap-4 sm:gap-6">
                 <div class="text-center md:text-right">
                     <div id="timer" class="text-lg font-mono text-emerald-400">00:00:00</div>
                     <div id="sync-status" class="text-xs text-emerald-400">Cloud Sincronizado</div>
                 </div>
+                <button onclick="recargarCacheFirebase()" class="px-3 py-2 rounded-lg text-xs font-semibold text-white neumo-button-secondary">
+                    🔄 Sincronizar Base
+                </button>
                 <button onclick="cerrarSesion()" class="px-4 py-2 rounded-lg text-xs font-semibold text-white neumo-button-red">
                     Salir
                 </button>
@@ -87,70 +95,103 @@
 
         <main class="grid grid-cols-1 lg:grid-cols-3 gap-6">
             
-            <!-- COLUMNA 1: Módulo 1 - Clientes -->
+            <!-- COLUMNA 1: Módulo 1 - Clientes y Carga Masiva CSV -->
             <div class="space-y-6">
-                <section class="neumo-card p-6">
-                    <h2 class="text-xl font-semibold mb-4 text-slate-200">Módulo 1: Clientes</h2>
+                <section class="neumo-card p-5 sm:p-6">
+                    <h2 class="text-lg sm:text-xl font-semibold mb-4 text-slate-200">Módulo 1: Clientes</h2>
                     
-                    <div class="mb-4 p-3 rounded-xl border border-slate-700 bg-slate-900/50">
-                        <label class="block text-xs text-blue-400 font-semibold uppercase mb-1">Buscar Cliente (Cédula, RIF o Nombre)</label>
+                    <div class="mb-4 p-3 rounded-xl border border-slate-700 bg-slate-900/50 space-y-2">
+                        <label class="block text-xs text-blue-400 font-semibold uppercase">Buscar Cliente (Nombre, Cédula, RIF o Teléfono)</label>
                         <div class="flex gap-2">
-                            <input type="text" id="criterio-busqueda" class="w-full p-2 rounded-lg neumo-input text-sm focus:outline-none" placeholder="Ej: vfff64s1 o Juan">
+                            <input type="text" id="criterio-busqueda" onkeydown="if(event.key==='Enter'){event.preventDefault();buscarCliente();}" class="w-full p-2 rounded-lg neumo-input text-sm focus:outline-none" placeholder="Ej: Zoom, José Andrés, V-123...">
                             <button type="button" onclick="buscarCliente()" class="px-3 py-2 rounded-lg text-white font-semibold text-xs neumo-button-secondary">Buscar</button>
+                        </div>
+                        <div id="selector-coincidencias-box" class="hidden pt-2">
+                            <label class="block text-[11px] text-amber-400 mb-1">Múltiples clientes encontrados (seleccione uno):</label>
+                            <select id="selector-coincidencias" onchange="seleccionarClienteDeLista()" class="w-full p-2 rounded-lg neumo-input text-xs focus:outline-none"></select>
                         </div>
                     </div>
 
                     <form id="client-form" onsubmit="guardarCliente(event)" class="space-y-3">
                         <div>
-                            <label class="block text-xs text-slate-400 mb-1">Cédula o RIF</label>
-                            <input type="text" id="cedula" required class="w-full p-2 rounded-lg neumo-input text-sm focus:outline-none" placeholder="V-12345678">
+                            <label class="block text-xs text-slate-400 mb-1">Cédula o RIF (Opcional si es empresa/histórico)</label>
+                            <input type="text" id="cedula" class="w-full p-2 rounded-lg neumo-input text-sm focus:outline-none" placeholder="V-12345678 / J-123456789">
                         </div>
                         <div>
-                            <label class="block text-xs text-slate-400 mb-1">Nombre y Apellido</label>
+                            <label class="block text-xs text-slate-400 mb-1">Nombre y Apellido / Empresa</label>
                             <input type="text" id="nombre" required class="w-full p-2 rounded-lg neumo-input text-sm focus:outline-none" placeholder="Juan Suárez">
                         </div>
                         <div>
                             <label class="block text-xs text-slate-400 mb-1">Teléfono</label>
-                            <input type="text" id="telefono" required class="w-full p-2 rounded-lg neumo-input text-sm focus:outline-none" placeholder="0414-1234567">
+                            <input type="text" id="telefono" class="w-full p-2 rounded-lg neumo-input text-sm focus:outline-none" placeholder="0414-1234567">
                         </div>
                         <div>
-                            <label class="block text-xs text-slate-400 mb-1">Dirección</label>
-                            <textarea id="direccion" rows="2" required class="w-full p-2 rounded-lg neumo-input text-sm focus:outline-none" placeholder="Dirección"></textarea>
+                            <label class="block text-xs text-slate-400 mb-1">Correo Electrónico / Dirección</label>
+                            <textarea id="direccion" rows="2" class="w-full p-2 rounded-lg neumo-input text-sm focus:outline-none" placeholder="Correo o Dirección"></textarea>
                         </div>
-                        <button type="submit" class="w-full py-2 rounded-lg text-xs font-semibold text-white neumo-button">
+                        <button type="submit" class="w-full py-2.5 rounded-lg text-xs font-semibold text-white neumo-button">
                             Guardar / Actualizar Cliente
                         </button>
                     </form>
+                </section>
+
+                <!-- CARGA MASIVA CSV SIN DUPLICADOS -->
+                <section class="neumo-card p-5 sm:p-6 border border-amber-500/30">
+                    <h2 class="text-base sm:text-lg font-semibold mb-2 text-amber-400">Importar Base de Datos CSV</h2>
+                    <p class="text-xs text-slate-400 mb-3">
+                        Selecciona tu archivo CSV de órdenes. Respeta fechas, horas y códigos exactos sin duplicar registros si se vuelve a cargar.
+                    </p>
+                    <div class="space-y-3">
+                        <input type="file" id="csv-file-input" accept=".csv" class="w-full text-xs text-slate-300 file:mr-2 file:py-2 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-amber-600 file:text-white cursor-pointer">
+                        <button type="button" onclick="importarCSVSinDuplicados()" class="w-full py-2.5 rounded-lg text-xs font-semibold text-white neumo-button-amber">
+                            ⬆️ Cargar CSV a Firebase (Antiduplicados)
+                        </button>
+                    </div>
                 </section>
             </div>
 
             <!-- COLUMNAS 2 y 3: Recepción, Vehículos, Chequeo Técnico y Exportación -->
             <div class="lg:col-span-2 space-y-6">
-                <section class="neumo-card p-6">
-                    <h2 class="text-xl font-semibold mb-4 text-slate-200">Módulos 2 y 3: Recepción y Chequeo Técnico</h2>
+                <section class="neumo-card p-5 sm:p-6">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4">
+                        <h2 class="text-lg sm:text-xl font-semibold text-slate-200">Módulos 2 y 3: Recepción y Chequeo Técnico</h2>
+                        <div class="flex gap-2 w-full sm:w-auto">
+                            <input type="text" id="buscar-placa-directa" onkeydown="if(event.key==='Enter'){event.preventDefault();buscarPorPlacaDirecta();}" class="w-full sm:w-44 p-2 rounded-lg neumo-input text-xs uppercase focus:outline-none" placeholder="Buscar Placa directa...">
+                            <button type="button" onclick="buscarPorPlacaDirecta()" class="px-3 py-2 rounded-lg text-white font-semibold text-xs neumo-button-secondary">Buscar Placa</button>
+                        </div>
+                    </div>
                     
-                    <form id="orden-form" onsubmit="guardarOrdenServicio(event)" class="space-y-6">
+                    <form id="orden-form" onsubmit="guardarOrdenServicio(event)" class="space-y-5">
                         
-                        <!-- Datos de la Orden y Selección / Registro de Vehículo -->
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <!-- Código, Fechas/Horas Exactas y Selección de Vehículo -->
+                        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
                             <div>
-                                <label class="block text-xs text-slate-400 mb-1">Código de Orden (Automático)</label>
-                                <input type="text" id="ord-codigo" readonly class="w-full p-2 rounded-lg neumo-input text-sm font-mono text-emerald-400 focus:outline-none">
+                                <label class="block text-xs text-slate-400 mb-1">Código de Orden</label>
+                                <input type="text" id="ord-codigo" required class="w-full p-2 rounded-lg neumo-input text-sm font-mono text-emerald-400 focus:outline-none" placeholder="Ej: 2025030002">
                             </div>
+                            <div>
+                                <label class="block text-xs text-slate-400 mb-1">Ingreso (Fecha y Hora)</label>
+                                <input type="text" id="ord-fecha-ingreso" required class="w-full p-2 rounded-lg neumo-input text-sm font-mono text-blue-300 focus:outline-none" placeholder="DD/MM/AAAA HH:MM:SS">
+                            </div>
+                            <div>
+                                <label class="block text-xs text-slate-400 mb-1">Salida (Fecha y Hora)</label>
+                                <input type="text" id="ord-fecha-salida" class="w-full p-2 rounded-lg neumo-input text-sm font-mono text-slate-300 focus:outline-none" placeholder="DD/MM/AAAA HH:MM:SS">
+                            </div>
+
                             <div>
                                 <label class="block text-xs text-slate-400 mb-1">Vehículo (Placa)</label>
                                 <select id="ord-placa" onchange="manejarSeleccionPlaca()" class="w-full p-2 rounded-lg neumo-input text-sm focus:outline-none">
-                                    <option value="">Seleccione cliente primero</option>
+                                    <option value="">Seleccione cliente o busque placa</option>
                                     <option value="NUEVO">➕ Registrar Nuevo Vehículo</option>
                                 </select>
+                            </div>
+                            <div id="contenedor-nueva-placa" class="hidden">
+                                <label class="block text-xs text-amber-400 mb-1">Nueva Placa</label>
+                                <input type="text" id="nuevo-placa" class="w-full p-2 rounded-lg neumo-input text-sm uppercase focus:outline-none" placeholder="Ej: AAO83NL">
                             </div>
                             <div>
                                 <label class="block text-xs text-slate-400 mb-1">Kilometraje</label>
                                 <input type="text" id="ord-km" required class="w-full p-2 rounded-lg neumo-input text-sm focus:outline-none" placeholder="Ej: 64500">
-                            </div>
-                            <div>
-                                <label class="block text-xs text-slate-400 mb-1">Placa (Si es nuevo)</label>
-                                <input type="text" id="nuevo-placa" class="w-full p-2 rounded-lg neumo-input text-sm focus:outline-none hidden" placeholder="Ej: AAO83NL">
                             </div>
                             <div>
                                 <label class="block text-xs text-slate-400 mb-1">Marca</label>
@@ -164,6 +205,18 @@
                                 <label class="block text-xs text-slate-400 mb-1">Año</label>
                                 <input type="text" id="ord-anio" required class="w-full p-2 rounded-lg neumo-input text-sm focus:outline-none" placeholder="2010">
                             </div>
+                            <div>
+                                <label class="block text-xs text-slate-400 mb-1">Serial Carrocería</label>
+                                <input type="text" id="ord-serial-carroceria" class="w-full p-2 rounded-lg neumo-input text-sm focus:outline-none" placeholder="Serial VIN / Carrocería">
+                            </div>
+                            <div>
+                                <label class="block text-xs text-slate-400 mb-1">Serial Batería</label>
+                                <input type="text" id="ord-serial-bateria" class="w-full p-2 rounded-lg neumo-input text-sm focus:outline-none" placeholder="Serial Batería">
+                            </div>
+                            <div>
+                                <label class="block text-xs text-slate-400 mb-1">Nivel de Combustible</label>
+                                <input type="text" id="ord-combustible" class="w-full p-2 rounded-lg neumo-input text-sm focus:outline-none" placeholder="1/4, 1/2, 3/4, Lleno">
+                            </div>
                         </div>
 
                         <!-- Servicios y Personal -->
@@ -174,7 +227,7 @@
                             </div>
                             <div class="space-y-3">
                                 <div>
-                                    <label class="block text-xs text-slate-400 mb-1">Mecánico Asignado</label>
+                                    <label class="block text-xs text-slate-400 mb-1">Mecánico Asignado / Recibido por</label>
                                     <input type="text" id="ord-mecanico" required class="w-full p-2 rounded-lg neumo-input text-sm focus:outline-none" placeholder="ANTONIO GUTIERREZ">
                                 </div>
                                 <div>
@@ -186,73 +239,78 @@
 
                         <!-- MÓDULO 3: CHECKLIST TÉCNICO DETALLADO -->
                         <div class="p-4 rounded-xl border border-slate-700 bg-slate-900/40 space-y-4">
-                            <h3 class="text-sm font-bold text-blue-400 uppercase tracking-wider">Módulo 3: Inspección Técnica Detallada</h3>
+                            <div class="flex justify-between items-center">
+                                <h3 class="text-sm font-bold text-blue-400 uppercase tracking-wider">Módulo 3: Inspección Técnica Detallada</h3>
+                                <button type="button" onclick="prepararNuevaOrdenParaPlacaActual()" class="px-2.5 py-1 rounded text-[11px] font-semibold bg-slate-700 hover:bg-slate-600 text-emerald-300">
+                                    ➕ Nueva Orden para esta Placa
+                                </button>
+                            </div>
                             
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
                                 <div class="p-3 bg-slate-900 rounded-lg">
                                     <span class="font-semibold text-slate-300 block mb-2">1. Sistema de Aceite</span>
                                     <div class="grid grid-cols-2 gap-2">
-                                        <input type="text" id="chk-aceite-nivel" placeholder="Nivel" class="p-1 neumo-input rounded">
-                                        <input type="text" id="chk-aceite-color" placeholder="Color" class="p-1 neumo-input rounded">
-                                        <input type="text" id="chk-aceite-filtro" placeholder="Filtro" class="p-1 neumo-input rounded">
-                                        <input type="text" id="chk-aceite-fugas" placeholder="Sin fugas (Sí/No)" class="p-1 neumo-input rounded">
+                                        <input type="text" id="chk-aceite-nivel" placeholder="Nivel" class="p-1.5 neumo-input rounded">
+                                        <input type="text" id="chk-aceite-color" placeholder="Color" class="p-1.5 neumo-input rounded">
+                                        <input type="text" id="chk-aceite-filtro" placeholder="Filtro" class="p-1.5 neumo-input rounded">
+                                        <input type="text" id="chk-aceite-fugas" placeholder="Sin fugas (Sí/No)" class="p-1.5 neumo-input rounded">
                                     </div>
                                 </div>
 
                                 <div class="p-3 bg-slate-900 rounded-lg">
                                     <span class="font-semibold text-slate-300 block mb-2">2. Correas y Mangueras</span>
                                     <div class="grid grid-cols-2 gap-2">
-                                        <input type="text" id="chk-correa-tension" placeholder="Tensión" class="p-1 neumo-input rounded">
-                                        <input type="text" id="chk-correa-grietas" placeholder="Sin grietas (Sí/No)" class="p-1 neumo-input rounded">
+                                        <input type="text" id="chk-correa-tension" placeholder="Tensión" class="p-1.5 neumo-input rounded">
+                                        <input type="text" id="chk-correa-grietas" placeholder="Sin grietas (Sí/No)" class="p-1.5 neumo-input rounded">
                                     </div>
                                 </div>
 
                                 <div class="p-3 bg-slate-900 rounded-lg">
                                     <span class="font-semibold text-slate-300 block mb-2">3. Líquido Refrigerante</span>
                                     <div class="grid grid-cols-3 gap-2">
-                                        <input type="text" id="chk-refrig-nivel" placeholder="Nivel" class="p-1 neumo-input rounded">
-                                        <input type="text" id="chk-refrig-color" placeholder="Color" class="p-1 neumo-input rounded">
-                                        <input type="text" id="chk-refrig-fugas" placeholder="Fugas (Sí/No)" class="p-1 neumo-input rounded">
+                                        <input type="text" id="chk-refrig-nivel" placeholder="Nivel" class="p-1.5 neumo-input rounded">
+                                        <input type="text" id="chk-refrig-color" placeholder="Color" class="p-1.5 neumo-input rounded">
+                                        <input type="text" id="chk-refrig-fugas" placeholder="Fugas (Sí/No)" class="p-1.5 neumo-input rounded">
                                     </div>
                                 </div>
 
                                 <div class="p-3 bg-slate-900 rounded-lg">
                                     <span class="font-semibold text-slate-300 block mb-2">4. Batería y Alternador</span>
                                     <div class="grid grid-cols-2 gap-2">
-                                        <input type="text" id="chk-bat-terminal" placeholder="Terminales limpios" class="p-1 neumo-input rounded">
-                                        <input type="text" id="chk-alt-voltaje" placeholder="Voltaje alternador" class="p-1 neumo-input rounded">
+                                        <input type="text" id="chk-bat-terminal" placeholder="Terminales limpios" class="p-1.5 neumo-input rounded">
+                                        <input type="text" id="chk-alt-voltaje" placeholder="Voltaje alternador" class="p-1.5 neumo-input rounded">
                                     </div>
                                 </div>
 
                                 <div class="p-3 bg-slate-900 rounded-lg">
                                     <span class="font-semibold text-slate-300 block mb-2">5. Dirección y Frenos</span>
                                     <div class="grid grid-cols-2 gap-2">
-                                        <input type="text" id="chk-dir-juego" placeholder="Juego libre dirección" class="p-1 neumo-input rounded">
-                                        <input type="text" id="chk-freno-liga" placeholder="Nivel liga de freno" class="p-1 neumo-input rounded">
+                                        <input type="text" id="chk-dir-juego" placeholder="Juego libre dirección" class="p-1.5 neumo-input rounded">
+                                        <input type="text" id="chk-freno-liga" placeholder="Nivel liga de freno" class="p-1.5 neumo-input rounded">
                                     </div>
                                 </div>
 
                                 <div class="p-3 bg-slate-900 rounded-lg">
-                                    <span class="font-semibold text-slate-300 block mb-2">6. Ruedas, Luces y Limpiaparabrisas</span>
+                                    <span class="font-semibold text-slate-300 block mb-2">6. Ruedas, Luces e Inventario</span>
                                     <div class="grid grid-cols-2 gap-2">
-                                        <input type="text" id="chk-ruedas-presion" placeholder="Presión neumática" class="p-1 neumo-input rounded">
-                                        <input type="text" id="chk-luces-ext" placeholder="Luces externas (Sí/No)" class="p-1 neumo-input rounded">
+                                        <input type="text" id="chk-ruedas-presion" placeholder="Presión / Rines" class="p-1.5 neumo-input rounded">
+                                        <input type="text" id="chk-luces-ext" placeholder="Luces adv. (Sí/No)" class="p-1.5 neumo-input rounded">
                                     </div>
                                 </div>
                             </div>
                         </div>
 
                         <button type="submit" class="w-full py-3 rounded-lg font-semibold text-white neumo-button-purple">
-                            Generar y Guardar Orden Completa en la Nube
+                            Guardar Orden y Chequeo Técnico en la Nube
                         </button>
                     </form>
                 </section>
 
                 <!-- Bitácora y Panel de Exportación a CSV -->
-                <section class="neumo-card p-6 space-y-4">
+                <section class="neumo-card p-5 sm:p-6 space-y-4">
                     <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
-                        <h2 class="text-xl font-semibold text-slate-200">Bitácora y Exportación de Datos</h2>
-                        <div class="flex gap-2 w-full md:w-auto">
+                        <h2 class="text-lg sm:text-xl font-semibold text-slate-200">Bitácora y Exportación de Datos</h2>
+                        <div class="flex flex-wrap gap-2 w-full md:w-auto">
                             <button type="button" onclick="exportarClientesCSV()" class="flex-1 md:flex-none px-3 py-2 rounded-lg text-xs font-semibold text-white neumo-button-secondary">
                                 📊 Exportar Clientes CSV
                             </button>
@@ -266,8 +324,8 @@
                         <div id="progress-bar" class="bg-blue-500 h-full w-0 transition-all duration-300"></div>
                     </div>
                     
-                    <div id="log-console" class="bg-slate-950 p-3 rounded-lg font-mono text-xs text-emerald-400 h-36 overflow-y-auto neumo-input">
-                        [Sistema Listo] Módulos de Clientes, Recepción, Chequeo Técnico y Exportación activos.
+                    <div id="log-console" class="bg-slate-950 p-3 rounded-lg font-mono text-xs text-emerald-400 h-40 overflow-y-auto neumo-input">
+                        [Sistema Listo] Módulos de Clientes, Importador CSV Antiduplicados, Recepción, Chequeo Técnico y Exportación activos.
                     </div>
                 </section>
             </div>
@@ -279,7 +337,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-app.js";
         import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-auth.js";
-        import { getFirestore, collection, addDoc, getDocs, updateDoc, doc } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-firestore.js";
+        import { getFirestore, collection, doc, setDoc, getDocs, updateDoc, writeBatch } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyBe96LcGjwrVh6ciDoEbbUwRhfGCOrqBS8",
@@ -298,8 +356,45 @@
         let clienteDocIdActual = null;
         let usuarioActual = null;
         let vehiculosClienteActual = [];
+        let coincidenciasClientes = [];
+        let cacheClientes = [];
+        let cacheOrdenes = [];
         let timerInterval = null;
         let segundosTranscurridos = 0;
+
+        // Normalización de texto para búsqueda sin fallos por acentos o mayúsculas
+        function normalizarTexto(texto) {
+            return String(texto || "")
+                .normalize("NFD")
+                .replace(/[\u0300-\u036f]/g, "")
+                .trim()
+                .toLowerCase();
+        }
+
+        // Genera un ID determinístico seguro para Firestore (evita duplicados)
+        function crearIdSeguro(texto) {
+            const norm = normalizarTexto(texto).replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "");
+            return norm ? norm.substring(0, 80) : "SIN_IDENTIFICAR";
+        }
+
+        function obtenerFechaHoraActualFormateada() {
+            const ahora = new Date();
+            const dd = String(ahora.getDate()).padStart(2, '0');
+            const mm = String(ahora.getMonth() + 1).padStart(2, '0');
+            const yyyy = ahora.getFullYear();
+            const hh = String(ahora.getHours()).padStart(2, '0');
+            const min = String(ahora.getMinutes()).padStart(2, '0');
+            const ss = String(ahora.getSeconds()).padStart(2, '0');
+            return `${dd}/${mm}/${yyyy} ${hh}:${min}:${ss}`;
+        }
+
+        function generarCodigoOrdenAutomatico() {
+            const ahora = new Date();
+            const yyyy = ahora.getFullYear();
+            const mm = String(ahora.getMonth() + 1).padStart(2, '0');
+            const rand = String(Math.floor(1000 + Math.random() * 9000));
+            return `${yyyy}${mm}${rand}`;
+        }
 
         function iniciarTemporizador() {
             segundosTranscurridos = 0;
@@ -310,13 +405,13 @@
                 const mins = String(Math.floor((segundosTranscurridos % 3600) / 60)).padStart(2, '0');
                 const secs = String(segundosTranscurridos % 60).padStart(2, '0');
                 const elTimer = document.getElementById('timer');
-                if(elTimer) elTimer.innerText = `${hrs}:${mins}:${secs}`;
+                if (elTimer) elTimer.innerText = `${hrs}:${mins}:${secs}`;
             }, 1000);
         }
 
         function registrarLog(mensaje) {
             const consola = document.getElementById('log-console');
-            if(consola) {
+            if (consola) {
                 const hora = new Date().toLocaleTimeString();
                 consola.innerHTML += `[${hora}] ${mensaje}<br>`;
                 consola.scrollTop = consola.scrollHeight;
@@ -325,24 +420,38 @@
 
         function actualizarProgreso(porcentaje) {
             const bar = document.getElementById('progress-bar');
-            if(bar) bar.style.width = porcentaje + '%';
+            if (bar) bar.style.width = porcentaje + '%';
         }
 
-        function generarCodigoOrden() {
-            const codigoAleatorio = 'OST-' + Math.floor(100000 + Math.random() * 900000);
-            const inputCodigo = document.getElementById('ord-codigo');
-            if(inputCodigo) inputCodigo.value = codigoAleatorio;
-        }
+        window.recargarCacheFirebase = async function() {
+            registrarLog("Sincronizando clientes y órdenes desde Firebase...");
+            actualizarProgreso(35);
+            try {
+                const [snapClientes, snapOrdenes] = await Promise.all([
+                    getDocs(collection(db, "clientes_taller")),
+                    getDocs(collection(db, "ordenes_servicio"))
+                ]);
+                cacheClientes = snapClientes.docs.map(d => ({ id: d.id, ...d.data() }));
+                cacheOrdenes = snapOrdenes.docs.map(d => ({ id: d.id, ...d.data() }));
+                document.getElementById('sync-status').innerText = `Cloud: ${cacheClientes.length} clientes | ${cacheOrdenes.length} órdenes`;
+                registrarLog(`Sincronización completa: ${cacheClientes.length} clientes y ${cacheOrdenes.length} órdenes en memoria.`);
+                actualizarProgreso(100);
+            } catch (e) {
+                registrarLog("Error al sincronizar con Firebase: " + e.message);
+                actualizarProgreso(0);
+            }
+        };
 
-        onAuthStateChanged(auth, (user) => {
+        onAuthStateChanged(auth, async (user) => {
             if (user) {
                 usuarioActual = user;
                 document.getElementById('auth-container').classList.add('hidden');
                 document.getElementById('app-container').classList.remove('hidden');
                 document.getElementById('user-display').innerText = user.email;
                 iniciarTemporizador();
-                generarCodigoOrden();
-                registrarLog("Sesión iniciada correctamente en Firestore.");
+                document.getElementById('ord-codigo').value = generarCodigoOrdenAutomatico();
+                document.getElementById('ord-fecha-ingreso').value = obtenerFechaHoraActualFormateada();
+                await recargarCacheFirebase();
             } else {
                 usuarioActual = null;
                 document.getElementById('auth-container').classList.remove('hidden');
@@ -355,7 +464,7 @@
             event.preventDefault();
             const email = document.getElementById('auth-email').value;
             const pass = document.getElementById('auth-password').value;
-            registrarLog("Autenticando usuario...");
+            registrarLog("Autenticando operador...");
             actualizarProgreso(30);
             try {
                 await signInWithEmailAndPassword(auth, email, pass);
@@ -363,7 +472,7 @@
             } catch (error) {
                 try {
                     await createUserWithEmailAndPassword(auth, email, pass);
-                    registrarLog("Nuevo usuario registrado y conectado.");
+                    registrarLog("Nuevo operador registrado y conectado.");
                     actualizarProgreso(100);
                 } catch (errReg) {
                     registrarLog("Error de autenticación: " + errReg.message);
@@ -378,61 +487,318 @@
             registrarLog("Sesión cerrada.");
         };
 
-        // BÚSQUEDA DIRECTA Y REAL EN TU BASE DE DATOS DE FIREBASE
-        window.buscarCliente = async function() {
-            const criterio = document.getElementById('criterio-busqueda').value.trim().toLowerCase();
-            if (!criterio) {
-                alert("Por favor ingrese una cédula, RIF o nombre para buscar.");
+        // IMPORTACIÓN MASIVA DESDE CSV SIN DUPLICADOS (IDEMPOTENTE)
+        window.importarCSVSinDuplicados = async function() {
+            const fileInput = document.getElementById('csv-file-input');
+            const file = fileInput.files[0];
+            if (!file) {
+                alert("Por favor seleccione primero el archivo CSV (Orden_de_Servicio - entrega y salida).");
                 return;
             }
-            registrarLog(`Consultando en Firebase (clientes_taller) por: "${criterio}"...`);
-            actualizarProgreso(40);
 
-            try {
-                const querySnapshot = await getDocs(collection(db, "clientes_taller"));
-                let encontrado = false;
+            registrarLog(`Leyendo archivo "${file.name}"...`);
+            actualizarProgreso(10);
 
-                querySnapshot.forEach((docSnap) => {
-                    const data = docSnap.data();
-                    const cedulaDB = String(data.cedula || "").trim().toLowerCase();
-                    const nombreDB = String(data.nombre || "").trim().toLowerCase();
+            Papa.parse(file, {
+                header: true,
+                skipEmptyLines: true,
+                complete: async function(results) {
+                    try {
+                        const rows = results.data;
+                        registrarLog(`Filas detectadas en CSV: ${rows.length}. Procesando y deduplicando...`);
+                        actualizarProgreso(25);
 
-                    // Coincide si la cédula es igual o si el nombre contiene lo que escribiste
-                    if (cedulaDB === criterio || nombreDB.includes(criterio)) {
-                        clienteDocIdActual = docSnap.id;
-                        document.getElementById('cedula').value = data.cedula || '';
-                        document.getElementById('nombre').value = data.nombre || '';
-                        document.getElementById('telefono').value = data.telefono || '';
-                        document.getElementById('direccion').value = data.direccion || '';
-                        
-                        // Cargar las placas asociadas al cliente en el Módulo 2
-                        vehiculosClienteActual = data.vehiculos || [];
-                        const selectPlaca = document.getElementById('ord-placa');
-                        selectPlaca.innerHTML = '<option value="">Seleccione vehículo (Placa)</option>';
-                        
-                        if (vehiculosClienteActual.length > 0) {
-                            vehiculosClienteActual.forEach(placa => {
-                                selectPlaca.innerHTML += `<option value="${placa}">${placa}</option>`;
+                        const mapaClientes = new Map();
+                        const mapaOrdenes = new Map();
+
+                        for (const row of rows) {
+                            const idServicio = String(row['ID_SERVICIO '] || row['ID_SERVICIO'] || '').trim();
+                            const codigo = String(row['CODIGO'] || '').trim();
+                            const fechaIngreso = String(row['Ingreso (fecha/hora)'] || '').trim();
+                            const fechaSalida = String(row['Salida (fecha/hora)'] || '').trim();
+                            const placa = String(row['Placas'] || '').trim().toUpperCase();
+                            const marca = String(row['Marca'] || '').trim();
+                            const modelo = String(row['Modelo'] || '').trim();
+                            const anio = String(row['Año'] || '').trim();
+                            const kilometraje = String(row['Kilometraje'] || '').trim();
+                            const serialCarroceria = String(row['Serial carrocería'] || '').trim();
+                            const serialBateria = String(row['Serial batería'] || '').trim();
+                            const clienteNombre = String(row['Cliente'] || '').trim();
+                            const telefono = String(row['Teléfono'] || '').trim();
+                            const email = String(row['E-mail'] || '').trim();
+                            const cedula = String(row['Cedula'] || row['CEDULA'] || row['RIF'] || '').trim();
+                            const trabajo = String(row['Trabajo / Servicio a realizar'] || '').trim();
+                            const recibidoPor = String(row['Recibido por'] || '').trim();
+                            const mecanico = String(row['MECANICO_ASIGNADO'] || recibidoPor || '').trim();
+                            const combustible = String(row['Nivel de combustible'] || '').trim();
+                            const lucesAdv = String(row['Luces de advertencia encendidas'] || '').trim();
+
+                            if (!idServicio && !placa && !clienteNombre) continue;
+
+                            const clienteKey = cedula ? crearIdSeguro(cedula) : crearIdSeguro(clienteNombre || `CLIENTE_${placa}`);
+                            const nombreFinalCliente = clienteNombre || `Cliente Placa ${placa}`;
+
+                            // Agrupar cliente y sus vehículos sin duplicar placas
+                            if (!mapaClientes.has(clienteKey)) {
+                                mapaClientes.set(clienteKey, {
+                                    cedula: cedula,
+                                    nombre: nombreFinalCliente,
+                                    telefono: telefono,
+                                    direccion: email,
+                                    vehiculos: [],
+                                    vehiculosDetalle: {},
+                                    fechaRegistro: fechaIngreso || obtenerFechaHoraActualFormateada(),
+                                    registradoPor: usuarioActual ? usuarioActual.email : "importacion_csv"
+                                });
+                            }
+
+                            const cliObj = mapaClientes.get(clienteKey);
+                            if (telefono && !cliObj.telefono) cliObj.telefono = telefono;
+                            if (email && !cliObj.direccion) cliObj.direccion = email;
+                            if (cedula && !cliObj.cedula) cliObj.cedula = cedula;
+
+                            if (placa) {
+                                if (!cliObj.vehiculos.includes(placa)) {
+                                    cliObj.vehiculos.push(placa);
+                                }
+                                const prevVeh = cliObj.vehiculosDetalle[placa] || {};
+                                cliObj.vehiculosDetalle[placa] = {
+                                    placa: placa,
+                                    marca: marca || prevVeh.marca || '',
+                                    modelo: modelo || prevVeh.modelo || '',
+                                    anio: anio || prevVeh.anio || '',
+                                    kilometraje: kilometraje || prevVeh.kilometraje || '',
+                                    serialCarroceria: serialCarroceria || prevVeh.serialCarroceria || '',
+                                    serialBateria: serialBateria || prevVeh.serialBateria || ''
+                                };
+                            }
+
+                            // Orden de servicio con ID único (ID_SERVICIO) para evitar duplicados al recargar
+                            const ordenDocId = idServicio ? crearIdSeguro(idServicio) : crearIdSeguro(`${codigo}_${placa}_${fechaIngreso}`);
+                            mapaOrdenes.set(ordenDocId, {
+                                idServicio: idServicio || ordenDocId,
+                                codigoOrden: codigo,
+                                fechaIngreso: fechaIngreso,
+                                fechaSalida: fechaSalida,
+                                clienteId: clienteKey,
+                                clienteNombre: nombreFinalCliente,
+                                telefonoCliente: telefono,
+                                placa: placa,
+                                marca: marca,
+                                modelo: modelo,
+                                anio: anio,
+                                kilometraje: kilometraje,
+                                serialCarroceria: serialCarroceria,
+                                serialBateria: serialBateria,
+                                combustible: combustible,
+                                servicio: trabajo,
+                                recibidoPor: recibidoPor,
+                                mecanico: mecanico,
+                                inventario: {
+                                    grua: String(row['Ingreso en grúa (Sí/No)'] || '').trim(),
+                                    lucesAdvertencia: lucesAdv,
+                                    gato: String(row['Gato'] || '').trim(),
+                                    herramientas: String(row['Herramientas'] || '').trim(),
+                                    triangulo: String(row['Triángulo'] || '').trim(),
+                                    repuesto: String(row['Neumático repuesto'] || '').trim(),
+                                    estereo: String(row['Estéreo'] || '').trim(),
+                                    antena: String(row['Antena'] || '').trim(),
+                                    emblemas: String(row['Emblemas'] || '').trim(),
+                                    alfombras: String(row['Alfombras'] || '').trim(),
+                                    cables: String(row['Cables'] || '').trim(),
+                                    tazasRines: String(row['Tazas / Rines'] || '').trim(),
+                                    chequeo21: String(row['Acepta el chequeo 21'] || '').trim()
+                                },
+                                checklist: {
+                                    aceiteNivel: '',
+                                    aceiteColor: '',
+                                    aceiteFiltro: '',
+                                    aceiteFugas: '',
+                                    correaTension: '',
+                                    correaGrietas: '',
+                                    refrigNivel: '',
+                                    refrigColor: '',
+                                    refrigFugas: '',
+                                    batTerminal: serialBateria ? `Serial: ${serialBateria}` : '',
+                                    altVoltaje: '',
+                                    dirJuego: '',
+                                    frenoLiga: '',
+                                    ruedasPresion: String(row['Tazas / Rines'] || '').trim(),
+                                    lucesExt: lucesAdv
+                                },
+                                registradoPor: usuarioActual ? usuarioActual.email : "importacion_csv"
                             });
                         }
-                        selectPlaca.innerHTML += '<option value="NUEVO">➕ Registrar Nuevo Vehículo</option>';
 
-                        encontrado = true;
-                        registrarLog(`¡Éxito! Cliente encontrado: ${data.nombre} (${vehiculosClienteActual.length} vehículos).`);
+                        const listaClientes = Array.from(mapaClientes.entries());
+                        const listaOrdenes = Array.from(mapaOrdenes.entries());
+                        registrarLog(`Registros únicos listos: ${listaClientes.length} clientes y ${listaOrdenes.length} órdenes.`);
+
+                        // Subir en lotes de 400 usando setDoc(..., { merge: true }) -> CERO DUPLICADOS
+                        const CHUNK_SIZE = 400;
+                        let procesados = 0;
+                        const totalOps = listaClientes.length + listaOrdenes.length;
+
+                        for (let i = 0; i < listaClientes.length; i += CHUNK_SIZE) {
+                            const batch = writeBatch(db);
+                            const slice = listaClientes.slice(i, i + CHUNK_SIZE);
+                            for (const [docId, data] of slice) {
+                                batch.set(doc(db, "clientes_taller", docId), data, { merge: true });
+                            }
+                            await batch.commit();
+                            procesados += slice.length;
+                            actualizarProgreso(25 + Math.round((procesados / totalOps) * 70));
+                            registrarLog(`Clientes guardados/actualizados: ${Math.min(i + CHUNK_SIZE, listaClientes.length)} / ${listaClientes.length}`);
+                        }
+
+                        for (let i = 0; i < listaOrdenes.length; i += CHUNK_SIZE) {
+                            const batch = writeBatch(db);
+                            const slice = listaOrdenes.slice(i, i + CHUNK_SIZE);
+                            for (const [docId, data] of slice) {
+                                batch.set(doc(db, "ordenes_servicio", docId), data, { merge: true });
+                            }
+                            await batch.commit();
+                            procesados += slice.length;
+                            actualizarProgreso(25 + Math.round((procesados / totalOps) * 70));
+                            registrarLog(`Órdenes guardadas/actualizadas: ${Math.min(i + CHUNK_SIZE, listaOrdenes.length)} / ${listaOrdenes.length}`);
+                        }
+
+                        await recargarCacheFirebase();
+                        actualizarProgreso(100);
+                        registrarLog("¡IMPORTACIÓN COMPLETADA SIN DUPLICADOS!");
+                        alert(`¡Importación exitosa!\nClientes sincronizados: ${listaClientes.length}\nÓrdenes sincronizadas: ${listaOrdenes.length}\n(Sin duplicados)`);
+                    } catch (err) {
+                        registrarLog("Error durante la importación CSV: " + err.message);
+                        alert("Error al importar CSV: " + err.message);
+                        actualizarProgreso(0);
                     }
-                });
-
-                if (!encontrado) {
-                    registrarLog(`No se encontró ningún registro para "${criterio}" en Firebase.`);
-                    alert("Cliente no encontrado en la base de datos de Firebase.");
-                    clienteDocIdActual = null;
+                },
+                error: function(err) {
+                    registrarLog("Error al leer el archivo CSV: " + err.message);
+                    alert("Error al leer CSV: " + err.message);
                 }
-                actualizarProgreso(100);
-            } catch (e) {
-                registrarLog("Error al consultar Firebase: " + e.message);
-                alert("Error al conectar con Firestore: " + e.message);
-                actualizarProgreso(100);
+            });
+        };
+
+        // CARGAR DATOS DE UN CLIENTE EN EL FORMULARIO Y SUS PLACAS EN EL MÓDULO 2
+        function aplicarDatosClienteEnUI(cliente) {
+            clienteDocIdActual = cliente.id;
+            document.getElementById('cedula').value = cliente.cedula || '';
+            document.getElementById('nombre').value = cliente.nombre || '';
+            document.getElementById('telefono').value = cliente.telefono || '';
+            document.getElementById('direccion').value = cliente.direccion || '';
+
+            vehiculosClienteActual = Array.isArray(cliente.vehiculos) ? [...cliente.vehiculos] : [];
+            const selectPlaca = document.getElementById('ord-placa');
+            selectPlaca.innerHTML = '<option value="">Seleccione vehículo (Placa)</option>';
+
+            vehiculosClienteActual.forEach(placa => {
+                const det = (cliente.vehiculosDetalle && cliente.vehiculosDetalle[placa]) ? cliente.vehiculosDetalle[placa] : {};
+                const etiqueta = det.marca ? `${placa} - ${det.marca} ${det.modelo || ''} (${det.anio || ''})` : placa;
+                selectPlaca.innerHTML += `<option value="${placa}">${etiqueta}</option>`;
+            });
+            selectPlaca.innerHTML += '<option value="NUEVO">➕ Registrar Nuevo Vehículo</option>';
+
+            registrarLog(`Cliente cargado: ${cliente.nombre} | Placas asociadas: ${vehiculosClienteActual.join(', ') || 'Ninguna'}`);
+
+            // Si tiene exactamente 1 vehículo, seleccionarlo automáticamente para mostrar sus datos de inmediato
+            if (vehiculosClienteActual.length === 1) {
+                selectPlaca.value = vehiculosClienteActual[0];
+                manejarSeleccionPlaca();
             }
+        }
+
+        // BÚSQUEDA DE CLIENTE POR NOMBRE, CÉDULA, RIF O TELÉFONO
+        window.buscarCliente = async function() {
+            const criterioRaw = document.getElementById('criterio-busqueda').value.trim();
+            if (!criterioRaw) {
+                alert("Ingrese un nombre, cédula, RIF o teléfono para buscar.");
+                return;
+            }
+            const criterio = normalizarTexto(criterioRaw);
+            registrarLog(`Buscando cliente: "${criterioRaw}"...`);
+            actualizarProgreso(40);
+
+            if (cacheClientes.length === 0) {
+                await recargarCacheFirebase();
+            }
+
+            coincidenciasClientes = cacheClientes.filter(c => {
+                const ced = normalizarTexto(c.cedula);
+                const nom = normalizarTexto(c.nombre);
+                const tel = normalizarTexto(c.telefono);
+                return (ced && ced.includes(criterio)) || (nom && nom.includes(criterio)) || (tel && tel.includes(criterio));
+            });
+
+            const boxCoincidencias = document.getElementById('selector-coincidencias-box');
+            const selectCoincidencias = document.getElementById('selector-coincidencias');
+
+            if (coincidenciasClientes.length === 0) {
+                boxCoincidencias.classList.add('hidden');
+                registrarLog(`No se encontró ningún cliente para "${criterioRaw}".`);
+                alert("Cliente no encontrado. Puede registrarlo completando los campos del Módulo 1.");
+                clienteDocIdActual = null;
+                actualizarProgreso(100);
+                return;
+            }
+
+            if (coincidenciasClientes.length === 1) {
+                boxCoincidencias.classList.add('hidden');
+                aplicarDatosClienteEnUI(coincidenciasClientes[0]);
+            } else {
+                // Ordenar coincidencia exacta primero y mostrar selector
+                coincidenciasClientes.sort((a, b) => {
+                    const aExact = normalizarTexto(a.nombre) === criterio || normalizarTexto(a.cedula) === criterio;
+                    const bExact = normalizarTexto(b.nombre) === criterio || normalizarTexto(b.cedula) === criterio;
+                    return (bExact ? 1 : 0) - (aExact ? 1 : 0);
+                });
+                selectCoincidencias.innerHTML = '';
+                coincidenciasClientes.forEach((cli, idx) => {
+                    const cantPlacas = (cli.vehiculos || []).length;
+                    selectCoincidencias.innerHTML += `<option value="${idx}">${cli.nombre} ${cli.cedula ? '(' + cli.cedula + ')' : ''} - ${cantPlacas} placa(s)</option>`;
+                });
+                boxCoincidencias.classList.remove('hidden');
+                aplicarDatosClienteEnUI(coincidenciasClientes[0]);
+                registrarLog(`Se encontraron ${coincidenciasClientes.length} clientes coincidentes.`);
+            }
+            actualizarProgreso(100);
+        };
+
+        window.seleccionarClienteDeLista = function() {
+            const idx = parseInt(document.getElementById('selector-coincidencias').value, 10);
+            if (!isNaN(idx) && coincidenciasClientes[idx]) {
+                aplicarDatosClienteEnUI(coincidenciasClientes[idx]);
+            }
+        };
+
+        // BÚSQUEDA DIRECTA POR PLACA (Trae vehículo, cliente propietario y última orden)
+        window.buscarPorPlacaDirecta = async function() {
+            const placaBuscada = document.getElementById('buscar-placa-directa').value.trim().toUpperCase();
+            if (!placaBuscada) {
+                alert("Ingrese una placa para buscar.");
+                return;
+            }
+            registrarLog(`Buscando información completa de la placa: ${placaBuscada}...`);
+            actualizarProgreso(40);
+
+            if (cacheClientes.length === 0 || cacheOrdenes.length === 0) {
+                await recargarCacheFirebase();
+            }
+
+            // Buscar cliente dueño de esa placa
+            const clienteDueno = cacheClientes.find(c => Array.isArray(c.vehiculos) && c.vehiculos.some(p => p.toUpperCase() === placaBuscada));
+            if (clienteDueno) {
+                aplicarDatosClienteEnUI(clienteDueno);
+                document.getElementById('ord-placa').value = placaBuscada;
+            } else {
+                // Si la placa existe en órdenes pero no estaba vinculada a un cliente
+                const selectPlaca = document.getElementById('ord-placa');
+                selectPlaca.innerHTML = `<option value="${placaBuscada}">${placaBuscada}</option><option value="NUEVO">➕ Registrar Nuevo Vehículo</option>`;
+                selectPlaca.value = placaBuscada;
+            }
+
+            await manejarSeleccionPlaca();
+            actualizarProgreso(100);
         };
 
         window.guardarCliente = async function(event) {
@@ -442,7 +808,9 @@
             const telefono = document.getElementById('telefono').value.trim();
             const direccion = document.getElementById('direccion').value.trim();
 
+            const docId = clienteDocIdActual || (cedula ? crearIdSeguro(cedula) : crearIdSeguro(nombre));
             actualizarProgreso(50);
+
             try {
                 const clienteData = {
                     cedula,
@@ -450,20 +818,15 @@
                     telefono,
                     direccion,
                     registradoPor: usuarioActual ? usuarioActual.email : "sistema",
-                    fechaRegistro: new Date().toISOString(),
+                    fechaRegistro: obtenerFechaHoraActualFormateada(),
                     vehiculos: vehiculosClienteActual
                 };
 
-                if (clienteDocIdActual) {
-                    await updateDoc(doc(db, "clientes_taller", clienteDocIdActual), clienteData);
-                    registrarLog(`Cliente actualizado exitosamente en Firestore (ID: ${clienteDocIdActual})`);
-                    alert("¡Datos del cliente actualizados!");
-                } else {
-                    const docRef = await addDoc(collection(db, "clientes_taller"), clienteData);
-                    clienteDocIdActual = docRef.id;
-                    registrarLog(`Cliente guardado exitosamente en Firestore (ID: ${docRef.id})`);
-                    alert("¡Cliente guardado exitosamente!");
-                }
+                await setDoc(doc(db, "clientes_taller", docId), clienteData, { merge: true });
+                clienteDocIdActual = docId;
+                await recargarCacheFirebase();
+                registrarLog(`Cliente "${nombre}" guardado/actualizado sin duplicados (ID: ${docId}).`);
+                alert("¡Cliente guardado exitosamente!");
                 actualizarProgreso(100);
             } catch (e) {
                 registrarLog("Error al guardar cliente: " + e.message);
@@ -472,71 +835,179 @@
             }
         };
 
+        // AL SELECCIONAR UNA PLACA: Rellena datos del vehículo y su última orden (Código, Fechas, Servicio, Checklist)
         window.manejarSeleccionPlaca = async function() {
             const select = document.getElementById('ord-placa');
+            const contNuevaPlaca = document.getElementById('contenedor-nueva-placa');
             const inputNuevoPlaca = document.getElementById('nuevo-placa');
-            const placaElegida = select.value;
+            const placaElegida = select.value.toUpperCase();
 
             if (placaElegida === 'NUEVO') {
-                inputNuevoPlaca.classList.remove('hidden');
+                contNuevaPlaca.classList.remove('hidden');
                 inputNuevoPlaca.required = true;
+                document.getElementById('ord-codigo').value = generarCodigoOrdenAutomatico();
+                document.getElementById('ord-fecha-ingreso').value = obtenerFechaHoraActualFormateada();
+                document.getElementById('ord-fecha-salida').value = '';
                 document.getElementById('ord-marca').value = '';
                 document.getElementById('ord-modelo').value = '';
                 document.getElementById('ord-anio').value = '';
                 document.getElementById('ord-km').value = '';
-            } else {
-                inputNuevoPlaca.classList.add('hidden');
-                inputNuevoPlaca.required = false;
-
-                // Consultar historial previo de este vehículo en 'ordenes_servicio' para rellenar datos
-                if (placaElegida) {
-                    registrarLog(`Consultando historial del vehículo placa: ${placaElegida}...`);
-                    try {
-                        const ordenesSnap = await getDocs(collection(db, "ordenes_servicio"));
-                        ordenesSnap.forEach(docSnap => {
-                            const ord = docSnap.data();
-                            if (ord.placa && ord.placa.toUpperCase() === placaElegida.toUpperCase()) {
-                                document.getElementById('ord-marca').value = ord.marca || '';
-                                document.getElementById('ord-modelo').value = ord.modelo || '';
-                                document.getElementById('ord-anio').value = ord.anio || '';
-                                document.getElementById('ord-km').value = ord.kilometraje || '';
-                                registrarLog(`Datos de vehículo recuperados (${ord.marca} ${ord.modelo} ${ord.anio}).`);
-                            }
-                        });
-                    } catch (e) {
-                        registrarLog("Nota: No se encontraron órdenes previas para autollenar datos del vehículo.");
-                    }
-                }
+                document.getElementById('ord-serial-carroceria').value = '';
+                document.getElementById('ord-serial-bateria').value = '';
+                document.getElementById('ord-combustible').value = '';
+                document.getElementById('ord-servicio').value = '';
+                return;
             }
+
+            contNuevaPlaca.classList.add('hidden');
+            inputNuevoPlaca.required = false;
+
+            if (!placaElegida) return;
+
+            registrarLog(`Cargando historial y ficha técnica de la placa ${placaElegida}...`);
+
+            // 1. Buscar datos base en detalle del cliente
+            const clienteActual = cacheClientes.find(c => c.id === clienteDocIdActual);
+            if (clienteActual && clienteActual.vehiculosDetalle && clienteActual.vehiculosDetalle[placaElegida]) {
+                const det = clienteActual.vehiculosDetalle[placaElegida];
+                document.getElementById('ord-marca').value = det.marca || '';
+                document.getElementById('ord-modelo').value = det.modelo || '';
+                document.getElementById('ord-anio').value = det.anio || '';
+                document.getElementById('ord-km').value = det.kilometraje || '';
+                document.getElementById('ord-serial-carroceria').value = det.serialCarroceria || '';
+                document.getElementById('ord-serial-bateria').value = det.serialBateria || '';
+            }
+
+            // 2. Buscar todas las órdenes de esta placa y tomar la más reciente
+            const ordenesPlaca = cacheOrdenes.filter(o => String(o.placa || '').toUpperCase() === placaElegida);
+            if (ordenesPlaca.length > 0) {
+                ordenesPlaca.sort((a, b) => String(b.codigoOrden || '').localeCompare(String(a.codigoOrden || '')));
+                const ultima = ordenesPlaca[0];
+
+                document.getElementById('ord-codigo').value = ultima.codigoOrden || generarCodigoOrdenAutomatico();
+                document.getElementById('ord-fecha-ingreso').value = ultima.fechaIngreso || obtenerFechaHoraActualFormateada();
+                document.getElementById('ord-fecha-salida').value = ultima.fechaSalida || '';
+                if (ultima.marca) document.getElementById('ord-marca').value = ultima.marca;
+                if (ultima.modelo) document.getElementById('ord-modelo').value = ultima.modelo;
+                if (ultima.anio) document.getElementById('ord-anio').value = ultima.anio;
+                if (ultima.kilometraje) document.getElementById('ord-km').value = ultima.kilometraje;
+                if (ultima.serialCarroceria) document.getElementById('ord-serial-carroceria').value = ultima.serialCarroceria;
+                if (ultima.serialBateria) document.getElementById('ord-serial-bateria').value = ultima.serialBateria;
+                document.getElementById('ord-combustible').value = ultima.combustible || '';
+                document.getElementById('ord-servicio').value = ultima.servicio || '';
+                document.getElementById('ord-mecanico').value = ultima.mecanico || ultima.recibidoPor || '';
+
+                if (ultima.checklist) {
+                    document.getElementById('chk-aceite-nivel').value = ultima.checklist.aceiteNivel || '';
+                    document.getElementById('chk-aceite-color').value = ultima.checklist.aceiteColor || '';
+                    document.getElementById('chk-aceite-filtro').value = ultima.checklist.aceiteFiltro || '';
+                    document.getElementById('chk-aceite-fugas').value = ultima.checklist.aceiteFugas || '';
+                    document.getElementById('chk-correa-tension').value = ultima.checklist.correaTension || '';
+                    document.getElementById('chk-correa-grietas').value = ultima.checklist.correaGrietas || '';
+                    document.getElementById('chk-refrig-nivel').value = ultima.checklist.refrigNivel || '';
+                    document.getElementById('chk-refrig-color').value = ultima.checklist.refrigColor || '';
+                    document.getElementById('chk-refrig-fugas').value = ultima.checklist.refrigFugas || '';
+                    document.getElementById('chk-bat-terminal').value = ultima.checklist.batTerminal || '';
+                    document.getElementById('chk-alt-voltaje').value = ultima.checklist.altVoltaje || '';
+                    document.getElementById('chk-dir-juego').value = ultima.checklist.dirJuego || '';
+                    document.getElementById('chk-freno-liga').value = ultima.checklist.frenoLiga || '';
+                    document.getElementById('chk-ruedas-presion').value = ultima.checklist.ruedasPresion || '';
+                    document.getElementById('chk-luces-ext').value = ultima.checklist.lucesExt || '';
+                }
+
+                registrarLog(`Placa ${placaElegida}: ${ordenesPlaca.length} orden(es) encontrada(s). Mostrando Código ${ultima.codigoOrden} (${ultima.fechaIngreso}).`);
+            } else {
+                document.getElementById('ord-codigo').value = generarCodigoOrdenAutomatico();
+                document.getElementById('ord-fecha-ingreso').value = obtenerFechaHoraActualFormateada();
+                document.getElementById('ord-fecha-salida').value = '';
+                registrarLog(`Placa ${placaElegida} sin órdenes previas. Lista para nueva recepción.`);
+            }
+        };
+
+        window.prepararNuevaOrdenParaPlacaActual = function() {
+            document.getElementById('ord-codigo').value = generarCodigoOrdenAutomatico();
+            document.getElementById('ord-fecha-ingreso').value = obtenerFechaHoraActualFormateada();
+            document.getElementById('ord-fecha-salida').value = '';
+            document.getElementById('ord-servicio').value = '';
+            registrarLog("Nuevo código y fecha/hora actual generados para registrar servicio.");
         };
 
         window.guardarOrdenServicio = async function(event) {
             event.preventDefault();
-            if (!clienteDocIdActual) {
-                alert("Primero debe buscar o guardar un cliente en el Módulo 1.");
+            const nombreCliente = document.getElementById('nombre').value.trim();
+            if (!clienteDocIdActual && !nombreCliente) {
+                alert("Primero debe buscar o registrar un cliente en el Módulo 1.");
                 return;
             }
 
-            let placaSeleccionada = document.getElementById('ord-placa').value;
-            if (placaSeleccionada === 'NUEVO') {
-                placaSeleccionada = document.getElementById('nuevo-placa').value.trim().toUpperCase();
-                if (placaSeleccionada && !vehiculosClienteActual.includes(placaSeleccionada)) {
-                    vehiculosClienteActual.push(placaSeleccionada);
-                    await updateDoc(doc(db, "clientes_taller", clienteDocIdActual), { vehiculos: vehiculosClienteActual });
-                    registrarLog(`Nuevo vehículo (${placaSeleccionada}) agregado al cliente.`);
-                }
+            if (!clienteDocIdActual && nombreCliente) {
+                const cedula = document.getElementById('cedula').value.trim();
+                clienteDocIdActual = cedula ? crearIdSeguro(cedula) : crearIdSeguro(nombreCliente);
             }
 
+            let placaSeleccionada = document.getElementById('ord-placa').value.toUpperCase();
+            if (placaSeleccionada === 'NUEVO') {
+                placaSeleccionada = document.getElementById('nuevo-placa').value.trim().toUpperCase();
+            }
+
+            if (!placaSeleccionada) {
+                alert("Debe seleccionar o ingresar una placa de vehículo.");
+                return;
+            }
+
+            const marca = document.getElementById('ord-marca').value.trim();
+            const modelo = document.getElementById('ord-modelo').value.trim();
+            const anio = document.getElementById('ord-anio').value.trim();
+            const kilometraje = document.getElementById('ord-km').value.trim();
+            const serialCarroceria = document.getElementById('ord-serial-carroceria').value.trim();
+            const serialBateria = document.getElementById('ord-serial-bateria').value.trim();
+            const codigoOrden = document.getElementById('ord-codigo').value.trim();
+            const fechaIngreso = document.getElementById('ord-fecha-ingreso').value.trim();
+            const fechaSalida = document.getElementById('ord-fecha-salida').value.trim();
+
+            if (!vehiculosClienteActual.includes(placaSeleccionada)) {
+                vehiculosClienteActual.push(placaSeleccionada);
+            }
+
+            // Actualizar ficha del cliente y su vehículo sin duplicar
+            await setDoc(doc(db, "clientes_taller", clienteDocIdActual), {
+                cedula: document.getElementById('cedula').value.trim(),
+                nombre: nombreCliente,
+                telefono: document.getElementById('telefono').value.trim(),
+                direccion: document.getElementById('direccion').value.trim(),
+                vehiculos: vehiculosClienteActual,
+                vehiculosDetalle: {
+                    [placaSeleccionada]: {
+                        placa: placaSeleccionada,
+                        marca,
+                        modelo,
+                        anio,
+                        kilometraje,
+                        serialCarroceria,
+                        serialBateria
+                    }
+                }
+            }, { merge: true });
+
+            const ordenIdUnico = crearIdSeguro(`${codigoOrden}_${placaSeleccionada}`);
             const ordenData = {
-                codigoOrden: document.getElementById('ord-codigo').value,
+                idServicio: ordenIdUnico,
+                codigoOrden: codigoOrden,
+                fechaIngreso: fechaIngreso,
+                fechaSalida: fechaSalida,
                 clienteId: clienteDocIdActual,
+                clienteNombre: nombreCliente,
+                telefonoCliente: document.getElementById('telefono').value.trim(),
                 placa: placaSeleccionada,
-                kilometraje: document.getElementById('ord-km').value,
-                marca: document.getElementById('ord-marca').value,
-                modelo: document.getElementById('ord-modelo').value,
-                anio: document.getElementById('ord-anio').value,
-                servicio: document.getElementById('ord-servicio').value,
-                mecanico: document.getElementById('ord-mecanico').value,
+                kilometraje: kilometraje,
+                marca: marca,
+                modelo: modelo,
+                anio: anio,
+                serialCarroceria: serialCarroceria,
+                serialBateria: serialBateria,
+                combustible: document.getElementById('ord-combustible').value.trim(),
+                servicio: document.getElementById('ord-servicio').value.trim(),
+                mecanico: document.getElementById('ord-mecanico').value.trim(),
                 checklist: {
                     aceiteNivel: document.getElementById('chk-aceite-nivel').value,
                     aceiteColor: document.getElementById('chk-aceite-color').value,
@@ -552,22 +1023,20 @@
                     dirJuego: document.getElementById('chk-dir-juego').value,
                     frenoLiga: document.getElementById('chk-freno-liga').value,
                     ruedasPresion: document.getElementById('chk-ruedas-presion').value,
-                    lucesExt: document.getElementById('chk-luces-ext').value,
+                    lucesExt: document.getElementById('chk-luces-ext').value
                 },
-                fecha: new Date().toISOString(),
                 registradoPor: usuarioActual ? usuarioActual.email : "sistema"
             };
 
             actualizarProgreso(60);
-            registrarLog("Guardando orden de servicio y chequeo técnico...");
+            registrarLog(`Guardando orden ${codigoOrden} (${fechaIngreso}) en Firebase...`);
 
             try {
-                await addDoc(collection(db, "ordenes_servicio"), ordenData);
-                registrarLog("¡Orden de servicio guardada con éxito en la nube!");
-                alert("¡Orden de servicio y chequeo técnico registrados con éxito!");
+                await setDoc(doc(db, "ordenes_servicio", ordenIdUnico), ordenData, { merge: true });
+                await recargarCacheFirebase();
+                registrarLog(`¡Orden ${codigoOrden} guardada/actualizada con éxito sin duplicados!`);
+                alert("¡Orden de servicio y chequeo técnico guardados en la nube!");
                 actualizarProgreso(100);
-                generarCodigoOrden();
-                document.getElementById('orden-form').reset();
             } catch (e) {
                 registrarLog("Error al guardar orden: " + e.message);
                 alert("Error: " + e.message);
@@ -575,24 +1044,27 @@
             }
         };
 
+        // EXPORTAR CLIENTES CSV (Sin separadores de miles, punto decimal)
         window.exportarClientesCSV = async function() {
             registrarLog("Generando archivo CSV de clientes...");
             actualizarProgreso(30);
             try {
-                const querySnapshot = await getDocs(collection(db, "clientes_taller"));
-                let csv = "Cedula,Nombre,Telefono,Direccion\n";
-                querySnapshot.forEach(docSnap => {
-                    const d = docSnap.data();
-                    csv += `"${d.cedula || ''}","${d.nombre || ''}","${d.telefono || ''}","${d.direccion || ''}"\n`;
+                if (cacheClientes.length === 0) await recargarCacheFirebase();
+                let csv = "Cedula_RIF,Nombre,Telefono,Direccion_Email,Placas\n";
+                cacheClientes.forEach(d => {
+                    const placasStr = Array.isArray(d.vehiculos) ? d.vehiculos.join(" | ") : "";
+                    csv += `"${(d.cedula || '').replace(/"/g, '""')}","${(d.nombre || '').replace(/"/g, '""')}","${(d.telefono || '').replace(/"/g, '""')}","${(d.direccion || '').replace(/"/g, '""')}","${placasStr}"\n`;
                 });
                 
-                const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+                const blob = new Blob(["\uFEFF" + csv], { type: 'text/csv;charset=utf-8;' });
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement('a');
                 a.href = url;
-                a.download = 'clientes_taller.csv';
+                a.download = 'clientes_taller_syntro.csv';
+                document.body.appendChild(a);
                 a.click();
-                registrarLog("CSV de clientes exportado con éxito.");
+                document.body.removeChild(a);
+                registrarLog(`CSV de clientes exportado (${cacheClientes.length} registros).`);
                 actualizarProgreso(100);
             } catch (e) {
                 registrarLog("Error al exportar clientes: " + e.message);
@@ -600,24 +1072,28 @@
             }
         };
 
+        // EXPORTAR ÓRDENES CSV (Conservando código, fechas/horas exactas y números sin separador de miles)
         window.exportarOrdenesCSV = async function() {
             registrarLog("Generando archivo CSV de órdenes de servicio...");
             actualizarProgreso(30);
             try {
-                const querySnapshot = await getDocs(collection(db, "ordenes_servicio"));
-                let csv = "Codigo,Placa,Marca,Modelo,Kilometraje,Mecanico,Fecha\n";
-                querySnapshot.forEach(docSnap => {
-                    const d = docSnap.data();
-                    csv += `"${d.codigoOrden || ''}","${d.placa || ''}","${d.marca || ''}","${d.modelo || ''}","${d.kilometraje || ''}","${d.mecanico || ''}","${d.fecha || ''}"\n`;
+                if (cacheOrdenes.length === 0) await recargarCacheFirebase();
+                let csv = "ID_SERVICIO,CODIGO,Ingreso_Fecha_Hora,Salida_Fecha_Hora,Placa,Cliente,Telefono,Marca,Modelo,Anio,Kilometraje,Mecanico,Servicio\n";
+                cacheOrdenes.forEach(d => {
+                    const kmLimpio = String(d.kilometraje || '').replace(/,/g, '.');
+                    const servicioLimpio = String(d.servicio || '').replace(/\r?\n/g, ' ').replace(/"/g, '""');
+                    csv += `"${d.idServicio || d.id}","${d.codigoOrden || ''}","${d.fechaIngreso || ''}","${d.fechaSalida || ''}","${d.placa || ''}","${(d.clienteNombre || '').replace(/"/g, '""')}","${d.telefonoCliente || ''}","${d.marca || ''}","${d.modelo || ''}","${d.anio || ''}","${kmLimpio}","${(d.mecanico || '').replace(/"/g, '""')}","${servicioLimpio}"\n`;
                 });
                 
-                const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+                const blob = new Blob(["\uFEFF" + csv], { type: 'text/csv;charset=utf-8;' });
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement('a');
                 a.href = url;
-                a.download = 'ordenes_servicio_taller.csv';
+                a.download = 'ordenes_servicio_taller_syntro.csv';
+                document.body.appendChild(a);
                 a.click();
-                registrarLog("CSV de órdenes exportado con éxito.");
+                document.body.removeChild(a);
+                registrarLog(`CSV de órdenes exportado (${cacheOrdenes.length} registros).`);
                 actualizarProgreso(100);
             } catch (e) {
                 registrarLog("Error al exportar órdenes: " + e.message);
