@@ -3,361 +3,587 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Taller Mecánico - Sistema Móvil y PC Firebase</title>
-    <!-- Firebase SDK (Modular v9) -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
-        import { getFirestore, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
-
-        // CREDENCIALES DE TU PROYECTO FIREBASE (taller-mecanico-c2124)
-        const firebaseConfig = {
-            apiKey: "AIzaSyD-TallerMecanico-FirebaseConfigAutoIntegrated",
-            authDomain: "taller-mecanico-c2124.firebaseapp.com",
-            projectId: "taller-mecanico-c2124",
-            storageBucket: "taller-mecanico-c2124.appspot.com",
-            messagingSenderId: "taller-mecanico-c2124-msg",
-            appId: "1:taller-mecanico-c2124:web:auto"
-        };
-
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-
-        let timerInterval;
-        let secondsElapsed = 0;
-
-        function startTimer() {
-            secondsElapsed = 0;
-            clearInterval(timerInterval);
-            timerInterval = setInterval(() => {
-                secondsElapsed++;
-                const mins = String(Math.floor(secondsElapsed / 60)).padStart(2, '0');
-                const secs = String(secondsElapsed % 60).padStart(2, '0');
-                document.getElementById('timer').innerText = `${mins}:${secs}`;
-            }, 1000);
-        }
-
-        function stopTimer() {
-            clearInterval(timerInterval);
-        }
-
-        function logMessage(msg) {
-            const consoleBox = document.getElementById('logConsole');
-            const timestamp = new Date().toLocaleTimeString();
-            consoleBox.innerHTML += `[${timestamp}] ${msg}<br>`;
-            consoleBox.scrollTop = consoleBox.scrollHeight;
-        }
-
-        function updateProgress(percent) {
-            document.getElementById('progressBar').style.width = percent + '%';
-        }
-
-        // Función de consulta adaptada a la colección 'clientes_taller'
-        window.buscarEnFirebase = async function() {
-            const criterio = document.getElementById('inputCriterio').value.trim();
-            const tipoBusqueda = document.getElementById('selectTipo').value; // 'cedula' o 'vehiculos'
-            
-            if (!criterio) {
-                alert("Por favor ingrese una cédula o placa para consultar.");
-                return;
-            }
-
-            const resultadosDiv = document.getElementById('resultadosContainer');
-            resultadosDiv.innerHTML = "";
-            document.getElementById('logConsole').innerHTML = "";
-            
-            startTimer();
-            updateProgress(25);
-            logMessage(`Conectando con Firestore (${tipoBusqueda}: ${criterio})...`);
-
-            try {
-                const refClientes = collection(db, "clientes_taller");
-                let q;
-
-                if (tipoBusqueda === 'cedula') {
-                    q = query(refClientes, where("cedula", "==", criterio));
-                } else {
-                    q = query(refClientes, where("vehiculos", "array-contains", criterio));
-                }
-
-                updateProgress(60);
-                logMessage("Ejecutando consulta indexada...");
-
-                const querySnapshot = await getDocs(q);
-                updateProgress(90);
-
-                if (querySnapshot.empty) {
-                    logMessage("No se encontraron registros coincidentes.");
-                    resultadosDiv.innerHTML = `<div class="neu-card" style="text-align:center; color:#ff6b6b;">No se encontraron registros para: <b>${criterio}</b></div>`;
-                    updateProgress(100);
-                    stopTimer();
-                    return;
-                }
-
-                let htmlContent = "";
-                querySnapshot.forEach((doc) => {
-                    const data = doc.data();
-                    logMessage(`¡Registro encontrado! ID: ${doc.id}`);
-                    
-                    let vehiculosHTML = "";
-                    if (data.vehiculos && Array.isArray(data.vehiculos)) {
-                        data.vehiculos.forEach(v => {
-                            vehiculosHTML += `<li>🚗 Vehículo / Placa: <b>${v}</b></li>`;
-                        });
-                    } else {
-                        vehiculosHTML = "<li>Sin vehículos registrados.</li>";
-                    }
-
-                    htmlContent += `
-                        <div class="neu-card result-card">
-                            <h3>👤 Cliente: ${data.nombre || 'N/D'}</h3>
-                            <p><b>Cédula / RIF:</b> ${data.cedula || 'N/D'}</p>
-                            <p><b>Teléfono:</b> ${data.telefono || 'N/D'}</p>
-                            <p><b>Dirección:</b> ${data.direccion || 'N/D'}</p>
-                            <hr style="border: 0; border-top: 1px solid #333; margin: 10px 0;">
-                            <h4>🚘 Vehículos Asociados</h4>
-                            <ul>${vehiculosHTML}</ul>
-                            <p style="font-size: 12px; color: #888; margin-top: 10px;">Registrado por: ${data.registradoPor || 'N/D'} el ${data.fechaRegistro || 'N/D'}</p>
-                        </div>
-                    `;
-                });
-
-                resultadosDiv.innerHTML = htmlContent;
-                updateProgress(100);
-                logMessage("Consulta finalizada con éxito.");
-                stopTimer();
-
-            } catch (error) {
-                console.error("Error al consultar Firebase:", error);
-                logMessage(`ERROR CRÍTICO: ${error.message}`);
-                updateProgress(100);
-                stopTimer();
-            }
-        };
-
-        // Exportar a CSV cumpliendo normas (separador de punto decimal, sin miles)
-        window.exportarCSV = function() {
-            logMessage("Generando archivo CSV...");
-            let csvContent = "data:text/csv;charset=utf-8,Cedula,Nombre,Telefono,Direccion\n";
-            const encodedUri = encodeURI(csvContent);
-            const link = document.createElement("a");
-            link.setAttribute("href", encodedUri);
-            link.setAttribute("download", "reporte_clientes_taller.csv");
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            logMessage("Archivo CSV exportado con éxito.");
-        };
-    </script>
-
+    <title>Taller Mecánico Syntro - Sistema Cloud Integral</title>
+    <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        :root {
-            --bg-color: #1a1a1a;
-            --neu-dark: #111111;
-            --neu-light: #232323;
-            --shadow-1: -5px -5px 10px #262626, 5px 5px 10px #0e0e0e;
-            --shadow-inset: inset 3px 3px 6px #0e0e0e, inset -3px -3px 6px #262626;
-            --accent: #00adb5;
-            --text-color: #e0e0e0;
-        }
-
-        * {
-            box-sizing: border-box;
-        }
-
         body {
-            background-color: var(--bg-color);
-            color: var(--text-color);
+            background-color: #0f172a;
+            color: #f8fafc;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            margin: 0;
-            padding: 10px;
-            display: flex;
-            justify-content: center;
         }
-
-        .main-container {
-            width: 100%;
-            max-width: 950px;
-            background: var(--bg-color);
-            padding: 15px;
-            border-radius: 20px;
-            box-shadow: var(--shadow-1);
+        .neumo-card {
+            background: #1e293b;
+            box-shadow: 8px 8px 16px #0b1120, -8px -8px 16px #314159;
+            border-radius: 1rem;
         }
-
-        @media (min-width: 768px) {
-            .main-container {
-                padding: 30px;
-            }
-        }
-
-        h1 {
-            text-align: center;
-            color: var(--accent);
-            margin-bottom: 20px;
-            font-size: 1.4rem;
-            text-shadow: 2px 2px 4px #0e0e0e;
-        }
-
-        @media (min-width: 768px) {
-            h1 {
-                font-size: 1.8rem;
-            }
-        }
-
-        .neu-card {
-            background: var(--bg-color);
-            padding: 15px;
-            border-radius: 15px;
-            box-shadow: var(--shadow-1);
-            margin-bottom: 15px;
-        }
-
-        @media (min-width: 768px) {
-            .neu-card {
-                padding: 20px;
-            }
-        }
-
-        .input-group {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            margin-bottom: 15px;
-        }
-
-        @media (min-width: 600px) {
-            .input-group {
-                flex-direction: row;
-                flex-wrap: wrap;
-            }
-        }
-
-        select, input {
-            background: var(--bg-color);
-            color: var(--text-color);
+        .neumo-input {
+            background: #0f172a;
+            box-shadow: inset 4px 4px 8px #0b1120, inset -4px -4px 8px #314159;
             border: none;
-            padding: 12px 15px;
-            border-radius: 10px;
-            box-shadow: var(--shadow-inset);
-            font-size: 16px;
-            outline: none;
-            width: 100%;
+            color: #ffffff;
         }
-
-        @media (min-width: 600px) {
-            select, input {
-                flex: 1;
-                min-width: 180px;
-            }
-        }
-
-        button.neu-btn {
-            background: var(--bg-color);
-            color: var(--accent);
-            border: none;
-            padding: 12px 20px;
-            border-radius: 10px;
-            box-shadow: var(--shadow-1);
-            cursor: pointer;
-            font-weight: bold;
-            font-size: 16px;
-            width: 100%;
+        .neumo-button {
+            background: #3b82f6;
+            box-shadow: 4px 4px 8px #1d4ed8, -4px -4px 8px #60a5fa;
             transition: all 0.2s ease;
         }
-
-        @media (min-width: 600px) {
-            button.neu-btn {
-                width: auto;
-            }
+        .neumo-button:active {
+            box-shadow: inset 2px 2px 4px #1d4ed8, inset -2px -2px 4px #60a5fa;
         }
-
-        button.neu-btn:active {
-            box-shadow: var(--shadow-inset);
-            color: #fff;
+        .neumo-button-secondary {
+            background: #059669;
+            box-shadow: 4px 4px 8px #047857, -4px -4px 8px #10b981;
         }
-
-        .status-bar-container {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 12px;
-            font-size: 13px;
-            flex-wrap: wrap;
-            gap: 10px;
+        .neumo-button-purple {
+            background: #7c3aed;
+            box-shadow: 4px 4px 8px #5b21b6, -4px -4px 8px #8b5cf6;
         }
-
-        .progress-track {
-            background: var(--bg-color);
-            height: 12px;
-            border-radius: 6px;
-            box-shadow: var(--shadow-inset);
-            overflow: hidden;
-            margin-bottom: 12px;
-        }
-
-        .progress-bar {
-            background: var(--accent);
-            height: 100%;
-            width: 0%;
-            transition: width 0.4s ease;
-        }
-
-        .log-console {
-            background: var(--neu-dark);
-            color: #00ffcc;
-            font-family: 'Courier New', Courier, monospace;
-            padding: 10px;
-            border-radius: 10px;
-            box-shadow: var(--shadow-inset);
-            height: 100px;
-            overflow-y: auto;
-            font-size: 12px;
-        }
-
-        .result-card {
-            border-left: 4px solid var(--accent);
-            word-break: break-word;
-        }
-
-        ul {
-            margin: 5px 0;
-            padding-left: 20px;
+        .neumo-button-red {
+            background: #dc2626;
+            box-shadow: 4px 4px 8px #991b1b, -4px -4px 8px #ef4444;
         }
     </style>
 </head>
-<body>
+<body class="p-4 md:p-6 min-h-screen flex flex-col justify-between">
 
-    <div class="main-container">
-        <h1>TALLER MECÁNICO - MÓVIL Y PC</h1>
-
-        <!-- Controles de Consulta -->
-        <div class="neu-card">
-            <div class="input-group">
-                <select id="selectTipo">
-                    <option value="cedula">Buscar por Cédula / RIF</option>
-                    <option value="vehiculos">Buscar por Placa</option>
-                </select>
-                <input type="text" id="inputCriterio" placeholder="Ej: vfff64s1 o placa...">
-                <button class="neu-btn" onclick="buscarEnFirebase()">Consultar</button>
-            </div>
-
-            <!-- Panel de Estado, Tiempos y Logs -->
-            <div class="status-bar-container">
-                <span>⏱️ Tiempo: <strong id="timer">00:00</strong></span>
-                <button class="neu-btn" style="padding: 6px 15px; font-size: 13px; width: auto;" onclick="exportarCSV()">📥 Exportar CSV</button>
-            </div>
-            <div class="progress-track">
-                <div id="progressBar" class="progress-bar"></div>
-            </div>
-            <div id="logConsole" class="log-console">Sistema adaptado para PC y móvil listo...</div>
+    <!-- PANTALLA DE LOGIN -->
+    <div id="auth-container" class="max-w-md mx-auto my-auto w-full neumo-card p-8">
+        <div class="text-center mb-6">
+            <h1 class="text-2xl font-bold text-blue-400">Taller Mecánico Syntro</h1>
+            <p class="text-xs text-slate-400 mt-1">Acceso Autorizado Operadores</p>
         </div>
-
-        <!-- Resultados -->
-        <div id="resultadosContainer">
-            <div class="neu-card" style="text-align: center; color: #777; font-size: 14px;">
-                Ingrese el criterio de búsqueda para visualizar los datos sincronizados.
+        <form onsubmit="manejarAutenticacion(event)" class="space-y-4">
+            <div>
+                <label class="block text-sm text-slate-400 mb-1">Correo Electrónico</label>
+                <input type="email" id="auth-email" required class="w-full p-3 rounded-lg neumo-input focus:outline-none" placeholder="taller@syntro.com">
             </div>
-        </div>
+            <div>
+                <label class="block text-sm text-slate-400 mb-1">Contraseña</label>
+                <input type="password" id="auth-password" required class="w-full p-3 rounded-lg neumo-input focus:outline-none" placeholder="••••••••">
+            </div>
+            <button type="submit" class="w-full py-3 rounded-lg font-semibold text-white neumo-button">
+                Iniciar Sesión / Registrarse
+            </button>
+        </form>
     </div>
 
+    <!-- APLICACIÓN PRINCIPAL -->
+    <div id="app-container" class="max-w-7xl mx-auto w-full hidden">
+        <header class="flex flex-col md:flex-row justify-between items-center mb-8 p-4 neumo-card gap-4">
+            <div>
+                <h1 class="text-2xl font-bold text-blue-400">Taller Mecánico Syntro</h1>
+                <p class="text-xs text-slate-400">Operador Activo: <span id="user-display" class="text-emerald-400 font-mono"></span></p>
+            </div>
+            <div class="flex items-center gap-6">
+                <div class="text-center md:text-right">
+                    <div id="timer" class="text-lg font-mono text-emerald-400">00:00:00</div>
+                    <div id="sync-status" class="text-xs text-emerald-400">Cloud Sincronizado</div>
+                </div>
+                <button onclick="cerrarSesion()" class="px-4 py-2 rounded-lg text-xs font-semibold text-white neumo-button-red">
+                    Salir
+                </button>
+            </div>
+        </header>
+
+        <main class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            
+            <!-- COLUMNA 1: Módulo 1 - Clientes -->
+            <div class="space-y-6">
+                <section class="neumo-card p-6">
+                    <h2 class="text-xl font-semibold mb-4 text-slate-200">Módulo 1: Clientes</h2>
+                    
+                    <div class="mb-4 p-3 rounded-xl border border-slate-700 bg-slate-900/50">
+                        <label class="block text-xs text-blue-400 font-semibold uppercase mb-1">Buscar Cliente</label>
+                        <div class="flex gap-2">
+                            <input type="text" id="criterio-busqueda" class="w-full p-2 rounded-lg neumo-input text-sm focus:outline-none" placeholder="Cédula, RIF o Nombre">
+                            <button type="button" onclick="buscarCliente()" class="px-3 py-2 rounded-lg text-white font-semibold text-xs neumo-button-secondary">Buscar</button>
+                        </div>
+                    </div>
+
+                    <form id="client-form" onsubmit="guardarCliente(event)" class="space-y-3">
+                        <div>
+                            <label class="block text-xs text-slate-400 mb-1">Cédula o RIF</label>
+                            <input type="text" id="cedula" required class="w-full p-2 rounded-lg neumo-input text-sm focus:outline-none" placeholder="V-12345678">
+                        </div>
+                        <div>
+                            <label class="block text-xs text-slate-400 mb-1">Nombre y Apellido</label>
+                            <input type="text" id="nombre" required class="w-full p-2 rounded-lg neumo-input text-sm focus:outline-none" placeholder="Juan Suárez">
+                        </div>
+                        <div>
+                            <label class="block text-xs text-slate-400 mb-1">Teléfono</label>
+                            <input type="text" id="telefono" required class="w-full p-2 rounded-lg neumo-input text-sm focus:outline-none" placeholder="0414-1234567">
+                        </div>
+                        <div>
+                            <label class="block text-xs text-slate-400 mb-1">Dirección</label>
+                            <textarea id="direccion" rows="2" required class="w-full p-2 rounded-lg neumo-input text-sm focus:outline-none" placeholder="Dirección"></textarea>
+                        </div>
+                        <button type="submit" class="w-full py-2 rounded-lg text-xs font-semibold text-white neumo-button">
+                            Guardar Cliente
+                        </button>
+                    </form>
+                </section>
+            </div>
+
+            <!-- COLUMNAS 2 y 3: Recepción, Vehículos, Chequeo Técnico y Exportación -->
+            <div class="lg:col-span-2 space-y-6">
+                <section class="neumo-card p-6">
+                    <h2 class="text-xl font-semibold mb-4 text-slate-200">Módulos 2 y 3: Recepción y Chequeo Técnico</h2>
+                    
+                    <form id="orden-form" onsubmit="guardarOrdenServicio(event)" class="space-y-6">
+                        
+                        <!-- Datos de la Orden y Selección / Registro de Vehículo -->
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div>
+                                <label class="block text-xs text-slate-400 mb-1">Código de Orden (Automático)</label>
+                                <input type="text" id="ord-codigo" readonly class="w-full p-2 rounded-lg neumo-input text-sm font-mono text-emerald-400 focus:outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-xs text-slate-400 mb-1">Vehículo (Placa)</label>
+                                <select id="ord-placa" onchange="manejarSeleccionPlaca()" class="w-full p-2 rounded-lg neumo-input text-sm focus:outline-none">
+                                    <option value="">Seleccione cliente primero</option>
+                                    <option value="NUEVO">➕ Registrar Nuevo Vehículo</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs text-slate-400 mb-1">Kilometraje</label>
+                                <input type="text" id="ord-km" required class="w-full p-2 rounded-lg neumo-input text-sm focus:outline-none" placeholder="Ej: 64500">
+                            </div>
+                            <div>
+                                <label class="block text-xs text-slate-400 mb-1">Placa (Si es nuevo)</label>
+                                <input type="text" id="nuevo-placa" class="w-full p-2 rounded-lg neumo-input text-sm focus:outline-none hidden" placeholder="Ej: AAO83NL">
+                            </div>
+                            <div>
+                                <label class="block text-xs text-slate-400 mb-1">Marca</label>
+                                <input type="text" id="ord-marca" required class="w-full p-2 rounded-lg neumo-input text-sm focus:outline-none" placeholder="Hyundai">
+                            </div>
+                            <div>
+                                <label class="block text-xs text-slate-400 mb-1">Modelo</label>
+                                <input type="text" id="ord-modelo" required class="w-full p-2 rounded-lg neumo-input text-sm focus:outline-none" placeholder="Elantra">
+                            </div>
+                            <div>
+                                <label class="block text-xs text-slate-400 mb-1">Año</label>
+                                <input type="text" id="ord-anio" required class="w-full p-2 rounded-lg neumo-input text-sm focus:outline-none" placeholder="2010">
+                            </div>
+                        </div>
+
+                        <!-- Servicios y Personal -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs text-slate-400 mb-1">Trabajo / Servicio a Realizar</label>
+                                <textarea id="ord-servicio" rows="3" required class="w-full p-2 rounded-lg neumo-input text-sm focus:outline-none" placeholder="Mantenimiento de radiador, mangueras..."></textarea>
+                            </div>
+                            <div class="space-y-3">
+                                <div>
+                                    <label class="block text-xs text-slate-400 mb-1">Mecánico Asignado</label>
+                                    <input type="text" id="ord-mecanico" required class="w-full p-2 rounded-lg neumo-input text-sm focus:outline-none" placeholder="ANTONIO GUTIERREZ">
+                                </div>
+                                <div>
+                                    <label class="block text-xs text-slate-400 mb-1">Fotografía de Recepción</label>
+                                    <input type="file" id="ord-foto" accept="image/*" class="w-full text-xs text-slate-300 file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-blue-600 file:text-white cursor-pointer">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- MÓDULO 3: CHECKLIST TÉCNICO DETALLADO -->
+                        <div class="p-4 rounded-xl border border-slate-700 bg-slate-900/40 space-y-4">
+                            <h3 class="text-sm font-bold text-blue-400 uppercase tracking-wider">Módulo 3: Inspección Técnica Detallada</h3>
+                            
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+                                <div class="p-3 bg-slate-900 rounded-lg">
+                                    <span class="font-semibold text-slate-300 block mb-2">1. Sistema de Aceite</span>
+                                    <div class="grid grid-cols-2 gap-2">
+                                        <input type="text" id="chk-aceite-nivel" placeholder="Nivel" class="p-1 neumo-input rounded">
+                                        <input type="text" id="chk-aceite-color" placeholder="Color" class="p-1 neumo-input rounded">
+                                        <input type="text" id="chk-aceite-filtro" placeholder="Filtro" class="p-1 neumo-input rounded">
+                                        <input type="text" id="chk-aceite-fugas" placeholder="Sin fugas (Sí/No)" class="p-1 neumo-input rounded">
+                                    </div>
+                                </div>
+
+                                <div class="p-3 bg-slate-900 rounded-lg">
+                                    <span class="font-semibold text-slate-300 block mb-2">2. Correas y Mangueras</span>
+                                    <div class="grid grid-cols-2 gap-2">
+                                        <input type="text" id="chk-correa-tension" placeholder="Tensión" class="p-1 neumo-input rounded">
+                                        <input type="text" id="chk-correa-grietas" placeholder="Sin grietas (Sí/No)" class="p-1 neumo-input rounded">
+                                    </div>
+                                </div>
+
+                                <div class="p-3 bg-slate-900 rounded-lg">
+                                    <span class="font-semibold text-slate-300 block mb-2">3. Líquido Refrigerante</span>
+                                    <div class="grid grid-cols-3 gap-2">
+                                        <input type="text" id="chk-refrig-nivel" placeholder="Nivel" class="p-1 neumo-input rounded">
+                                        <input type="text" id="chk-refrig-color" placeholder="Color" class="p-1 neumo-input rounded">
+                                        <input type="text" id="chk-refrig-fugas" placeholder="Fugas (Sí/No)" class="p-1 neumo-input rounded">
+                                    </div>
+                                </div>
+
+                                <div class="p-3 bg-slate-900 rounded-lg">
+                                    <span class="font-semibold text-slate-300 block mb-2">4. Batería y Alternador</span>
+                                    <div class="grid grid-cols-2 gap-2">
+                                        <input type="text" id="chk-bat-terminal" placeholder="Terminales limpios" class="p-1 neumo-input rounded">
+                                        <input type="text" id="chk-alt-voltaje" placeholder="Voltaje alternador" class="p-1 neumo-input rounded">
+                                    </div>
+                                </div>
+
+                                <div class="p-3 bg-slate-900 rounded-lg">
+                                    <span class="font-semibold text-slate-300 block mb-2">5. Dirección y Frenos</span>
+                                    <div class="grid grid-cols-2 gap-2">
+                                        <input type="text" id="chk-dir-juego" placeholder="Juego libre dirección" class="p-1 neumo-input rounded">
+                                        <input type="text" id="chk-freno-liga" placeholder="Nivel liga de freno" class="p-1 neumo-input rounded">
+                                    </div>
+                                </div>
+
+                                <div class="p-3 bg-slate-900 rounded-lg">
+                                    <span class="font-semibold text-slate-300 block mb-2">6. Ruedas, Luces y Limpiaparabrisas</span>
+                                    <div class="grid grid-cols-2 gap-2">
+                                        <input type="text" id="chk-ruedas-presion" placeholder="Presión neumática" class="p-1 neumo-input rounded">
+                                        <input type="text" id="chk-luces-ext" placeholder="Luces externas (Sí/No)" class="p-1 neumo-input rounded">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="w-full py-3 rounded-lg font-semibold text-white neumo-button-purple">
+                            Generar y Guardar Orden Completa en la Nube
+                        </button>
+                    </form>
+                </section>
+
+                <!-- Bitácora y Panel de Exportación a CSV -->
+                <section class="neumo-card p-6 space-y-4">
+                    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
+                        <h2 class="text-xl font-semibold text-slate-200">Bitácora y Exportación de Datos</h2>
+                        <div class="flex gap-2 w-full md:w-auto">
+                            <button type="button" onclick="exportarClientesCSV()" class="flex-1 md:flex-none px-3 py-2 rounded-lg text-xs font-semibold text-white neumo-button-secondary">
+                                📊 Exportar Clientes CSV
+                            </button>
+                            <button type="button" onclick="exportarOrdenesCSV()" class="flex-1 md:flex-none px-3 py-2 rounded-lg text-xs font-semibold text-white neumo-button">
+                                📋 Exportar Órdenes CSV
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="w-full bg-slate-900 rounded-full h-3 overflow-hidden neumo-input">
+                        <div id="progress-bar" class="bg-blue-500 h-full w-0 transition-all duration-300"></div>
+                    </div>
+                    
+                    <div id="log-console" class="bg-slate-950 p-3 rounded-lg font-mono text-xs text-emerald-400 h-36 overflow-y-auto neumo-input">
+                        [Sistema Listo] Módulos de Clientes, Recepción, Chequeo Técnico y Exportación activos.
+                    </div>
+                </section>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- Script Firebase y Lógica -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-app.js";
+        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-auth.js";
+        import { getFirestore, collection, addDoc, getDocs, updateDoc, doc, query, where } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBe96LcGjwrVh6ciDoEbbUwRhfGCOrqBS8",
+            authDomain: "taller-mecanico-c2124.firebaseapp.com",
+            projectId: "taller-mecanico-c2124",
+            storageBucket: "taller-mecanico-c2124.firebasestorage.app",
+            messagingSenderId: "524886950258",
+            appId: "1:524886950258:web:8980e91ab51833e7b49deb",
+            measurementId: "G-TWRKEQBJML"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        
+        let clienteDocIdActual = null;
+        let usuarioActual = null;
+        let vehiculosClienteActual = [];
+        let timerInterval = null;
+        let segundosTranscurridos = 0;
+
+        // Temporizador de sesión y uso
+        function iniciarTemporizador() {
+            segundosTranscurridos = 0;
+            clearInterval(timerInterval);
+            timerInterval = setInterval(() => {
+                segundosTranscurridos++;
+                const hrs = String(Math.floor(segundosTranscurridos / 3600)).padStart(2, '0');
+                const mins = String(Math.floor((segundosTranscurridos % 3600) / 60)).padStart(2, '0');
+                const secs = String(segundosTranscurridos % 60).padStart(2, '0');
+                const elTimer = document.getElementById('timer');
+                if(elTimer) elTimer.innerText = `${hrs}:${mins}:${secs}`;
+            }, 1000);
+        }
+
+        function registrarLog(mensaje) {
+            const consola = document.getElementById('log-console');
+            if(consola) {
+                const hora = new Date().toLocaleTimeString();
+                consola.innerHTML += `[${hora}] ${mensaje}<br>`;
+                consola.scrollTop = consola.scrollHeight;
+            }
+        }
+
+        function actualizarProgreso(porcentaje) {
+            const bar = document.getElementById('progress-bar');
+            if(bar) bar.style.width = porcentaje + '%';
+        }
+
+        function generarCodigoOrden() {
+            const codigoAleatorio = 'OST-' + Math.floor(100000 + Math.random() * 900000);
+            const inputCodigo = document.getElementById('ord-codigo');
+            if(inputCodigo) inputCodigo.value = codigoAleatorio;
+        }
+
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                usuarioActual = user;
+                document.getElementById('auth-container').classList.add('hidden');
+                document.getElementById('app-container').classList.remove('hidden');
+                document.getElementById('user-display').innerText = user.email;
+                iniciarTemporizador();
+                generarCodigoOrden();
+                registrarLog("Sesión iniciada correctamente en Firestore.");
+            } else {
+                usuarioActual = null;
+                document.getElementById('auth-container').classList.remove('hidden');
+                document.getElementById('app-container').classList.add('hidden');
+                clearInterval(timerInterval);
+            }
+        });
+
+        window.manejarAutenticacion = async function(event) {
+            event.preventDefault();
+            const email = document.getElementById('auth-email').value;
+            const pass = document.getElementById('auth-password').value;
+            registrarLog("Autenticando usuario...");
+            actualizarProgreso(30);
+            try {
+                await signInWithEmailAndPassword(auth, email, pass);
+                actualizarProgreso(100);
+            } catch (error) {
+                try {
+                    await createUserWithEmailAndPassword(auth, email, pass);
+                    registrarLog("Nuevo usuario registrado y conectado.");
+                    actualizarProgreso(100);
+                } catch (errReg) {
+                    registrarLog("Error de autenticación: " + errReg.message);
+                    alert("Error: " + errReg.message);
+                    actualizarProgreso(0);
+                }
+            }
+        };
+
+        window.cerrarSesion = async function() {
+            await signOut(auth);
+            registrarLog("Sesión cerrada.");
+        };
+
+        // Buscar cliente en la colección 'clientes_taller'
+        window.buscarCliente = async function() {
+            const criterio = document.getElementById('criterio-busqueda').value.trim();
+            if (!criterio) {
+                alert("Ingrese una cédula, RIF o nombre para buscar.");
+                return;
+            }
+            registrarLog(`Buscando cliente: ${criterio}...`);
+            actualizarProgreso(40);
+            try {
+                const qRef = collection(db, "clientes_taller");
+                const querySnapshot = await getDocs(qRef);
+                let encontrado = false;
+
+                querySnapshot.forEach((docSnap) => {
+                    const data = docSnap.data();
+                    if (data.cedula === criterio || (data.nombre && data.nombre.toLowerCase().includes(criterio.toLowerCase()))) {
+                        clienteDocIdActual = docSnap.id;
+                        document.getElementById('cedula').value = data.cedula || '';
+                        document.getElementById('nombre').value = data.nombre || '';
+                        document.getElementById('telefono').value = data.telefono || '';
+                        document.getElementById('direccion').value = data.direccion || '';
+                        
+                        vehiculosClienteActual = data.vehiculos || [];
+                        const selectPlaca = document.getElementById('ord-placa');
+                        selectPlaca.innerHTML = '<option value="">Seleccione vehículo</option>';
+                        vehiculosClienteActual.forEach(placa => {
+                            selectPlaca.innerHTML += `<option value="${placa}">${placa}</option>`;
+                        });
+                        selectPlaca.innerHTML += '<option value="NUEVO">➕ Registrar Nuevo Vehículo</option>';
+
+                        encontrado = true;
+                        registrarLog(`Cliente encontrado: ${data.nombre} (ID: ${docSnap.id})`);
+                    }
+                });
+
+                if (!encontrado) {
+                    registrarLog("Cliente no encontrado. Puede registrar uno nuevo.");
+                    alert("Cliente no encontrado en la base de datos. Complete los datos y guarde.");
+                    clienteDocIdActual = null;
+                }
+                actualizarProgreso(100);
+            } catch (e) {
+                registrarLog("Error al buscar cliente: " + e.message);
+                actualizarProgreso(100);
+            }
+        };
+
+        window.guardarCliente = async function(event) {
+            event.preventDefault();
+            const cedula = document.getElementById('cedula').value;
+            const nombre = document.getElementById('nombre').value;
+            const telefono = document.getElementById('telefono').value;
+            const direccion = document.getElementById('direccion').value;
+
+            actualizarProgreso(50);
+            try {
+                const clienteData = {
+                    cedula,
+                    nombre,
+                    telefono,
+                    direccion,
+                    registradoPor: usuarioActual ? usuarioActual.email : "sistema",
+                    fechaRegistro: new Date().toISOString(),
+                    vehiculos: vehiculosClienteActual
+                };
+
+                const docRef = await addDoc(collection(db, "clientes_taller"), clienteData);
+                clienteDocIdActual = docRef.id;
+                registrarLog(`Cliente guardado con éxito en Firestore (ID: ${docRef.id})`);
+                alert("¡Cliente guardado exitosamente!");
+                actualizarProgreso(100);
+            } catch (e) {
+                registrarLog("Error al guardar cliente: " + e.message);
+                alert("Error al guardar: " + e.message);
+                actualizarProgreso(100);
+            }
+        };
+
+        window.manejarSeleccionPlaca = function() {
+            const select = document.getElementById('ord-placa');
+            const inputNuevoPlaca = document.getElementById('nuevo-placa');
+            if (select.value === 'NUEVO') {
+                inputNuevoPlaca.classList.remove('hidden');
+                inputNuevoPlaca.required = true;
+            } else {
+                inputNuevoPlaca.classList.add('hidden');
+                inputNuevoPlaca.required = false;
+            }
+        };
+
+        window.guardarOrdenServicio = async function(event) {
+            event.preventDefault();
+            if (!clienteDocIdActual) {
+                alert("Primero debe buscar o guardar un cliente antes de emitir una orden.");
+                return;
+            }
+
+            let placaSeleccionada = document.getElementById('ord-placa').value;
+            if (placaSeleccionada === 'NUEVO') {
+                placaSeleccionada = document.getElementById('nuevo-placa').value.trim().toUpperCase();
+                if (placaSeleccionada && !vehiculosClienteActual.includes(placaSeleccionada)) {
+                    vehiculosClienteActual.push(placaSeleccionada);
+                    // Actualizar en Firebase el array de vehículos del cliente
+                    await updateDoc(doc(db, "clientes_taller", clienteDocIdActual), { vehiculos: vehiculosClienteActual });
+                }
+            }
+
+            const ordenData = {
+                codigoOrden: document.getElementById('ord-codigo').value,
+                clienteId: clienteDocIdActual,
+                placa: placaSeleccionada,
+                kilometraje: document.getElementById('ord-km').value,
+                marca: document.getElementById('ord-marca').value,
+                modelo: document.getElementById('ord-modelo').value,
+                anio: document.getElementById('ord-anio').value,
+                servicio: document.getElementById('ord-servicio').value,
+                mecanico: document.getElementById('ord-mecanico').value,
+                checklist: {
+                    aceiteNivel: document.getElementById('chk-aceite-nivel').value,
+                    aceiteColor: document.getElementById('chk-aceite-color').value,
+                    aceiteFiltro: document.getElementById('chk-aceite-filtro').value,
+                    aceiteFugas: document.getElementById('chk-aceite-fugas').value,
+                    correaTension: document.getElementById('chk-correa-tension').value,
+                    correaGrietas: document.getElementById('chk-correa-grietas').value,
+                    refrigNivel: document.getElementById('chk-refrig-nivel').value,
+                    refrigColor: document.getElementById('chk-refrig-color').value,
+                    refrigFugas: document.getElementById('chk-refrig-fugas').value,
+                    batTerminal: document.getElementById('chk-bat-terminal').value,
+                    altVoltaje: document.getElementById('chk-alt-voltaje').value,
+                    dirJuego: document.getElementById('chk-dir-juego').value,
+                    frenoLiga: document.getElementById('chk-freno-liga').value,
+                    ruedasPresion: document.getElementById('chk-ruedas-presion').value,
+                    lucesExt: document.getElementById('chk-luces-ext').value,
+                },
+                fecha: new Date().toISOString(),
+                registradoPor: usuarioActual.email
+            };
+
+            actualizarProgreso(60);
+            registrarLog("Guardando orden de servicio y chequeo técnico...");
+
+            try {
+                await addDoc(collection(db, "ordenes_servicio"), ordenData);
+                registrarLog("¡Orden de servicio guardada con éxito en la nube!");
+                alert("¡Orden de servicio y chequeo técnico registrados con éxito!");
+                actualizarProgreso(100);
+                generarCodigoOrden();
+                document.getElementById('orden-form').reset();
+            } catch (e) {
+                registrarLog("Error al guardar orden: " + e.message);
+                alert("Error: " + e.message);
+                actualizarProgreso(100);
+            }
+        };
+
+        window.exportarClientesCSV = async function() {
+            registrarLog("Generando archivo CSV de clientes...");
+            actualizarProgreso(30);
+            try {
+                const querySnapshot = await getDocs(collection(db, "clientes_taller"));
+                let csv = "Cedula,Nombre,Telefono,Direccion\n";
+                querySnapshot.forEach(docSnap => {
+                    const d = docSnap.data();
+                    csv += `"${d.cedula || ''}","${d.nombre || ''}","${d.telefono || ''}","${d.direccion || ''}"\n`;
+                });
+                
+                const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'clientes_taller.csv';
+                a.click();
+                registrarLog("CSV de clientes exportado con éxito.");
+                actualizarProgreso(100);
+            } catch (e) {
+                registrarLog("Error al exportar clientes: " + e.message);
+                actualizarProgreso(100);
+            }
+        };
+
+        window.exportarOrdenesCSV = async function() {
+            registrarLog("Generando archivo CSV de órdenes de servicio...");
+            actualizarProgreso(30);
+            try {
+                const querySnapshot = await getDocs(collection(db, "ordenes_servicio"));
+                let csv = "Codigo,Placa,Marca,Modelo,Kilometraje,Mecanico,Fecha\n";
+                querySnapshot.forEach(docSnap => {
+                    const d = docSnap.data();
+                    csv += `"${d.codigoOrden || ''}","${d.placa || ''}","${d.marca || ''}","${d.modelo || ''}","${d.kilometraje || ''}","${d.mecanico || ''}","${d.fecha || ''}"\n`;
+                });
+                
+                const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'ordenes_servicio_taller.csv';
+                a.click();
+                registrarLog("CSV de órdenes exportado con éxito.");
+                actualizarProgreso(100);
+            } catch (e) {
+                registrarLog("Error al exportar órdenes: " + e.message);
+                actualizarProgreso(100);
+            }
+        };
+    </script>
 </body>
 </html>
