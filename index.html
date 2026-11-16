@@ -378,58 +378,60 @@
             registrarLog("Sesión cerrada.");
         };
 
-        // BÚSQUEDA DE CLIENTES DESDE FIREBASE (Cédula, RIF o Nombre)
+        // BÚSQUEDA DIRECTA DESDE FIREBASE (Cédula, RIF o Nombre)
         window.buscarCliente = async function() {
-            const criterio = document.getElementById('criterio-busqueda').value.trim().toLowerCase();
+            const criterio = document.getElementById('criterio-busqueda').value.trim();
             if (!criterio) {
                 alert("Ingrese una cédula, RIF o nombre para buscar.");
                 return;
             }
-            registrarLog(`Buscando cliente por criterio: "${criterio}"...`);
+            registrarLog(`Buscando en Firebase: "${criterio}"...`);
             actualizarProgreso(40);
+
             try {
                 const querySnapshot = await getDocs(collection(db, "clientes_taller"));
                 let encontrado = false;
 
                 querySnapshot.forEach((docSnap) => {
                     const data = docSnap.data();
-                    const cedulaDB = (data.cedula || "").toLowerCase();
-                    const nombreDB = (data.nombre || "").toLowerCase();
+                    const cedulaDB = String(data.cedula || "").trim().toLowerCase();
+                    const nombreDB = String(data.nombre || "").trim().toLowerCase();
+                    const criterioBusqueda = criterio.toLowerCase();
 
-                    // Comprobamos si coincide con cédula/RIF o contiene el nombre
-                    if (cedulaDB === criterio || nombreDB.includes(criterio)) {
+                    if (cedulaDB === criterioBusqueda || nombreDB.includes(criterioBusqueda)) {
                         clienteDocIdActual = docSnap.id;
                         document.getElementById('cedula').value = data.cedula || '';
                         document.getElementById('nombre').value = data.nombre || '';
                         document.getElementById('telefono').value = data.telefono || '';
                         document.getElementById('direccion').value = data.direccion || '';
                         
-                        // Cargar vehículos del cliente en el selector del Módulo 2
+                        // Cargar las placas de vehículos asociadas al cliente en el Módulo 2
                         vehiculosClienteActual = data.vehiculos || [];
                         const selectPlaca = document.getElementById('ord-placa');
                         selectPlaca.innerHTML = '<option value="">Seleccione vehículo (Placa)</option>';
                         
-                        vehiculosClienteActual.forEach(placa => {
-                            selectPlaca.innerHTML += `<option value="${placa}">${placa}</option>`;
-                        });
+                        if (vehiculosClienteActual.length > 0) {
+                            vehiculosClienteActual.forEach(placa => {
+                                selectPlaca.innerHTML += `<option value="${placa}">${placa}</option>`;
+                            });
+                        }
                         selectPlaca.innerHTML += '<option value="NUEVO">➕ Registrar Nuevo Vehículo</option>';
 
                         encontrado = true;
-                        registrarLog(`¡Cliente encontrado! ${data.nombre} (ID: ${docSnap.id}) con ${vehiculosClienteActual.length} vehículo(s).`);
+                        registrarLog(`¡Cliente encontrado: ${data.nombre} con ${vehiculosClienteActual.length} vehículo(s)!`);
+                        alert(`¡Cliente encontrado: ${data.nombre}!`);
                     }
                 });
 
                 if (!encontrado) {
-                    registrarLog("Cliente no encontrado en la base de datos.");
-                    alert("Cliente no encontrado. Puede registrarlo completando los datos del Módulo 1.");
+                    registrarLog(`No se encontró ningún registro para "${criterio}".`);
+                    alert("Cliente no encontrado en la base de datos. Verifique si la cédula o nombre coinciden exactamente con Firebase.");
                     clienteDocIdActual = null;
-                    document.getElementById('client-form').reset();
-                    document.getElementById('criterio-busqueda').value = criterio;
                 }
                 actualizarProgreso(100);
             } catch (e) {
-                registrarLog("Error al buscar cliente: " + e.message);
-                alert("Error al conectar con Firestore: " + e.message);
+                registrarLog("Error al conectar con Firestore: " + e.message);
+                alert("Error de conexión con Firebase: " + e.message);
                 actualizarProgreso(100);
             }
         };
@@ -580,8 +582,7 @@
                 
                 const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
                 const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
+                const a = document.href = url;
                 a.download = 'ordenes_servicio_taller.csv';
                 a.click();
                 registrarLog("CSV de órdenes exportado con éxito.");
