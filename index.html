@@ -378,14 +378,14 @@
             registrarLog("Sesión cerrada.");
         };
 
-        // BÚSQUEDA DIRECTA DESDE FIREBASE (Cédula, RIF o Nombre)
+        // BÚSQUEDA DIRECTA Y REAL EN TU BASE DE DATOS DE FIREBASE
         window.buscarCliente = async function() {
-            const criterio = document.getElementById('criterio-busqueda').value.trim();
+            const criterio = document.getElementById('criterio-busqueda').value.trim().toLowerCase();
             if (!criterio) {
-                alert("Ingrese una cédula, RIF o nombre para buscar.");
+                alert("Por favor ingrese una cédula, RIF o nombre para buscar.");
                 return;
             }
-            registrarLog(`Buscando en Firebase: "${criterio}"...`);
+            registrarLog(`Consultando en Firebase (clientes_taller) por: "${criterio}"...`);
             actualizarProgreso(40);
 
             try {
@@ -396,16 +396,16 @@
                     const data = docSnap.data();
                     const cedulaDB = String(data.cedula || "").trim().toLowerCase();
                     const nombreDB = String(data.nombre || "").trim().toLowerCase();
-                    const criterioBusqueda = criterio.toLowerCase();
 
-                    if (cedulaDB === criterioBusqueda || nombreDB.includes(criterioBusqueda)) {
+                    // Coincide si la cédula es igual o si el nombre contiene lo que escribiste
+                    if (cedulaDB === criterio || nombreDB.includes(criterio)) {
                         clienteDocIdActual = docSnap.id;
                         document.getElementById('cedula').value = data.cedula || '';
                         document.getElementById('nombre').value = data.nombre || '';
                         document.getElementById('telefono').value = data.telefono || '';
                         document.getElementById('direccion').value = data.direccion || '';
                         
-                        // Cargar las placas de vehículos asociadas al cliente en el Módulo 2
+                        // Cargar las placas asociadas al cliente en el Módulo 2
                         vehiculosClienteActual = data.vehiculos || [];
                         const selectPlaca = document.getElementById('ord-placa');
                         selectPlaca.innerHTML = '<option value="">Seleccione vehículo (Placa)</option>';
@@ -418,20 +418,19 @@
                         selectPlaca.innerHTML += '<option value="NUEVO">➕ Registrar Nuevo Vehículo</option>';
 
                         encontrado = true;
-                        registrarLog(`¡Cliente encontrado: ${data.nombre} con ${vehiculosClienteActual.length} vehículo(s)!`);
-                        alert(`¡Cliente encontrado: ${data.nombre}!`);
+                        registrarLog(`¡Éxito! Cliente encontrado: ${data.nombre} (${vehiculosClienteActual.length} vehículos).`);
                     }
                 });
 
                 if (!encontrado) {
-                    registrarLog(`No se encontró ningún registro para "${criterio}".`);
-                    alert("Cliente no encontrado en la base de datos. Verifique si la cédula o nombre coinciden exactamente con Firebase.");
+                    registrarLog(`No se encontró ningún registro para "${criterio}" en Firebase.`);
+                    alert("Cliente no encontrado en la base de datos de Firebase.");
                     clienteDocIdActual = null;
                 }
                 actualizarProgreso(100);
             } catch (e) {
-                registrarLog("Error al conectar con Firestore: " + e.message);
-                alert("Error de conexión con Firebase: " + e.message);
+                registrarLog("Error al consultar Firebase: " + e.message);
+                alert("Error al conectar con Firestore: " + e.message);
                 actualizarProgreso(100);
             }
         };
@@ -455,10 +454,16 @@
                     vehiculos: vehiculosClienteActual
                 };
 
-                const docRef = await addDoc(collection(db, "clientes_taller"), clienteData);
-                clienteDocIdActual = docRef.id;
-                registrarLog(`Cliente guardado exitosamente en Firestore (ID: ${docRef.id})`);
-                alert("¡Cliente guardado exitosamente!");
+                if (clienteDocIdActual) {
+                    await updateDoc(doc(db, "clientes_taller", clienteDocIdActual), clienteData);
+                    registrarLog(`Cliente actualizado exitosamente en Firestore (ID: ${clienteDocIdActual})`);
+                    alert("¡Datos del cliente actualizados!");
+                } else {
+                    const docRef = await addDoc(collection(db, "clientes_taller"), clienteData);
+                    clienteDocIdActual = docRef.id;
+                    registrarLog(`Cliente guardado exitosamente en Firestore (ID: ${docRef.id})`);
+                    alert("¡Cliente guardado exitosamente!");
+                }
                 actualizarProgreso(100);
             } catch (e) {
                 registrarLog("Error al guardar cliente: " + e.message);
@@ -467,22 +472,48 @@
             }
         };
 
-        window.manejarSeleccionPlaca = function() {
+        window.manejarSeleccionPlaca = async function() {
             const select = document.getElementById('ord-placa');
             const inputNuevoPlaca = document.getElementById('nuevo-placa');
-            if (select.value === 'NUEVO') {
+            const placaElegida = select.value;
+
+            if (placaElegida === 'NUEVO') {
                 inputNuevoPlaca.classList.remove('hidden');
                 inputNuevoPlaca.required = true;
+                document.getElementById('ord-marca').value = '';
+                document.getElementById('ord-modelo').value = '';
+                document.getElementById('ord-anio').value = '';
+                document.getElementById('ord-km').value = '';
             } else {
                 inputNuevoPlaca.classList.add('hidden');
                 inputNuevoPlaca.required = false;
+
+                // Consultar historial previo de este vehículo en 'ordenes_servicio' para rellenar datos
+                if (placaElegida) {
+                    registrarLog(`Consultando historial del vehículo placa: ${placaElegida}...`);
+                    try {
+                        const ordenesSnap = await getDocs(collection(db, "ordenes_servicio"));
+                        ordenesSnap.forEach(docSnap => {
+                            const ord = docSnap.data();
+                            if (ord.placa && ord.placa.toUpperCase() === placaElegida.toUpperCase()) {
+                                document.getElementById('ord-marca').value = ord.marca || '';
+                                document.getElementById('ord-modelo').value = ord.modelo || '';
+                                document.getElementById('ord-anio').value = ord.anio || '';
+                                document.getElementById('ord-km').value = ord.kilometraje || '';
+                                registrarLog(`Datos de vehículo recuperados (${ord.marca} ${ord.modelo} ${ord.anio}).`);
+                            }
+                        });
+                    } catch (e) {
+                        registrarLog("Nota: No se encontraron órdenes previas para autollenar datos del vehículo.");
+                    }
+                }
             }
         };
 
         window.guardarOrdenServicio = async function(event) {
             event.preventDefault();
             if (!clienteDocIdActual) {
-                alert("Primero debe buscar o seleccionar un cliente en el Módulo 1.");
+                alert("Primero debe buscar o guardar un cliente en el Módulo 1.");
                 return;
             }
 
@@ -524,7 +555,7 @@
                     lucesExt: document.getElementById('chk-luces-ext').value,
                 },
                 fecha: new Date().toISOString(),
-                registradoPor: usuarioActual.email
+                registradoPor: usuarioActual ? usuarioActual.email : "sistema"
             };
 
             actualizarProgreso(60);
@@ -582,7 +613,8 @@
                 
                 const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
                 const url = URL.createObjectURL(blob);
-                const a = document.href = url;
+                const a = document.createElement('a');
+                a.href = url;
                 a.download = 'ordenes_servicio_taller.csv';
                 a.click();
                 registrarLog("CSV de órdenes exportado con éxito.");
