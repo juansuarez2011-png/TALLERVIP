@@ -43,7 +43,6 @@
             margin: 0 auto;
         }
 
-        /* Header 3D Neumórfico */
         header {
             display: flex;
             flex-wrap: wrap;
@@ -107,7 +106,6 @@
             box-shadow: 0 4px 15px rgba(37, 99, 235, 0.45);
         }
 
-        /* Tarjetas 3D */
         .card {
             background: var(--card-bg);
             border: 1px solid var(--border);
@@ -168,7 +166,6 @@
             box-shadow: var(--inset-3d), 0 0 0 3px rgba(56, 189, 248, 0.2);
         }
 
-        /* Lista desplegable inteligente */
         .autocomplete-list {
             position: absolute;
             top: 100%;
@@ -213,7 +210,6 @@
             color: white;
         }
 
-        /* Cuadrícula de Inventario */
         .checkbox-grid {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
@@ -241,7 +237,6 @@
             box-shadow: none;
         }
 
-        /* Botones */
         .btn {
             background: linear-gradient(145deg, #2563eb, #1d4ed8);
             color: white;
@@ -277,25 +272,6 @@
             gap: 12px;
         }
 
-        /* Barra de progreso y consola */
-        .progress-container {
-            width: 100%;
-            height: 6px;
-            background: #0a0e17;
-            border-radius: 4px;
-            margin-top: 15px;
-            overflow: hidden;
-            display: none;
-        }
-
-        .progress-bar {
-            height: 100%;
-            width: 0%;
-            background: var(--accent);
-            transition: width 0.3s ease;
-        }
-
-        /* Dashboard Admin */
         .kpi-grid {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
@@ -365,7 +341,6 @@
 
         .hidden { display: none !important; }
 
-        /* Adaptación Responsiva PC / Laptop / Tablet / Móvil */
         @media (max-width: 900px) {
             .form-grid { grid-template-columns: repeat(2, 1fr); }
             .col-2, .col-3 { grid-column: span 2; }
@@ -388,7 +363,7 @@
     <header>
         <div class="brand-area">
             <h1>🛠️ Taller Mecánico Syntro</h1>
-            <span id="dbStatusBadge" class="status-pill">● Base Precargada Activa (64 Clientes listos)</span>
+            <span id="dbStatusBadge" class="status-pill">● Base Precargada Activa (64 Clientes)</span>
         </div>
         <div class="nav-tabs">
             <button class="tab-btn active" onclick="cambiarModulo('recepcion')">Módulo 1 y 2: Recepción</button>
@@ -407,8 +382,8 @@
 
             <div class="form-grid">
                 <div class="input-group col-2">
-                    <label>Buscador Inteligente (Escriba nombre, empresa o cédula/RIF) *</label>
-                    <input type="text" id="buscador_cliente" autocomplete="off" placeholder="Ej: José, Rafael, Zoom, Movilnet, Embajada..." oninput="buscarClienteInteligente(this.value)">
+                    <label>Seleccionar o Escribir Cliente (Persona, Empresa o Cédula/RIF) *</label>
+                    <input type="text" id="buscador_cliente" autocomplete="off" placeholder="Escriba nombre, empresa o cédula/RIF..." oninput="buscarClienteInteligente(this.value)">
                     <div id="autocompleteList" class="autocomplete-list"></div>
                 </div>
 
@@ -546,10 +521,6 @@
                 </div>
             </div>
 
-            <div class="progress-container" id="progressBarBox">
-                <div class="progress-bar" id="progressBar"></div>
-            </div>
-
             <div class="actions-row">
                 <button type="reset" class="btn btn-secondary" onclick="limpiarCliente()">Limpiar Formulario</button>
                 <button type="submit" class="btn btn-success">Guardar Recepción en Base de Datos</button>
@@ -561,7 +532,6 @@
     <div id="viewAdmin" class="card hidden">
         <h2>
             <span>Módulo 3: Panel Administrador - Control de Entradas y Salidas</span>
-            <button class="btn btn-secondary" style="padding: 6px 14px; font-size: 0.85rem;" onclick="exportarCSV()">📥 Exportar CSV</button>
         </h2>
 
         <div class="kpi-grid">
@@ -581,10 +551,6 @@
                 <div class="kpi-title">Entregados / Salidas</div>
                 <div class="kpi-value" id="kpiSalidas">0</div>
             </div>
-        </div>
-
-        <div class="input-group" style="margin-bottom: 18px;">
-            <input type="text" id="filtroAdmin" placeholder="Filtrar tabla por placa, cliente, empresa o mecánico..." oninput="filtrarTablaAdmin(this.value)">
         </div>
         
         <div class="table-wrapper">
@@ -614,7 +580,7 @@
 
 <script>
     // =========================================================================
-    // 1. CONFIGURACIÓN SUPABASE (Coloca aquí tus credenciales cuando las tengas)
+    // 1. CONFIGURACIÓN SUPABASE
     // =========================================================================
     const SUPABASE_URL = 'https://TU-PROYECTO.supabase.co';
     const SUPABASE_KEY = 'TU-ANON-KEY';
@@ -622,7 +588,7 @@
     const supabaseClient = supabaseActivo ? supabase.createClient(SUPABASE_URL, SUPABASE_KEY) : null;
 
     // =========================================================================
-    // 2. BASE DE DATOS DE CLIENTES PRECARGADA DIRECTAMENTE EN EL CÓDIGO
+    // 2. BASE DE DATOS DE CLIENTES PRECARGADA (64 CLIENTES)
     // =========================================================================
     const CLIENTES_PRECARGADOS = [
         // Empresas e Instituciones
@@ -694,7 +660,6 @@
         { id: 'c64', tipo_cliente: 'Persona', cedula_rif: 'PER-054', nombre_razon_social: 'Gustavo', telefono: '', correo: '', direccion: 'Registrado en taller' }
     ];
 
-    // Inicializar almacenamiento local con los clientes precargados si está vacío
     function obtenerClientes() {
         const guardados = localStorage.getItem('syntro_clientes');
         if (!guardados) {
@@ -710,19 +675,17 @@
 
     let clienteSeleccionadoId = null;
 
-    // Actualizar estado visual de conexión
     window.addEventListener('DOMContentLoaded', () => {
         const clientes = obtenerClientes();
         const badge = document.getElementById('dbStatusBadge');
         if (supabaseActivo) {
-            badge.innerText = `● Conectado a Supabase (${clientes.length} Clientes base)`;
+            badge.innerText = `● Conectado a Supabase (${clientes.length} Clientes)`;
         } else {
-            badge.innerText = `● Modo Local / Precargado (${clientes.length} Clientes listos)`;
+            badge.innerText = `● Base Precargada Activa (${clientes.length} Clientes)`;
         }
         document.getElementById('kpiClientes').innerText = clientes.length;
     });
 
-    // Cambiar entre pestañas
     function cambiarModulo(vista) {
         if (vista === 'recepcion') {
             document.getElementById('viewRecepcion').classList.remove('hidden');
@@ -738,8 +701,8 @@
         }
     }
 
-    // Buscador Inteligente en tiempo real (Busca en base precargada + nuevos registrados)
-    async function buscarClienteInteligente(query) {
+    // Lista desplegable inteligente con coincidencias inmediatas
+    function buscarClienteInteligente(query) {
         const listDiv = document.getElementById('autocompleteList');
         const texto = query.trim().toLowerCase();
 
@@ -756,13 +719,13 @@
         );
 
         if (filtrados.length === 0) {
-            listDiv.innerHTML = `<div class="autocomplete-item" style="color: var(--warning);">No encontrado. Complete los datos abajo para registrarlo por primera vez.</div>`;
+            listDiv.innerHTML = `<div class="autocomplete-item" style="color: var(--warning);">Cliente no encontrado. Complete los datos abajo para registrarlo por primera vez.</div>`;
             listDiv.style.display = 'block';
             return;
         }
 
         listDiv.innerHTML = '';
-        filtrados.slice(0, 10).forEach(cliente => {
+        filtrados.slice(0, 12).forEach(cliente => {
             const item = document.createElement('div');
             item.className = 'autocomplete-item';
             item.innerHTML = `
@@ -801,22 +764,15 @@
         document.getElementById('autocompleteList').style.display = 'none';
     }
 
-    // Cerrar lista desplegable si se hace clic fuera
     document.addEventListener('click', (e) => {
         if (!e.target.closest('.input-group')) {
             document.getElementById('autocompleteList').style.display = 'none';
         }
     });
 
-    // Guardar Recepción Completa (Local + Supabase si está configurado)
     async function guardarRecepcion(e) {
         e.preventDefault();
-        const pBox = document.getElementById('progressBarBox');
-        const pBar = document.getElementById('progressBar');
-        pBox.style.display = 'block';
-        pBar.style.width = '40%';
 
-        // 1. Guardar o actualizar cliente
         let clientes = obtenerClientes();
         const cedulaRif = document.getElementById('cedula_rif').value.trim();
         const datosCliente = {
@@ -837,9 +793,6 @@
         }
         localStorage.setItem('syntro_clientes', JSON.stringify(clientes));
 
-        pBar.style.width = '75%';
-
-        // 2. Crear registro de recepción
         const codigoServicio = '2026' + Math.floor(100000 + Math.random() * 900000);
         const registro = {
             codigo_servicio: codigoServicio,
@@ -864,7 +817,6 @@
             estado: 'En Taller'
         };
 
-        // Guardar en Supabase si está activo
         if (supabaseActivo) {
             try {
                 const { data: cData } = await supabaseClient
@@ -914,19 +866,13 @@
             }
         }
 
-        // Guardar en almacenamiento local
         const recepciones = obtenerRecepciones();
         recepciones.unshift(registro);
         localStorage.setItem('syntro_recepciones', JSON.stringify(recepciones));
 
-        pBar.style.width = '100%';
-        setTimeout(() => {
-            alert(`✅ Vehículo registrado con éxito.\nCódigo de Servicio: ${codigoServicio}\nCliente: ${datosCliente.nombre_razon_social}`);
-            document.getElementById('formRecepcion').reset();
-            limpiarCliente();
-            pBox.style.display = 'none';
-            pBar.style.width = '0%';
-        }, 300);
+        alert(`✅ Vehículo registrado con éxito.\nCódigo de Servicio: ${codigoServicio}\nCliente: ${datosCliente.nombre_razon_social}`);
+        document.getElementById('formRecepcion').reset();
+        limpiarCliente();
     }
 
     // =========================================================================
@@ -941,18 +887,14 @@
         document.getElementById('kpiGrua').innerText = recepciones.filter(r => r.ingreso_grua === 'SI').length;
         document.getElementById('kpiSalidas').innerText = recepciones.filter(r => r.estado === 'Entregado').length;
 
-        renderizarTablaAdmin(recepciones);
-    }
-
-    function renderizarTablaAdmin(lista) {
         const tbody = document.getElementById('tablaAdminBody');
-        if (!lista || lista.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="9" style="text-align: center; color: var(--text-muted); padding: 20px;">Aún no hay ingresos registrados. Registre un vehículo en el Módulo 1 y 2.</td></tr>`;
+        if (!recepciones || recepciones.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="9" style="text-align: center; color: var(--text-muted); padding: 20px;">Aún no hay ingresos registrados.</td></tr>`;
             return;
         }
 
         tbody.innerHTML = '';
-        lista.forEach((row, idx) => {
+        recepciones.forEach((row, idx) => {
             const estadoColor = row.estado === 'Entregado' ? 'var(--success)' : 'var(--warning)';
             const tr = document.createElement('tr');
             tr.innerHTML = `
@@ -980,35 +922,6 @@
         recepciones[index].salida_fecha_hora = new Date().toLocaleString();
         localStorage.setItem('syntro_recepciones', JSON.stringify(recepciones));
         cargarDatosAdmin();
-    }
-
-    function filtrarTablaAdmin(texto) {
-        const q = texto.toLowerCase();
-        const recepciones = obtenerRecepciones();
-        const filtrados = recepciones.filter(r =>
-            r.vehiculo.placa.toLowerCase().includes(q) ||
-            r.cliente.nombre_razon_social.toLowerCase().includes(q) ||
-            r.mecanico_asignado.toLowerCase().includes(q) ||
-            r.codigo_servicio.toLowerCase().includes(q)
-        );
-        renderizarTablaAdmin(filtrados);
-    }
-
-    function exportarCSV() {
-        const recepciones = obtenerRecepciones();
-        if (recepciones.length === 0) {
-            alert('No hay datos para exportar.');
-            return;
-        }
-        let csv = 'Codigo;Ingreso;Salida;Cliente;Cedula_RIF;Placa;Marca;Modelo;Kilometraje;Grua;Mecanico;Estado\n';
-        recepciones.forEach(r => {
-            csv += `${r.codigo_servicio};${r.ingreso_fecha_hora};${r.salida_fecha_hora || ''};${r.cliente.nombre_razon_social};${r.cliente.cedula_rif};${r.vehiculo.placa};${r.vehiculo.marca};${r.vehiculo.modelo};${r.kilometraje};${r.ingreso_grua};${r.mecanico_asignado};${r.estado}\n`;
-        });
-        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-        const link = document.createElement('a');
-        link.href = URL.createObjectURL(blob);
-        link.download = `Recepcion_Taller_Syntro_${new Date().toISOString().slice(0,10)}.csv`;
-        link.click();
     }
 </script>
 
