@@ -47,6 +47,24 @@
             background: #dc2626;
             box-shadow: 4px 4px 8px #991b1b, -4px -4px 8px #ef4444;
         }
+        /* Modal visor de fotos */
+        #modal-fotos {
+            backdrop-filter: blur(4px);
+        }
+        .foto-thumb {
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .foto-thumb:hover {
+            transform: scale(1.05);
+        }
+        /* Estilo para impresión del informe */
+        @media print {
+            body { background: white !important; color: black !important; }
+            .no-print { display: none !important; }
+            .informe-container { box-shadow: none !important; background: white !important; color: black !important; }
+            .informe-foto { max-width: 300px; }
+        }
     </style>
 </head>
 <body class="p-3 sm:p-4 md:p-6 min-h-screen flex flex-col justify-between">
@@ -319,6 +337,9 @@
                             <button type="button" onclick="exportarOrdenesCSV()" class="flex-1 md:flex-none px-3 py-2 rounded-lg text-xs font-semibold text-white neumo-button">
                                 📋 Exportar Órdenes CSV
                             </button>
+                            <button type="button" onclick="abrirVisorFotos()" class="flex-1 md:flex-none px-3 py-2 rounded-lg text-xs font-semibold text-white neumo-button-amber">
+                                🖼️ Ver Fotos de Orden
+                            </button>
                         </div>
                     </div>
 
@@ -333,6 +354,41 @@
             </div>
 
         </main>
+    </div>
+
+    <!-- MODAL VISOR DE FOTOS + INFORME -->
+    <div id="modal-fotos" class="hidden fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4">
+        <div class="neumo-card w-full max-w-5xl max-h-[95vh] overflow-y-auto p-6">
+            <div class="flex justify-between items-center mb-4 no-print">
+                <h2 class="text-lg font-bold text-blue-400">🖼️ Visor de Fotos e Informe de Orden</h2>
+                <button onclick="cerrarVisorFotos()" class="px-3 py-2 rounded-lg text-xs font-semibold text-white neumo-button-red">✖ Cerrar</button>
+            </div>
+
+            <!-- Buscador dentro del modal -->
+            <div class="mb-4 p-3 rounded-xl border border-slate-700 bg-slate-900/50 space-y-2 no-print">
+                <label class="block text-xs text-blue-400 font-semibold uppercase">Buscar Orden (Código, Placa o Cliente)</label>
+                <div class="flex gap-2">
+                    <input type="text" id="visor-busqueda" onkeydown="if(event.key==='Enter'){event.preventDefault();buscarOrdenEnVisor();}" class="w-full p-2 rounded-lg neumo-input text-sm focus:outline-none" placeholder="Ej: 2025030002 / AAO83NL / Juan">
+                    <button type="button" onclick="buscarOrdenEnVisor()" class="px-3 py-2 rounded-lg text-white font-semibold text-xs neumo-button-secondary">Buscar</button>
+                </div>
+                <div id="visor-resultados" class="mt-2 space-y-2 max-h-40 overflow-y-auto"></div>
+            </div>
+
+            <!-- Informe de la orden seleccionada -->
+            <div id="informe-container" class="informe-container bg-slate-900 rounded-xl p-5 space-y-4">
+                <p class="text-slate-400 text-sm text-center">Busque una orden para visualizar su informe y fotos.</p>
+            </div>
+
+            <!-- Botón de descarga/imprimir informe -->
+            <div id="acciones-informe" class="hidden flex flex-wrap gap-2 justify-end mt-4 no-print">
+                <button onclick="descargarInformeHTML()" class="px-4 py-2 rounded-lg text-xs font-semibold text-white neumo-button">
+                    📥 Descargar Informe HTML
+                </button>
+                <button onclick="window.print()" class="px-4 py-2 rounded-lg text-xs font-semibold text-white neumo-button-purple">
+                    🖨️ Imprimir / PDF
+                </button>
+            </div>
+        </div>
     </div>
 
     <!-- Script Firebase y Lógica -->
@@ -365,6 +421,7 @@
         let cacheOrdenes = [];
         let timerInterval = null;
         let segundosTranscurridos = 0;
+        let ordenActualVisor = null; // guarda la orden que se está viendo en el visor
 
         // Normalización de texto para búsqueda sin fallos por acentos o mayúsculas
         function normalizarTexto(texto) {
@@ -516,7 +573,6 @@
             }
         });
 
-        // Listener para preview cuando se seleccionan fotos
         document.addEventListener('DOMContentLoaded', () => {
             const inputFotos = document.getElementById('ord-fotos');
             if (inputFotos) inputFotos.addEventListener('change', window.mostrarPreviewFotos);
@@ -549,7 +605,226 @@
             registrarLog("Sesión cerrada.");
         };
 
-        // IMPORTACIÓN MASIVA DESDE CSV SIN DUPLICADOS (IDEMPOTENTE)
+        // ========================================================
+        // VISOR DE FOTOS E INFORME
+        // ========================================================
+        window.abrirVisorFotos = function() {
+            document.getElementById('modal-fotos').classList.remove('hidden');
+            document.getElementById('visor-busqueda').value = '';
+            document.getElementById('visor-resultados').innerHTML = '';
+            document.getElementById('informe-container').innerHTML = '<p class="text-slate-400 text-sm text-center">Busque una orden para visualizar su informe y fotos.</p>';
+            document.getElementById('acciones-informe').classList.add('hidden');
+            ordenActualVisor = null;
+        };
+
+        window.cerrarVisorFotos = function() {
+            document.getElementById('modal-fotos').classList.add('hidden');
+        };
+
+        window.buscarOrdenEnVisor = function() {
+            const criterioRaw = document.getElementById('visor-busqueda').value.trim();
+            if (!criterioRaw) {
+                alert("Ingrese código de orden, placa o nombre del cliente.");
+                return;
+            }
+            const criterio = normalizarTexto(criterioRaw);
+            const resultados = cacheOrdenes.filter(o => {
+                return normalizarTexto(o.codigoOrden).includes(criterio) ||
+                       normalizarTexto(o.placa).includes(criterio) ||
+                       normalizarTexto(o.clienteNombre).includes(criterio);
+            });
+
+            const contResultados = document.getElementById('visor-resultados');
+            contResultados.innerHTML = '';
+
+            if (resultados.length === 0) {
+                contResultados.innerHTML = '<p class="text-xs text-amber-400">No se encontraron órdenes.</p>';
+                return;
+            }
+
+            // Ordenar por código descendente
+            resultados.sort((a, b) => String(b.codigoOrden || '').localeCompare(String(a.codigoOrden || '')));
+
+            resultados.slice(0, 20).forEach((ord, idx) => {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'w-full text-left p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs text-slate-200 flex justify-between items-center';
+                const cantFotos = Array.isArray(ord.fotosRecepcion) ? ord.fotosRecepcion.length : 0;
+                btn.innerHTML = `<span>📋 ${ord.codigoOrden} — ${ord.placa} — ${ord.clienteNombre}</span><span class="text-emerald-400 text-[10px]">${ord.fechaIngreso || ''} | 🖼️ ${cantFotos}</span>`;
+                btn.onclick = () => mostrarInformeOrden(ord);
+                contResultados.appendChild(btn);
+            });
+        };
+
+        // Muestra el informe completo de la orden seleccionada con sus fotos
+        window.mostrarInformeOrden = function(orden) {
+            ordenActualVisor = orden;
+            const cont = document.getElementById('informe-container');
+            const fotos = Array.isArray(orden.fotosRecepcion) ? orden.fotosRecepcion : [];
+            const chk = orden.checklist || {};
+
+            const filasChecklist = [
+                ['Aceite Nivel', chk.aceiteNivel], ['Aceite Color', chk.aceiteColor],
+                ['Aceite Filtro', chk.aceiteFiltro], ['Aceite Fugas', chk.aceiteFugas],
+                ['Correa Tensión', chk.correaTension], ['Correa Grietas', chk.correaGrietas],
+                ['Refrig. Nivel', chk.refrigNivel], ['Refrig. Color', chk.refrigColor],
+                ['Refrig. Fugas', chk.refrigFugas], ['Batería Terminal', chk.batTerminal],
+                ['Alternador Voltaje', chk.altVoltaje], ['Dirección Juego', chk.dirJuego],
+                ['Freno Liga', chk.frenoLiga], ['Ruedas Presión', chk.ruedasPresion],
+                ['Luces Ext.', chk.lucesExt]
+            ].filter(([, v]) => v && String(v).trim() !== '');
+
+            const fotosHTML = fotos.length > 0
+                ? fotos.map((url, i) => `
+                    <div class="text-center">
+                        <img src="${url}" alt="Foto ${i + 1}" class="informe-foto w-full max-w-[300px] h-auto rounded-lg border border-slate-700 mx-auto" onerror="this.style.display='none'; this.parentElement.innerHTML += '<p class=\\'text-[10px] text-red-400\\'>Error al cargar foto ${i + 1}</p>';">
+                        <p class="text-[10px] text-slate-500 mt-1">Foto ${i + 1}</p>
+                    </div>
+                `).join('')
+                : '<p class="text-xs text-slate-500">Sin fotos registradas.</p>';
+
+            cont.innerHTML = `
+                <div class="border-b border-slate-700 pb-3 mb-3">
+                    <h3 class="text-lg font-bold text-emerald-400">📋 Orden ${orden.codigoOrden || '—'}</h3>
+                    <p class="text-xs text-slate-400">ID: ${orden.idServicio || orden.id || ''}</p>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                    <div><span class="text-slate-400">Cliente:</span> <span class="text-white font-semibold">${orden.clienteNombre || ''}</span></div>
+                    <div><span class="text-slate-400">Teléfono:</span> <span class="text-white">${orden.telefonoCliente || ''}</span></div>
+                    <div><span class="text-slate-400">Placa:</span> <span class="text-white font-mono">${orden.placa || ''}</span></div>
+                    <div><span class="text-slate-400">Vehículo:</span> <span class="text-white">${orden.marca || ''} ${orden.modelo || ''} (${orden.anio || ''})</span></div>
+                    <div><span class="text-slate-400">Kilometraje:</span> <span class="text-white">${orden.kilometraje || ''}</span></div>
+                    <div><span class="text-slate-400">Combustible:</span> <span class="text-white">${orden.combustible || ''}</span></div>
+                    <div><span class="text-slate-400">Serial Carrocería:</span> <span class="text-white">${orden.serialCarroceria || ''}</span></div>
+                    <div><span class="text-slate-400">Serial Batería:</span> <span class="text-white">${orden.serialBateria || ''}</span></div>
+                    <div><span class="text-slate-400">Ingreso:</span> <span class="text-white font-mono">${orden.fechaIngreso || ''}</span></div>
+                    <div><span class="text-slate-400">Salida:</span> <span class="text-white font-mono">${orden.fechaSalida || ''}</span></div>
+                    <div><span class="text-slate-400">Mecánico:</span> <span class="text-white">${orden.mecanico || ''}</span></div>
+                    <div><span class="text-slate-400">Registrado por:</span> <span class="text-white">${orden.registradoPor || ''}</span></div>
+                </div>
+                <div class="mt-3 p-3 rounded-lg bg-slate-800">
+                    <p class="text-xs text-slate-400 mb-1">Trabajo / Servicio:</p>
+                    <p class="text-sm text-white whitespace-pre-wrap">${orden.servicio || '—'}</p>
+                </div>
+                <div class="mt-3">
+                    <h4 class="text-sm font-bold text-blue-400 mb-2">🔧 Chequeo Técnico</h4>
+                    ${filasChecklist.length > 0 ? `
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-1 text-xs">
+                            ${filasChecklist.map(([k, v]) => `<div class="flex justify-between border-b border-slate-800 py-1"><span class="text-slate-400">${k}:</span><span class="text-white">${v}</span></div>`).join('')}
+                        </div>
+                    ` : '<p class="text-xs text-slate-500">Sin datos de chequeo.</p>'}
+                </div>
+                <div class="mt-4">
+                    <h4 class="text-sm font-bold text-amber-400 mb-2">📸 Fotos de Recepción (${fotos.length})</h4>
+                    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                        ${fotosHTML}
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('acciones-informe').classList.remove('hidden');
+        };
+
+        // Descarga el informe como archivo HTML independiente (con fotos por URL)
+        window.descargarInformeHTML = function() {
+            if (!ordenActualVisor) {
+                alert("Primero busque y seleccione una orden.");
+                return;
+            }
+            const orden = ordenActualVisor;
+            const fotos = Array.isArray(orden.fotosRecepcion) ? orden.fotosRecepcion : [];
+            const chk = orden.checklist || {};
+
+            const filasChecklist = [
+                ['Aceite Nivel', chk.aceiteNivel], ['Aceite Color', chk.aceiteColor],
+                ['Aceite Filtro', chk.aceiteFiltro], ['Aceite Fugas', chk.aceiteFugas],
+                ['Correa Tensión', chk.correaTension], ['Correa Grietas', chk.correaGrietas],
+                ['Refrig. Nivel', chk.refrigNivel], ['Refrig. Color', chk.refrigColor],
+                ['Refrig. Fugas', chk.refrigFugas], ['Batería Terminal', chk.batTerminal],
+                ['Alternador Voltaje', chk.altVoltaje], ['Dirección Juego', chk.dirJuego],
+                ['Freno Liga', chk.frenoLiga], ['Ruedas Presión', chk.ruedasPresion],
+                ['Luces Ext.', chk.lucesExt]
+            ].filter(([, v]) => v && String(v).trim() !== '');
+
+            const fotosHTML = fotos.length > 0
+                ? fotos.map((url, i) => `
+                    <div style="display:inline-block;margin:6px;text-align:center;">
+                        <img src="${url}" alt="Foto ${i + 1}" style="max-width:300px;max-height:300px;border-radius:8px;border:1px solid #ccc;" />
+                        <div style="font-size:10px;color:#666;">Foto ${i + 1}</div>
+                    </div>
+                `).join('')
+                : '<p>Sin fotos registradas.</p>';
+
+            const html = `<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Informe Orden ${orden.codigoOrden || ''}</title>
+<style>
+    body { font-family: Arial, sans-serif; padding: 20px; color: #222; max-width: 900px; margin: auto; }
+    h1 { color: #1d4ed8; border-bottom: 3px solid #1d4ed8; padding-bottom: 8px; }
+    h2 { color: #1d4ed8; margin-top: 24px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+    td { padding: 6px 8px; border-bottom: 1px solid #ddd; font-size: 13px; }
+    td:first-child { font-weight: bold; color: #555; width: 40%; }
+    .servicio { background: #f3f4f6; padding: 12px; border-radius: 8px; white-space: pre-wrap; margin-top: 8px; }
+    .fotos { margin-top: 10px; }
+    .footer { margin-top: 30px; font-size: 11px; color: #888; text-align: center; border-top: 1px solid #ddd; padding-top: 10px; }
+    @media print { body { padding: 10px; } }
+</style>
+</head>
+<body>
+<h1>Taller Mecánico Syntro — Informe de Orden</h1>
+<p><strong>Orden:</strong> ${orden.codigoOrden || ''} &nbsp; | &nbsp; <strong>ID:</strong> ${orden.idServicio || orden.id || ''}</p>
+
+<h2>Datos del Cliente y Vehículo</h2>
+<table>
+    <tr><td>Cliente</td><td>${orden.clienteNombre || ''}</td></tr>
+    <tr><td>Teléfono</td><td>${orden.telefonoCliente || ''}</td></tr>
+    <tr><td>Placa</td><td>${orden.placa || ''}</td></tr>
+    <tr><td>Vehículo</td><td>${orden.marca || ''} ${orden.modelo || ''} (${orden.anio || ''})</td></tr>
+    <tr><td>Kilometraje</td><td>${orden.kilometraje || ''}</td></tr>
+    <tr><td>Combustible</td><td>${orden.combustible || ''}</td></tr>
+    <tr><td>Serial Carrocería</td><td>${orden.serialCarroceria || ''}</td></tr>
+    <tr><td>Serial Batería</td><td>${orden.serialBateria || ''}</td></tr>
+    <tr><td>Fecha Ingreso</td><td>${orden.fechaIngreso || ''}</td></tr>
+    <tr><td>Fecha Salida</td><td>${orden.fechaSalida || ''}</td></tr>
+    <tr><td>Mecánico</td><td>${orden.mecanico || ''}</td></tr>
+    <tr><td>Registrado por</td><td>${orden.registradoPor || ''}</td></tr>
+</table>
+
+<h2>Trabajo / Servicio</h2>
+<div class="servicio">${orden.servicio || '—'}</div>
+
+<h2>Chequeo Técnico</h2>
+<table>
+${filasChecklist.length > 0 ? filasChecklist.map(([k, v]) => `<tr><td>${k}</td><td>${v}</td></tr>`).join('') : '<tr><td colspan="2">Sin datos de chequeo.</td></tr>'}
+</table>
+
+<h2>Fotos de Recepción (${fotos.length})</h2>
+<div class="fotos">${fotosHTML}</div>
+
+<div class="footer">
+    Generado el ${new Date().toLocaleString('es-VE')} — Taller Mecánico Syntro
+</div>
+</body>
+</html>`;
+
+            const blob = new Blob([html], { type: 'text/html;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `informe_orden_${orden.codigoOrden || 'sin_codigo'}.html`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            registrarLog(`Informe HTML descargado para orden ${orden.codigoOrden}.`);
+        };
+
+        // ========================================================
+        // IMPORTACIÓN MASIVA DESDE CSV
+        // ========================================================
         window.importarCSVSinDuplicados = async function() {
             const fileInput = document.getElementById('csv-file-input');
             const file = fileInput.files[0];
@@ -600,7 +875,6 @@
                             const clienteKey = cedula ? crearIdSeguro(cedula) : crearIdSeguro(clienteNombre || `CLIENTE_${placa}`);
                             const nombreFinalCliente = clienteNombre || `Cliente Placa ${placa}`;
 
-                            // Agrupar cliente y sus vehículos sin duplicar placas
                             if (!mapaClientes.has(clienteKey)) {
                                 mapaClientes.set(clienteKey, {
                                     cedula: cedula,
@@ -635,7 +909,6 @@
                                 };
                             }
 
-                            // Orden de servicio con ID único (ID_SERVICIO) para evitar duplicados al recargar
                             const ordenDocId = idServicio ? crearIdSeguro(idServicio) : crearIdSeguro(`${codigo}_${placa}_${fechaIngreso}`);
                             mapaOrdenes.set(ordenDocId, {
                                 idServicio: idServicio || ordenDocId,
@@ -696,7 +969,6 @@
                         const listaOrdenes = Array.from(mapaOrdenes.entries());
                         registrarLog(`Registros únicos listos: ${listaClientes.length} clientes y ${listaOrdenes.length} órdenes.`);
 
-                        // Subir en lotes de 400 usando setDoc(..., { merge: true }) -> CERO DUPLICADOS
                         const CHUNK_SIZE = 400;
                         let procesados = 0;
                         const totalOps = listaClientes.length + listaOrdenes.length;
@@ -742,7 +1014,6 @@
             });
         };
 
-        // CARGAR DATOS DE UN CLIENTE EN EL FORMULARIO Y SUS PLACAS EN EL MÓDULO 2
         function aplicarDatosClienteEnUI(cliente) {
             clienteDocIdActual = cliente.id;
             document.getElementById('cedula').value = cliente.cedula || '';
@@ -763,14 +1034,12 @@
 
             registrarLog(`Cliente cargado: ${cliente.nombre} | Placas asociadas: ${vehiculosClienteActual.join(', ') || 'Ninguna'}`);
 
-            // Si tiene exactamente 1 vehículo, seleccionarlo automáticamente para mostrar sus datos de inmediato
             if (vehiculosClienteActual.length === 1) {
                 selectPlaca.value = vehiculosClienteActual[0];
                 manejarSeleccionPlaca();
             }
         }
 
-        // BÚSQUEDA DE CLIENTE POR NOMBRE, CÉDULA, RIF O TELÉFONO
         window.buscarCliente = async function() {
             const criterioRaw = document.getElementById('criterio-busqueda').value.trim();
             if (!criterioRaw) {
@@ -808,7 +1077,6 @@
                 boxCoincidencias.classList.add('hidden');
                 aplicarDatosClienteEnUI(coincidenciasClientes[0]);
             } else {
-                // Ordenar coincidencia exacta primero y mostrar selector
                 coincidenciasClientes.sort((a, b) => {
                     const aExact = normalizarTexto(a.nombre) === criterio || normalizarTexto(a.cedula) === criterio;
                     const bExact = normalizarTexto(b.nombre) === criterio || normalizarTexto(b.cedula) === criterio;
@@ -833,7 +1101,6 @@
             }
         };
 
-        // BÚSQUEDA DIRECTA POR PLACA (Trae vehículo, cliente propietario y última orden)
         window.buscarPorPlacaDirecta = async function() {
             const placaBuscada = document.getElementById('buscar-placa-directa').value.trim().toUpperCase();
             if (!placaBuscada) {
@@ -847,13 +1114,11 @@
                 await recargarCacheFirebase();
             }
 
-            // Buscar cliente dueño de esa placa
             const clienteDueno = cacheClientes.find(c => Array.isArray(c.vehiculos) && c.vehiculos.some(p => p.toUpperCase() === placaBuscada));
             if (clienteDueno) {
                 aplicarDatosClienteEnUI(clienteDueno);
                 document.getElementById('ord-placa').value = placaBuscada;
             } else {
-                // Si la placa existe en órdenes pero no estaba vinculada a un cliente
                 const selectPlaca = document.getElementById('ord-placa');
                 selectPlaca.innerHTML = `<option value="${placaBuscada}">${placaBuscada}</option><option value="NUEVO">➕ Registrar Nuevo Vehículo</option>`;
                 selectPlaca.value = placaBuscada;
@@ -897,7 +1162,6 @@
             }
         };
 
-        // AL SELECCIONAR UNA PLACA: Rellena datos del vehículo y su última orden (Código, Fechas, Servicio, Checklist)
         window.manejarSeleccionPlaca = async function() {
             const select = document.getElementById('ord-placa');
             const contNuevaPlaca = document.getElementById('contenedor-nueva-placa');
@@ -928,7 +1192,6 @@
 
             registrarLog(`Cargando historial y ficha técnica de la placa ${placaElegida}...`);
 
-            // 1. Buscar datos base en detalle del cliente
             const clienteActual = cacheClientes.find(c => c.id === clienteDocIdActual);
             if (clienteActual && clienteActual.vehiculosDetalle && clienteActual.vehiculosDetalle[placaElegida]) {
                 const det = clienteActual.vehiculosDetalle[placaElegida];
@@ -940,7 +1203,6 @@
                 document.getElementById('ord-serial-bateria').value = det.serialBateria || '';
             }
 
-            // 2. Buscar todas las órdenes de esta placa y tomar la más reciente
             const ordenesPlaca = cacheOrdenes.filter(o => String(o.placa || '').toUpperCase() === placaElegida);
             if (ordenesPlaca.length > 0) {
                 ordenesPlaca.sort((a, b) => String(b.codigoOrden || '').localeCompare(String(a.codigoOrden || '')));
@@ -1031,7 +1293,6 @@
                 vehiculosClienteActual.push(placaSeleccionada);
             }
 
-            // Actualizar ficha del cliente y su vehículo sin duplicar
             await setDoc(doc(db, "clientes_taller", clienteDocIdActual), {
                 cedula: document.getElementById('cedula').value.trim(),
                 nombre: nombreCliente,
@@ -1051,7 +1312,6 @@
                 }
             }, { merge: true });
 
-            // Subir fotos múltiples a Firebase Storage
             const fotosURLs = await subirFotosMultiples(codigoOrden, placaSeleccionada);
 
             const ordenIdUnico = crearIdSeguro(`${codigoOrden}_${placaSeleccionada}`);
@@ -1073,7 +1333,7 @@
                 combustible: document.getElementById('ord-combustible').value.trim(),
                 servicio: document.getElementById('ord-servicio').value.trim(),
                 mecanico: document.getElementById('ord-mecanico').value.trim(),
-                fotosRecepcion: fotosURLs, // Almacenamos array de URLs de las fotos
+                fotosRecepcion: fotosURLs,
                 checklist: {
                     aceiteNivel: document.getElementById('chk-aceite-nivel').value,
                     aceiteColor: document.getElementById('chk-aceite-color').value,
@@ -1100,7 +1360,7 @@
             try {
                 await setDoc(doc(db, "ordenes_servicio", ordenIdUnico), ordenData, { merge: true });
                 await recargarCacheFirebase();
-                registrarLog(`¡Orden ${codigoOrden} guardada/actualizada con éxito sin duplicados! (${fotosURLs.length} fotos subidas)`);
+                registrarLog(`¡Orden ${codigoOrden} guardada/actualizada con éxito! (${fotosURLs.length} fotos subidas)`);
                 alert(`¡Orden de servicio y chequeo técnico guardados en la nube!\nFotos de recepción subidas: ${fotosURLs.length}`);
                 document.getElementById('ord-fotos').value = '';
                 document.getElementById('lista-fotos-preview').innerHTML = '';
@@ -1112,7 +1372,6 @@
             }
         };
 
-        // EXPORTAR CLIENTES CSV (Sin separadores de miles, punto decimal)
         window.exportarClientesCSV = async function() {
             registrarLog("Generando archivo CSV de clientes...");
             actualizarProgreso(30);
@@ -1140,18 +1399,18 @@
             }
         };
 
-        // EXPORTAR ÓRDENES CSV (Conservando código, fechas/horas exactas y números sin separador de miles)
         window.exportarOrdenesCSV = async function() {
             registrarLog("Generando archivo CSV de órdenes de servicio...");
             actualizarProgreso(30);
             try {
                 if (cacheOrdenes.length === 0) await recargarCacheFirebase();
-                let csv = "ID_SERVICIO,CODIGO,Ingreso_Fecha_Hora,Salida_Fecha_Hora,Placa,Cliente,Telefono,Marca,Modelo,Anio,Kilometraje,Mecanico,Servicio,Cantidad_Fotos\n";
+                let csv = "ID_SERVICIO,CODIGO,Ingreso_Fecha_Hora,Salida_Fecha_Hora,Placa,Cliente,Telefono,Marca,Modelo,Anio,Kilometraje,Mecanico,Servicio,Cantidad_Fotos,URLs_Fotos\n";
                 cacheOrdenes.forEach(d => {
                     const kmLimpio = String(d.kilometraje || '').replace(/,/g, '.');
                     const servicioLimpio = String(d.servicio || '').replace(/\r?\n/g, ' ').replace(/"/g, '""');
-                    const cantFotos = Array.isArray(d.fotosRecepcion) ? d.fotosRecepcion.length : 0;
-                    csv += `"${d.idServicio || d.id}","${d.codigoOrden || ''}","${d.fechaIngreso || ''}","${d.fechaSalida || ''}","${d.placa || ''}","${(d.clienteNombre || '').replace(/"/g, '""')}","${d.telefonoCliente || ''}","${d.marca || ''}","${d.modelo || ''}","${d.anio || ''}","${kmLimpio}","${(d.mecanico || '').replace(/"/g, '""')}","${servicioLimpio}","${cantFotos}"\n`;
+                    const fotos = Array.isArray(d.fotosRecepcion) ? d.fotosRecepcion : [];
+                    const urlsFotos = fotos.join(' | ').replace(/"/g, '""');
+                    csv += `"${d.idServicio || d.id}","${d.codigoOrden || ''}","${d.fechaIngreso || ''}","${d.fechaSalida || ''}","${d.placa || ''}","${(d.clienteNombre || '').replace(/"/g, '""')}","${d.telefonoCliente || ''}","${d.marca || ''}","${d.modelo || ''}","${d.anio || ''}","${kmLimpio}","${(d.mecanico || '').replace(/"/g, '""')}","${servicioLimpio}","${fotos.length}","${urlsFotos}"\n`;
                 });
                 
                 const blob = new Blob(["\uFEFF" + csv], { type: 'text/csv;charset=utf-8;' });
