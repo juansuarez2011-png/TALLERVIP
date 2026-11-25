@@ -6,6 +6,7 @@
     <title>Taller Mecánico Syntro - Sistema Cloud Integral</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <style>
         body {
             background-color: #0f172a;
@@ -47,18 +48,9 @@
             background: #dc2626;
             box-shadow: 4px 4px 8px #991b1b, -4px -4px 8px #ef4444;
         }
-        /* Modal visor de fotos */
-        #modal-fotos {
-            backdrop-filter: blur(4px);
-        }
-        .foto-thumb {
-            cursor: pointer;
-            transition: transform 0.2s;
-        }
-        .foto-thumb:hover {
-            transform: scale(1.05);
-        }
-        /* Estilo para impresión del informe */
+        #modal-fotos { backdrop-filter: blur(4px); }
+        .foto-thumb { cursor: pointer; transition: transform 0.2s; }
+        .foto-thumb:hover { transform: scale(1.05); }
         @media print {
             body { background: white !important; color: black !important; }
             .no-print { display: none !important; }
@@ -113,7 +105,7 @@
 
         <main class="grid grid-cols-1 lg:grid-cols-3 gap-6">
             
-            <!-- COLUMNA 1: Módulo 1 - Clientes y Carga Masiva CSV -->
+            <!-- COLUMNA 1 -->
             <div class="space-y-6">
                 <section class="neumo-card p-5 sm:p-6">
                     <h2 class="text-lg sm:text-xl font-semibold mb-4 text-slate-200">Módulo 1: Clientes</h2>
@@ -153,7 +145,6 @@
                     </form>
                 </section>
 
-                <!-- CARGA MASIVA CSV SIN DUPLICADOS -->
                 <section class="neumo-card p-5 sm:p-6 border border-amber-500/30">
                     <h2 class="text-base sm:text-lg font-semibold mb-2 text-amber-400">Importar Base de Datos CSV</h2>
                     <p class="text-xs text-slate-400 mb-3">
@@ -168,7 +159,7 @@
                 </section>
             </div>
 
-            <!-- COLUMNAS 2 y 3: Recepción, Vehículos, Chequeo Técnico y Exportación -->
+            <!-- COLUMNAS 2 y 3 -->
             <div class="lg:col-span-2 space-y-6">
                 <section class="neumo-card p-5 sm:p-6">
                     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4">
@@ -181,7 +172,6 @@
                     
                     <form id="orden-form" onsubmit="guardarOrdenServicio(event)" class="space-y-5">
                         
-                        <!-- Código, Fechas/Horas Exactas y Selección de Vehículo -->
                         <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
                             <div>
                                 <label class="block text-xs text-slate-400 mb-1">Código de Orden</label>
@@ -237,7 +227,6 @@
                             </div>
                         </div>
 
-                        <!-- Servicios y Personal -->
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
                                 <label class="block text-xs text-slate-400 mb-1">Trabajo / Servicio a Realizar</label>
@@ -257,7 +246,6 @@
                             </div>
                         </div>
 
-                        <!-- MÓDULO 3: CHECKLIST TÉCNICO DETALLADO -->
                         <div class="p-4 rounded-xl border border-slate-700 bg-slate-900/40 space-y-4">
                             <div class="flex justify-between items-center">
                                 <h3 class="text-sm font-bold text-blue-400 uppercase tracking-wider">Módulo 3: Inspección Técnica Detallada</h3>
@@ -276,7 +264,6 @@
                                         <input type="text" id="chk-aceite-fugas" placeholder="Sin fugas (Sí/No)" class="p-1.5 neumo-input rounded">
                                     </div>
                                 </div>
-
                                 <div class="p-3 bg-slate-900 rounded-lg">
                                     <span class="font-semibold text-slate-300 block mb-2">2. Correas y Mangueras</span>
                                     <div class="grid grid-cols-2 gap-2">
@@ -284,7 +271,6 @@
                                         <input type="text" id="chk-correa-grietas" placeholder="Sin grietas (Sí/No)" class="p-1.5 neumo-input rounded">
                                     </div>
                                 </div>
-
                                 <div class="p-3 bg-slate-900 rounded-lg">
                                     <span class="font-semibold text-slate-300 block mb-2">3. Líquido Refrigerante</span>
                                     <div class="grid grid-cols-3 gap-2">
@@ -293,7 +279,6 @@
                                         <input type="text" id="chk-refrig-fugas" placeholder="Fugas (Sí/No)" class="p-1.5 neumo-input rounded">
                                     </div>
                                 </div>
-
                                 <div class="p-3 bg-slate-900 rounded-lg">
                                     <span class="font-semibold text-slate-300 block mb-2">4. Batería y Alternador</span>
                                     <div class="grid grid-cols-2 gap-2">
@@ -301,7 +286,6 @@
                                         <input type="text" id="chk-alt-voltaje" placeholder="Voltaje alternador" class="p-1.5 neumo-input rounded">
                                     </div>
                                 </div>
-
                                 <div class="p-3 bg-slate-900 rounded-lg">
                                     <span class="font-semibold text-slate-300 block mb-2">5. Dirección y Frenos</span>
                                     <div class="grid grid-cols-2 gap-2">
@@ -309,7 +293,6 @@
                                         <input type="text" id="chk-freno-liga" placeholder="Nivel liga de freno" class="p-1.5 neumo-input rounded">
                                     </div>
                                 </div>
-
                                 <div class="p-3 bg-slate-900 rounded-lg">
                                     <span class="font-semibold text-slate-300 block mb-2">6. Ruedas, Luces e Inventario</span>
                                     <div class="grid grid-cols-2 gap-2">
@@ -326,19 +309,22 @@
                     </form>
                 </section>
 
-                <!-- Bitácora y Panel de Exportación a CSV -->
+                <!-- Bitácora y Panel de Exportación -->
                 <section class="neumo-card p-5 sm:p-6 space-y-4">
                     <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
                         <h2 class="text-lg sm:text-xl font-semibold text-slate-200">Bitácora y Exportación de Datos</h2>
                         <div class="flex flex-wrap gap-2 w-full md:w-auto">
                             <button type="button" onclick="exportarClientesCSV()" class="flex-1 md:flex-none px-3 py-2 rounded-lg text-xs font-semibold text-white neumo-button-secondary">
-                                📊 Exportar Clientes CSV
+                                📊 Clientes CSV
                             </button>
                             <button type="button" onclick="exportarOrdenesCSV()" class="flex-1 md:flex-none px-3 py-2 rounded-lg text-xs font-semibold text-white neumo-button">
-                                📋 Exportar Órdenes CSV
+                                📋 Órdenes CSV
                             </button>
                             <button type="button" onclick="abrirVisorFotos()" class="flex-1 md:flex-none px-3 py-2 rounded-lg text-xs font-semibold text-white neumo-button-amber">
-                                🖼️ Ver Fotos de Orden
+                                🖼️ Ver Fotos
+                            </button>
+                            <button type="button" onclick="exportarTodoConFotosZIP()" class="flex-1 md:flex-none px-3 py-2 rounded-lg text-xs font-semibold text-white neumo-button-purple">
+                                📦 Exportar TODO + Fotos (ZIP)
                             </button>
                         </div>
                     </div>
@@ -364,7 +350,6 @@
                 <button onclick="cerrarVisorFotos()" class="px-3 py-2 rounded-lg text-xs font-semibold text-white neumo-button-red">✖ Cerrar</button>
             </div>
 
-            <!-- Buscador dentro del modal -->
             <div class="mb-4 p-3 rounded-xl border border-slate-700 bg-slate-900/50 space-y-2 no-print">
                 <label class="block text-xs text-blue-400 font-semibold uppercase">Buscar Orden (Código, Placa o Cliente)</label>
                 <div class="flex gap-2">
@@ -374,12 +359,10 @@
                 <div id="visor-resultados" class="mt-2 space-y-2 max-h-40 overflow-y-auto"></div>
             </div>
 
-            <!-- Informe de la orden seleccionada -->
             <div id="informe-container" class="informe-container bg-slate-900 rounded-xl p-5 space-y-4">
                 <p class="text-slate-400 text-sm text-center">Busque una orden para visualizar su informe y fotos.</p>
             </div>
 
-            <!-- Botón de descarga/imprimir informe -->
             <div id="acciones-informe" class="hidden flex flex-wrap gap-2 justify-end mt-4 no-print">
                 <button onclick="descargarInformeHTML()" class="px-4 py-2 rounded-lg text-xs font-semibold text-white neumo-button">
                     📥 Descargar Informe HTML
@@ -391,11 +374,10 @@
         </div>
     </div>
 
-    <!-- Script Firebase y Lógica -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-app.js";
         import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-auth.js";
-        import { getFirestore, collection, doc, setDoc, getDocs, updateDoc, writeBatch } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-firestore.js";
+        import { getFirestore, collection, doc, setDoc, getDocs, writeBatch } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-firestore.js";
         import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-storage.js";
 
         const firebaseConfig = {
@@ -421,18 +403,12 @@
         let cacheOrdenes = [];
         let timerInterval = null;
         let segundosTranscurridos = 0;
-        let ordenActualVisor = null; // guarda la orden que se está viendo en el visor
+        let ordenActualVisor = null;
 
-        // Normalización de texto para búsqueda sin fallos por acentos o mayúsculas
         function normalizarTexto(texto) {
-            return String(texto || "")
-                .normalize("NFD")
-                .replace(/[\u0300-\u036f]/g, "")
-                .trim()
-                .toLowerCase();
+            return String(texto || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().toLowerCase();
         }
 
-        // Genera un ID determinístico seguro para Firestore (evita duplicados)
         function crearIdSeguro(texto) {
             const norm = normalizarTexto(texto).replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "");
             return norm ? norm.substring(0, 80) : "SIN_IDENTIFICAR";
@@ -484,7 +460,6 @@
             if (bar) bar.style.width = porcentaje + '%';
         }
 
-        // Preview de las fotos seleccionadas
         window.mostrarPreviewFotos = function() {
             const input = document.getElementById('ord-fotos');
             const preview = document.getElementById('lista-fotos-preview');
@@ -507,17 +482,14 @@
             }
         };
 
-        // Sube todas las fotos seleccionadas a Firebase Storage y retorna array de URLs
         async function subirFotosMultiples(codigoOrden, placa) {
             const input = document.getElementById('ord-fotos');
             const files = input.files;
             if (!files || files.length === 0) return [];
-
             const urls = [];
             const carpeta = `recepciones/${crearIdSeguro(placa)}_${crearIdSeguro(codigoOrden)}`;
             registrarLog(`Subiendo ${files.length} foto(s) a Firebase Storage...`);
             actualizarProgreso(20);
-
             for (let i = 0; i < files.length; i++) {
                 const file = files[i];
                 const timestamp = Date.now();
@@ -623,29 +595,21 @@
 
         window.buscarOrdenEnVisor = function() {
             const criterioRaw = document.getElementById('visor-busqueda').value.trim();
-            if (!criterioRaw) {
-                alert("Ingrese código de orden, placa o nombre del cliente.");
-                return;
-            }
+            if (!criterioRaw) { alert("Ingrese código de orden, placa o nombre del cliente."); return; }
             const criterio = normalizarTexto(criterioRaw);
             const resultados = cacheOrdenes.filter(o => {
                 return normalizarTexto(o.codigoOrden).includes(criterio) ||
                        normalizarTexto(o.placa).includes(criterio) ||
                        normalizarTexto(o.clienteNombre).includes(criterio);
             });
-
             const contResultados = document.getElementById('visor-resultados');
             contResultados.innerHTML = '';
-
             if (resultados.length === 0) {
                 contResultados.innerHTML = '<p class="text-xs text-amber-400">No se encontraron órdenes.</p>';
                 return;
             }
-
-            // Ordenar por código descendente
             resultados.sort((a, b) => String(b.codigoOrden || '').localeCompare(String(a.codigoOrden || '')));
-
-            resultados.slice(0, 20).forEach((ord, idx) => {
+            resultados.slice(0, 20).forEach((ord) => {
                 const btn = document.createElement('button');
                 btn.type = 'button';
                 btn.className = 'w-full text-left p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs text-slate-200 flex justify-between items-center';
@@ -656,7 +620,6 @@
             });
         };
 
-        // Muestra el informe completo de la orden seleccionada con sus fotos
         window.mostrarInformeOrden = function(orden) {
             ordenActualVisor = orden;
             const cont = document.getElementById('informe-container');
@@ -677,10 +640,9 @@
             const fotosHTML = fotos.length > 0
                 ? fotos.map((url, i) => `
                     <div class="text-center">
-                        <img src="${url}" alt="Foto ${i + 1}" class="informe-foto w-full max-w-[300px] h-auto rounded-lg border border-slate-700 mx-auto" onerror="this.style.display='none'; this.parentElement.innerHTML += '<p class=\\'text-[10px] text-red-400\\'>Error al cargar foto ${i + 1}</p>';">
+                        <img src="${url}" alt="Foto ${i + 1}" class="informe-foto w-full max-w-[300px] h-auto rounded-lg border border-slate-700 mx-auto">
                         <p class="text-[10px] text-slate-500 mt-1">Foto ${i + 1}</p>
-                    </div>
-                `).join('')
+                    </div>`).join('')
                 : '<p class="text-xs text-slate-500">Sin fotos registradas.</p>';
 
             cont.innerHTML = `
@@ -695,12 +657,9 @@
                     <div><span class="text-slate-400">Vehículo:</span> <span class="text-white">${orden.marca || ''} ${orden.modelo || ''} (${orden.anio || ''})</span></div>
                     <div><span class="text-slate-400">Kilometraje:</span> <span class="text-white">${orden.kilometraje || ''}</span></div>
                     <div><span class="text-slate-400">Combustible:</span> <span class="text-white">${orden.combustible || ''}</span></div>
-                    <div><span class="text-slate-400">Serial Carrocería:</span> <span class="text-white">${orden.serialCarroceria || ''}</span></div>
-                    <div><span class="text-slate-400">Serial Batería:</span> <span class="text-white">${orden.serialBateria || ''}</span></div>
                     <div><span class="text-slate-400">Ingreso:</span> <span class="text-white font-mono">${orden.fechaIngreso || ''}</span></div>
                     <div><span class="text-slate-400">Salida:</span> <span class="text-white font-mono">${orden.fechaSalida || ''}</span></div>
                     <div><span class="text-slate-400">Mecánico:</span> <span class="text-white">${orden.mecanico || ''}</span></div>
-                    <div><span class="text-slate-400">Registrado por:</span> <span class="text-white">${orden.registradoPor || ''}</span></div>
                 </div>
                 <div class="mt-3 p-3 rounded-lg bg-slate-800">
                     <p class="text-xs text-slate-400 mb-1">Trabajo / Servicio:</p>
@@ -711,30 +670,21 @@
                     ${filasChecklist.length > 0 ? `
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-1 text-xs">
                             ${filasChecklist.map(([k, v]) => `<div class="flex justify-between border-b border-slate-800 py-1"><span class="text-slate-400">${k}:</span><span class="text-white">${v}</span></div>`).join('')}
-                        </div>
-                    ` : '<p class="text-xs text-slate-500">Sin datos de chequeo.</p>'}
+                        </div>` : '<p class="text-xs text-slate-500">Sin datos de chequeo.</p>'}
                 </div>
                 <div class="mt-4">
                     <h4 class="text-sm font-bold text-amber-400 mb-2">📸 Fotos de Recepción (${fotos.length})</h4>
-                    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-                        ${fotosHTML}
-                    </div>
+                    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">${fotosHTML}</div>
                 </div>
             `;
-
             document.getElementById('acciones-informe').classList.remove('hidden');
         };
 
-        // Descarga el informe como archivo HTML independiente (con fotos por URL)
         window.descargarInformeHTML = function() {
-            if (!ordenActualVisor) {
-                alert("Primero busque y seleccione una orden.");
-                return;
-            }
+            if (!ordenActualVisor) { alert("Primero busque y seleccione una orden."); return; }
             const orden = ordenActualVisor;
             const fotos = Array.isArray(orden.fotosRecepcion) ? orden.fotosRecepcion : [];
             const chk = orden.checklist || {};
-
             const filasChecklist = [
                 ['Aceite Nivel', chk.aceiteNivel], ['Aceite Color', chk.aceiteColor],
                 ['Aceite Filtro', chk.aceiteFiltro], ['Aceite Fugas', chk.aceiteFugas],
@@ -745,81 +695,225 @@
                 ['Freno Liga', chk.frenoLiga], ['Ruedas Presión', chk.ruedasPresion],
                 ['Luces Ext.', chk.lucesExt]
             ].filter(([, v]) => v && String(v).trim() !== '');
+            const fotosHTML = fotos.length > 0 ? fotos.map((url, i) => `
+                <div style="display:inline-block;margin:6px;text-align:center;">
+                    <img src="${url}" alt="Foto ${i + 1}" style="max-width:300px;max-height:300px;border-radius:8px;border:1px solid #ccc;" />
+                    <div style="font-size:10px;color:#666;">Foto ${i + 1}</div>
+                </div>`).join('') : '<p>Sin fotos registradas.</p>';
 
-            const fotosHTML = fotos.length > 0
-                ? fotos.map((url, i) => `
-                    <div style="display:inline-block;margin:6px;text-align:center;">
-                        <img src="${url}" alt="Foto ${i + 1}" style="max-width:300px;max-height:300px;border-radius:8px;border:1px solid #ccc;" />
-                        <div style="font-size:10px;color:#666;">Foto ${i + 1}</div>
-                    </div>
-                `).join('')
-                : '<p>Sin fotos registradas.</p>';
-
-            const html = `<!DOCTYPE html>
-<html lang="es">
-<head>
-<meta charset="UTF-8">
-<title>Informe Orden ${orden.codigoOrden || ''}</title>
-<style>
-    body { font-family: Arial, sans-serif; padding: 20px; color: #222; max-width: 900px; margin: auto; }
-    h1 { color: #1d4ed8; border-bottom: 3px solid #1d4ed8; padding-bottom: 8px; }
-    h2 { color: #1d4ed8; margin-top: 24px; }
-    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-    td { padding: 6px 8px; border-bottom: 1px solid #ddd; font-size: 13px; }
-    td:first-child { font-weight: bold; color: #555; width: 40%; }
-    .servicio { background: #f3f4f6; padding: 12px; border-radius: 8px; white-space: pre-wrap; margin-top: 8px; }
-    .fotos { margin-top: 10px; }
-    .footer { margin-top: 30px; font-size: 11px; color: #888; text-align: center; border-top: 1px solid #ddd; padding-top: 10px; }
-    @media print { body { padding: 10px; } }
-</style>
-</head>
-<body>
+            const html = `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><title>Informe ${orden.codigoOrden || ''}</title>
+<style>body{font-family:Arial,sans-serif;padding:20px;color:#222;max-width:900px;margin:auto}
+h1{color:#1d4ed8;border-bottom:3px solid #1d4ed8;padding-bottom:8px}
+h2{color:#1d4ed8;margin-top:24px}table{width:100%;border-collapse:collapse;margin-top:10px}
+td{padding:6px 8px;border-bottom:1px solid #ddd;font-size:13px}
+td:first-child{font-weight:bold;color:#555;width:40%}
+.servicio{background:#f3f4f6;padding:12px;border-radius:8px;white-space:pre-wrap;margin-top:8px}
+.footer{margin-top:30px;font-size:11px;color:#888;text-align:center;border-top:1px solid #ddd;padding-top:10px}</style></head><body>
 <h1>Taller Mecánico Syntro — Informe de Orden</h1>
-<p><strong>Orden:</strong> ${orden.codigoOrden || ''} &nbsp; | &nbsp; <strong>ID:</strong> ${orden.idServicio || orden.id || ''}</p>
-
-<h2>Datos del Cliente y Vehículo</h2>
-<table>
-    <tr><td>Cliente</td><td>${orden.clienteNombre || ''}</td></tr>
-    <tr><td>Teléfono</td><td>${orden.telefonoCliente || ''}</td></tr>
-    <tr><td>Placa</td><td>${orden.placa || ''}</td></tr>
-    <tr><td>Vehículo</td><td>${orden.marca || ''} ${orden.modelo || ''} (${orden.anio || ''})</td></tr>
-    <tr><td>Kilometraje</td><td>${orden.kilometraje || ''}</td></tr>
-    <tr><td>Combustible</td><td>${orden.combustible || ''}</td></tr>
-    <tr><td>Serial Carrocería</td><td>${orden.serialCarroceria || ''}</td></tr>
-    <tr><td>Serial Batería</td><td>${orden.serialBateria || ''}</td></tr>
-    <tr><td>Fecha Ingreso</td><td>${orden.fechaIngreso || ''}</td></tr>
-    <tr><td>Fecha Salida</td><td>${orden.fechaSalida || ''}</td></tr>
-    <tr><td>Mecánico</td><td>${orden.mecanico || ''}</td></tr>
-    <tr><td>Registrado por</td><td>${orden.registradoPor || ''}</td></tr>
-</table>
-
-<h2>Trabajo / Servicio</h2>
-<div class="servicio">${orden.servicio || '—'}</div>
-
-<h2>Chequeo Técnico</h2>
-<table>
-${filasChecklist.length > 0 ? filasChecklist.map(([k, v]) => `<tr><td>${k}</td><td>${v}</td></tr>`).join('') : '<tr><td colspan="2">Sin datos de chequeo.</td></tr>'}
-</table>
-
-<h2>Fotos de Recepción (${fotos.length})</h2>
-<div class="fotos">${fotosHTML}</div>
-
-<div class="footer">
-    Generado el ${new Date().toLocaleString('es-VE')} — Taller Mecánico Syntro
-</div>
-</body>
-</html>`;
+<p><strong>Orden:</strong> ${orden.codigoOrden || ''} | <strong>ID:</strong> ${orden.idServicio || orden.id || ''}</p>
+<h2>Datos del Cliente y Vehículo</h2><table>
+<tr><td>Cliente</td><td>${orden.clienteNombre || ''}</td></tr>
+<tr><td>Teléfono</td><td>${orden.telefonoCliente || ''}</td></tr>
+<tr><td>Placa</td><td>${orden.placa || ''}</td></tr>
+<tr><td>Vehículo</td><td>${orden.marca || ''} ${orden.modelo || ''} (${orden.anio || ''})</td></tr>
+<tr><td>Kilometraje</td><td>${orden.kilometraje || ''}</td></tr>
+<tr><td>Combustible</td><td>${orden.combustible || ''}</td></tr>
+<tr><td>Serial Carrocería</td><td>${orden.serialCarroceria || ''}</td></tr>
+<tr><td>Serial Batería</td><td>${orden.serialBateria || ''}</td></tr>
+<tr><td>Fecha Ingreso</td><td>${orden.fechaIngreso || ''}</td></tr>
+<tr><td>Fecha Salida</td><td>${orden.fechaSalida || ''}</td></tr>
+<tr><td>Mecánico</td><td>${orden.mecanico || ''}</td></tr>
+<tr><td>Registrado por</td><td>${orden.registradoPor || ''}</td></tr></table>
+<h2>Trabajo / Servicio</h2><div class="servicio">${orden.servicio || '—'}</div>
+<h2>Chequeo Técnico</h2><table>${filasChecklist.length > 0 ? filasChecklist.map(([k, v]) => `<tr><td>${k}</td><td>${v}</td></tr>`).join('') : '<tr><td colspan="2">Sin datos.</td></tr>'}</table>
+<h2>Fotos de Recepción (${fotos.length})</h2><div>${fotosHTML}</div>
+<div class="footer">Generado el ${new Date().toLocaleString('es-VE')} — Taller Mecánico Syntro</div>
+</body></html>`;
 
             const blob = new Blob([html], { type: 'text/html;charset=utf-8;' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
             a.download = `informe_orden_${orden.codigoOrden || 'sin_codigo'}.html`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
+            document.body.appendChild(a); a.click(); document.body.removeChild(a);
             URL.revokeObjectURL(url);
             registrarLog(`Informe HTML descargado para orden ${orden.codigoOrden}.`);
+        };
+
+        // ========================================================
+        // 📦 NUEVO: EXPORTAR TODO (CSV + FOTOS) EN UN ZIP
+        // ========================================================
+        window.exportarTodoConFotosZIP = async function() {
+            if (cacheOrdenes.length === 0 || cacheClientes.length === 0) {
+                await recargarCacheFirebase();
+            }
+
+            if (typeof JSZip === 'undefined') {
+                alert("No se pudo cargar la librería JSZip. Verifique su conexión.");
+                return;
+            }
+
+            const confirmar = confirm(
+                `Se descargará un archivo ZIP con:\n\n` +
+                `• clientes.csv (${cacheClientes.length} registros)\n` +
+                `• ordenes.csv (${cacheOrdenes.length} registros)\n` +
+                `• informes/ (un HTML por cada orden)\n` +
+                `• fotos/ (todas las fotos descargadas de Firebase)\n\n` +
+                `⚠️ Puede tardar varios minutos si hay muchas fotos. ¿Continuar?`
+            );
+            if (!confirmar) return;
+
+            const zip = new JSZip();
+            registrarLog("📦 Preparando exportación completa con fotos (ZIP)...");
+            actualizarProgreso(5);
+
+            // 1) CSV de clientes
+            let csvCli = "Cedula_RIF,Nombre,Telefono,Direccion_Email,Placas\n";
+            cacheClientes.forEach(d => {
+                const placasStr = Array.isArray(d.vehiculos) ? d.vehiculos.join(" | ") : "";
+                csvCli += `"${(d.cedula || '').replace(/"/g, '""')}","${(d.nombre || '').replace(/"/g, '""')}","${(d.telefono || '').replace(/"/g, '""')}","${(d.direccion || '').replace(/"/g, '""')}","${placasStr}"\n`;
+            });
+            zip.file("clientes.csv", "\uFEFF" + csvCli);
+
+            // 2) CSV de órdenes
+            let csvOrd = "ID_SERVICIO,CODIGO,Ingreso,Salida,Placa,Cliente,Telefono,Marca,Modelo,Anio,Kilometraje,Mecanico,Servicio,Cantidad_Fotos,Carpeta_Fotos\n";
+            cacheOrdenes.forEach(d => {
+                const fotos = Array.isArray(d.fotosRecepcion) ? d.fotosRecepcion : [];
+                const carpetaFoto = fotos.length > 0 ? `fotos/${crearIdSeguro(d.placa)}_${crearIdSeguro(d.codigoOrden)}/` : '';
+                const servicioLimpio = String(d.servicio || '').replace(/\r?\n/g, ' ').replace(/"/g, '""');
+                csvOrd += `"${d.idServicio || d.id}","${d.codigoOrden || ''}","${d.fechaIngreso || ''}","${d.fechaSalida || ''}","${d.placa || ''}","${(d.clienteNombre || '').replace(/"/g, '""')}","${d.telefonoCliente || ''}","${d.marca || ''}","${d.modelo || ''}","${d.anio || ''}","${String(d.kilometraje || '').replace(/,/g, '.')}","${(d.mecanico || '').replace(/"/g, '""')}","${servicioLimpio}","${fotos.length}","${carpetaFoto}"\n`;
+            });
+            zip.file("ordenes.csv", "\uFEFF" + csvOrd);
+            actualizarProgreso(10);
+
+            // 3) Informes HTML individuales + fotos dentro de cada carpeta
+            const totalOrdenes = cacheOrdenes.length;
+            let fotosTotalesDescargadas = 0;
+            let fotosFallidas = 0;
+            let ordenesProcesadas = 0;
+
+            for (const orden of cacheOrdenes) {
+                ordenesProcesadas++;
+                const fotos = Array.isArray(orden.fotosRecepcion) ? orden.fotosRecepcion : [];
+                const carpetaFoto = `fotos/${crearIdSeguro(orden.placa)}_${crearIdSeguro(orden.codigoOrden)}/`;
+                const nombresLocales = [];
+
+                // Descargar cada foto
+                for (let i = 0; i < fotos.length; i++) {
+                    const url = fotos[i];
+                    const ext = (url.match(/\.(jpg|jpeg|png|webp|gif)(\?|$)/i) || [,'jpg'])[1];
+                    const nombreLocal = `foto_${i + 1}.${ext}`;
+                    try {
+                        registrarLog(`⬇️ Descargando foto ${i + 1}/${fotos.length} de orden ${orden.codigoOrden}...`);
+                        const resp = await fetch(url);
+                        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+                        const blob = await resp.blob();
+                        zip.file(carpetaFoto + nombreLocal, blob);
+                        nombresLocales.push(nombreLocal);
+                        fotosTotalesDescargadas++;
+                    } catch (err) {
+                        registrarLog(`⚠️ No se pudo descargar foto ${i + 1} de orden ${orden.codigoOrden}: ${err.message}`);
+                        fotosFallidas++;
+                    }
+                }
+
+                // Generar informe HTML con fotos LOCALES (relativas)
+                const chk = orden.checklist || {};
+                const filasChecklist = [
+                    ['Aceite Nivel', chk.aceiteNivel], ['Aceite Color', chk.aceiteColor],
+                    ['Aceite Filtro', chk.aceiteFiltro], ['Aceite Fugas', chk.aceiteFugas],
+                    ['Correa Tensión', chk.correaTension], ['Correa Grietas', chk.correaGrietas],
+                    ['Refrig. Nivel', chk.refrigNivel], ['Refrig. Color', chk.refrigColor],
+                    ['Refrig. Fugas', chk.refrigFugas], ['Batería Terminal', chk.batTerminal],
+                    ['Alternador Voltaje', chk.altVoltaje], ['Dirección Juego', chk.dirJuego],
+                    ['Freno Liga', chk.frenoLiga], ['Ruedas Presión', chk.ruedasPresion],
+                    ['Luces Ext.', chk.lucesExt]
+                ].filter(([, v]) => v && String(v).trim() !== '');
+
+                const fotosHTML = nombresLocales.length > 0
+                    ? nombresLocales.map((n, i) => `
+                        <div style="display:inline-block;margin:6px;text-align:center;">
+                            <img src="../${carpetaFoto}${n}" style="max-width:300px;max-height:300px;border-radius:8px;border:1px solid #ccc;" />
+                            <div style="font-size:10px;color:#666;">Foto ${i + 1}</div>
+                        </div>`).join('')
+                    : '<p>Sin fotos.</p>';
+
+                const htmlInforme = `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><title>Informe ${orden.codigoOrden || ''}</title>
+<style>body{font-family:Arial,sans-serif;padding:20px;color:#222;max-width:900px;margin:auto}
+h1{color:#1d4ed8;border-bottom:3px solid #1d4ed8;padding-bottom:8px}h2{color:#1d4ed8;margin-top:24px}
+table{width:100%;border-collapse:collapse;margin-top:10px}td{padding:6px 8px;border-bottom:1px solid #ddd;font-size:13px}
+td:first-child{font-weight:bold;color:#555;width:40%}.servicio{background:#f3f4f6;padding:12px;border-radius:8px;white-space:pre-wrap;margin-top:8px}
+.footer{margin-top:30px;font-size:11px;color:#888;text-align:center;border-top:1px solid #ddd;padding-top:10px}</style></head><body>
+<h1>Taller Mecánico Syntro — Informe ${orden.codigoOrden || ''}</h1>
+<h2>Datos del Cliente y Vehículo</h2><table>
+<tr><td>Cliente</td><td>${orden.clienteNombre || ''}</td></tr>
+<tr><td>Teléfono</td><td>${orden.telefonoCliente || ''}</td></tr>
+<tr><td>Placa</td><td>${orden.placa || ''}</td></tr>
+<tr><td>Vehículo</td><td>${orden.marca || ''} ${orden.modelo || ''} (${orden.anio || ''})</td></tr>
+<tr><td>Kilometraje</td><td>${orden.kilometraje || ''}</td></tr>
+<tr><td>Combustible</td><td>${orden.combustible || ''}</td></tr>
+<tr><td>Ingreso</td><td>${orden.fechaIngreso || ''}</td></tr>
+<tr><td>Salida</td><td>${orden.fechaSalida || ''}</td></tr>
+<tr><td>Mecánico</td><td>${orden.mecanico || ''}</td></tr></table>
+<h2>Servicio</h2><div class="servicio">${orden.servicio || '—'}</div>
+<h2>Chequeo Técnico</h2><table>${filasChecklist.map(([k, v]) => `<tr><td>${k}</td><td>${v}</td></tr>`).join('') || '<tr><td colspan="2">Sin datos</td></tr>'}</table>
+<h2>Fotos (${nombresLocales.length})</h2><div>${fotosHTML}</div>
+<div class="footer">Generado el ${new Date().toLocaleString('es-VE')} — Taller Mecánico Syntro</div>
+</body></html>`;
+
+                zip.file(`informes/informe_${crearIdSeguro(orden.codigoOrden)}.html`, htmlInforme);
+
+                const pct = 10 + Math.round((ordenesProcesadas / totalOrdenes) * 80);
+                actualizarProgreso(pct);
+            }
+
+            // 4) README
+            zip.file("LEEME.txt",
+`EXPORTACIÓN COMPLETA - TALLER MECÁNICO SYNTRO
+Fecha: ${new Date().toLocaleString('es-VE')}
+
+CONTENIDO DEL ZIP:
+- clientes.csv        → Todos los clientes (${cacheClientes.length})
+- ordenes.csv         → Todas las órdenes con referencia a carpeta de fotos
+- informes/           → Un informe HTML por cada orden (con fotos locales)
+- fotos/              → Todas las fotos organizadas por placa y código de orden
+
+FOTOS DESCARGADAS: ${fotosTotalesDescargadas}
+FOTOS FALLIDAS:    ${fotosFallidas}
+
+CÓMO USAR:
+1. Abre "informes/informe_XXXXX.html" en tu navegador. Las fotos se cargan desde las carpetas locales.
+2. "ordenes.csv" incluye columna "Carpeta_Fotos" que indica dónde están las fotos de cada orden.
+3. Puedes imprimir cualquier informe desde el navegador (Ctrl+P → Guardar como PDF).
+
+NOTA: Los informes y fotos funcionan SIN conexión a internet.
+`);
+            actualizarProgreso(92);
+
+            // 5) Generar y descargar
+            registrarLog("Comprimiendo ZIP (esto puede tardar unos segundos)...");
+            try {
+                const contenido = await zip.generateAsync(
+                    { type: "blob", compression: "DEFLATE", compressionOptions: { level: 6 } },
+                    (meta) => {
+                        const pct = 92 + Math.round((meta.percent / 100) * 8);
+                        actualizarProgreso(pct);
+                    }
+                );
+                const urlZip = URL.createObjectURL(contenido);
+                const a = document.createElement('a');
+                a.href = urlZip;
+                a.download = `Syntro_Export_${new Date().toISOString().slice(0,10)}.zip`;
+                document.body.appendChild(a); a.click(); document.body.removeChild(a);
+                URL.revokeObjectURL(urlZip);
+                actualizarProgreso(100);
+                registrarLog(`✅ ZIP generado: ${cacheOrdenes.length} órdenes, ${fotosTotalesDescargadas} fotos descargadas (${fotosFallidas} fallidas).`);
+                alert(`✅ Exportación completa lista.\n\nÓrdenes: ${cacheOrdenes.length}\nClientes: ${cacheClientes.length}\nFotos descargadas: ${fotosTotalesDescargadas}\nFotos fallidas: ${fotosFallidas}`);
+            } catch (err) {
+                registrarLog("❌ Error al generar ZIP: " + err.message);
+                alert("Error al generar ZIP: " + err.message);
+                actualizarProgreso(0);
+            }
         };
 
         // ========================================================
@@ -828,26 +922,18 @@ ${filasChecklist.length > 0 ? filasChecklist.map(([k, v]) => `<tr><td>${k}</td><
         window.importarCSVSinDuplicados = async function() {
             const fileInput = document.getElementById('csv-file-input');
             const file = fileInput.files[0];
-            if (!file) {
-                alert("Por favor seleccione primero el archivo CSV (Orden_de_Servicio - entrega y salida).");
-                return;
-            }
-
+            if (!file) { alert("Por favor seleccione primero el archivo CSV."); return; }
             registrarLog(`Leyendo archivo "${file.name}"...`);
             actualizarProgreso(10);
-
             Papa.parse(file, {
-                header: true,
-                skipEmptyLines: true,
+                header: true, skipEmptyLines: true,
                 complete: async function(results) {
                     try {
                         const rows = results.data;
-                        registrarLog(`Filas detectadas en CSV: ${rows.length}. Procesando y deduplicando...`);
+                        registrarLog(`Filas detectadas en CSV: ${rows.length}. Procesando...`);
                         actualizarProgreso(25);
-
                         const mapaClientes = new Map();
                         const mapaOrdenes = new Map();
-
                         for (const row of rows) {
                             const idServicio = String(row['ID_SERVICIO '] || row['ID_SERVICIO'] || '').trim();
                             const codigo = String(row['CODIGO'] || '').trim();
@@ -869,251 +955,124 @@ ${filasChecklist.length > 0 ? filasChecklist.map(([k, v]) => `<tr><td>${k}</td><
                             const mecanico = String(row['MECANICO_ASIGNADO'] || recibidoPor || '').trim();
                             const combustible = String(row['Nivel de combustible'] || '').trim();
                             const lucesAdv = String(row['Luces de advertencia encendidas'] || '').trim();
-
                             if (!idServicio && !placa && !clienteNombre) continue;
-
                             const clienteKey = cedula ? crearIdSeguro(cedula) : crearIdSeguro(clienteNombre || `CLIENTE_${placa}`);
                             const nombreFinalCliente = clienteNombre || `Cliente Placa ${placa}`;
-
                             if (!mapaClientes.has(clienteKey)) {
-                                mapaClientes.set(clienteKey, {
-                                    cedula: cedula,
-                                    nombre: nombreFinalCliente,
-                                    telefono: telefono,
-                                    direccion: email,
-                                    vehiculos: [],
-                                    vehiculosDetalle: {},
-                                    fechaRegistro: fechaIngreso || obtenerFechaHoraActualFormateada(),
-                                    registradoPor: usuarioActual ? usuarioActual.email : "importacion_csv"
-                                });
+                                mapaClientes.set(clienteKey, { cedula, nombre: nombreFinalCliente, telefono, direccion: email, vehiculos: [], vehiculosDetalle: {}, fechaRegistro: fechaIngreso || obtenerFechaHoraActualFormateada(), registradoPor: usuarioActual ? usuarioActual.email : "importacion_csv" });
                             }
-
                             const cliObj = mapaClientes.get(clienteKey);
                             if (telefono && !cliObj.telefono) cliObj.telefono = telefono;
                             if (email && !cliObj.direccion) cliObj.direccion = email;
                             if (cedula && !cliObj.cedula) cliObj.cedula = cedula;
-
                             if (placa) {
-                                if (!cliObj.vehiculos.includes(placa)) {
-                                    cliObj.vehiculos.push(placa);
-                                }
+                                if (!cliObj.vehiculos.includes(placa)) cliObj.vehiculos.push(placa);
                                 const prevVeh = cliObj.vehiculosDetalle[placa] || {};
-                                cliObj.vehiculosDetalle[placa] = {
-                                    placa: placa,
-                                    marca: marca || prevVeh.marca || '',
-                                    modelo: modelo || prevVeh.modelo || '',
-                                    anio: anio || prevVeh.anio || '',
-                                    kilometraje: kilometraje || prevVeh.kilometraje || '',
-                                    serialCarroceria: serialCarroceria || prevVeh.serialCarroceria || '',
-                                    serialBateria: serialBateria || prevVeh.serialBateria || ''
-                                };
+                                cliObj.vehiculosDetalle[placa] = { placa, marca: marca || prevVeh.marca || '', modelo: modelo || prevVeh.modelo || '', anio: anio || prevVeh.anio || '', kilometraje: kilometraje || prevVeh.kilometraje || '', serialCarroceria: serialCarroceria || prevVeh.serialCarroceria || '', serialBateria: serialBateria || prevVeh.serialBateria || '' };
                             }
-
                             const ordenDocId = idServicio ? crearIdSeguro(idServicio) : crearIdSeguro(`${codigo}_${placa}_${fechaIngreso}`);
                             mapaOrdenes.set(ordenDocId, {
-                                idServicio: idServicio || ordenDocId,
-                                codigoOrden: codigo,
-                                fechaIngreso: fechaIngreso,
-                                fechaSalida: fechaSalida,
-                                clienteId: clienteKey,
-                                clienteNombre: nombreFinalCliente,
-                                telefonoCliente: telefono,
-                                placa: placa,
-                                marca: marca,
-                                modelo: modelo,
-                                anio: anio,
-                                kilometraje: kilometraje,
-                                serialCarroceria: serialCarroceria,
-                                serialBateria: serialBateria,
-                                combustible: combustible,
-                                servicio: trabajo,
-                                recibidoPor: recibidoPor,
-                                mecanico: mecanico,
-                                inventario: {
-                                    grua: String(row['Ingreso en grúa (Sí/No)'] || '').trim(),
-                                    lucesAdvertencia: lucesAdv,
-                                    gato: String(row['Gato'] || '').trim(),
-                                    herramientas: String(row['Herramientas'] || '').trim(),
-                                    triangulo: String(row['Triángulo'] || '').trim(),
-                                    repuesto: String(row['Neumático repuesto'] || '').trim(),
-                                    estereo: String(row['Estéreo'] || '').trim(),
-                                    antena: String(row['Antena'] || '').trim(),
-                                    emblemas: String(row['Emblemas'] || '').trim(),
-                                    alfombras: String(row['Alfombras'] || '').trim(),
-                                    cables: String(row['Cables'] || '').trim(),
-                                    tazasRines: String(row['Tazas / Rines'] || '').trim(),
-                                    chequeo21: String(row['Acepta el chequeo 21'] || '').trim()
-                                },
-                                checklist: {
-                                    aceiteNivel: '',
-                                    aceiteColor: '',
-                                    aceiteFiltro: '',
-                                    aceiteFugas: '',
-                                    correaTension: '',
-                                    correaGrietas: '',
-                                    refrigNivel: '',
-                                    refrigColor: '',
-                                    refrigFugas: '',
-                                    batTerminal: serialBateria ? `Serial: ${serialBateria}` : '',
-                                    altVoltaje: '',
-                                    dirJuego: '',
-                                    frenoLiga: '',
-                                    ruedasPresion: String(row['Tazas / Rines'] || '').trim(),
-                                    lucesExt: lucesAdv
-                                },
+                                idServicio: idServicio || ordenDocId, codigoOrden: codigo, fechaIngreso, fechaSalida, clienteId: clienteKey, clienteNombre: nombreFinalCliente, telefonoCliente: telefono, placa, marca, modelo, anio, kilometraje, serialCarroceria, serialBateria, combustible, servicio: trabajo, recibidoPor, mecanico,
+                                inventario: { grua: String(row['Ingreso en grúa (Sí/No)'] || '').trim(), lucesAdvertencia: lucesAdv, gato: String(row['Gato'] || '').trim(), herramientas: String(row['Herramientas'] || '').trim(), triangulo: String(row['Triángulo'] || '').trim(), repuesto: String(row['Neumático repuesto'] || '').trim(), estereo: String(row['Estéreo'] || '').trim(), antena: String(row['Antena'] || '').trim(), emblemas: String(row['Emblemas'] || '').trim(), alfombras: String(row['Alfombras'] || '').trim(), cables: String(row['Cables'] || '').trim(), tazasRines: String(row['Tazas / Rines'] || '').trim(), chequeo21: String(row['Acepta el chequeo 21'] || '').trim() },
+                                checklist: { aceiteNivel: '', aceiteColor: '', aceiteFiltro: '', aceiteFugas: '', correaTension: '', correaGrietas: '', refrigNivel: '', refrigColor: '', refrigFugas: '', batTerminal: serialBateria ? `Serial: ${serialBateria}` : '', altVoltaje: '', dirJuego: '', frenoLiga: '', ruedasPresion: String(row['Tazas / Rines'] || '').trim(), lucesExt: lucesAdv },
                                 registradoPor: usuarioActual ? usuarioActual.email : "importacion_csv"
                             });
                         }
-
                         const listaClientes = Array.from(mapaClientes.entries());
                         const listaOrdenes = Array.from(mapaOrdenes.entries());
-                        registrarLog(`Registros únicos listos: ${listaClientes.length} clientes y ${listaOrdenes.length} órdenes.`);
-
                         const CHUNK_SIZE = 400;
                         let procesados = 0;
                         const totalOps = listaClientes.length + listaOrdenes.length;
-
                         for (let i = 0; i < listaClientes.length; i += CHUNK_SIZE) {
                             const batch = writeBatch(db);
-                            const slice = listaClientes.slice(i, i + CHUNK_SIZE);
-                            for (const [docId, data] of slice) {
-                                batch.set(doc(db, "clientes_taller", docId), data, { merge: true });
-                            }
+                            listaClientes.slice(i, i + CHUNK_SIZE).forEach(([docId, data]) => batch.set(doc(db, "clientes_taller", docId), data, { merge: true }));
                             await batch.commit();
-                            procesados += slice.length;
+                            procesados += Math.min(CHUNK_SIZE, listaClientes.length - i);
                             actualizarProgreso(25 + Math.round((procesados / totalOps) * 70));
-                            registrarLog(`Clientes guardados/actualizados: ${Math.min(i + CHUNK_SIZE, listaClientes.length)} / ${listaClientes.length}`);
                         }
-
                         for (let i = 0; i < listaOrdenes.length; i += CHUNK_SIZE) {
                             const batch = writeBatch(db);
-                            const slice = listaOrdenes.slice(i, i + CHUNK_SIZE);
-                            for (const [docId, data] of slice) {
-                                batch.set(doc(db, "ordenes_servicio", docId), data, { merge: true });
-                            }
+                            listaOrdenes.slice(i, i + CHUNK_SIZE).forEach(([docId, data]) => batch.set(doc(db, "ordenes_servicio", docId), data, { merge: true }));
                             await batch.commit();
-                            procesados += slice.length;
+                            procesados += Math.min(CHUNK_SIZE, listaOrdenes.length - i);
                             actualizarProgreso(25 + Math.round((procesados / totalOps) * 70));
-                            registrarLog(`Órdenes guardadas/actualizadas: ${Math.min(i + CHUNK_SIZE, listaOrdenes.length)} / ${listaOrdenes.length}`);
                         }
-
                         await recargarCacheFirebase();
                         actualizarProgreso(100);
-                        registrarLog("¡IMPORTACIÓN COMPLETADA SIN DUPLICADOS!");
-                        alert(`¡Importación exitosa!\nClientes sincronizados: ${listaClientes.length}\nÓrdenes sincronizadas: ${listaOrdenes.length}\n(Sin duplicados)`);
+                        alert(`¡Importación exitosa!\nClientes: ${listaClientes.length}\nÓrdenes: ${listaOrdenes.length}`);
                     } catch (err) {
-                        registrarLog("Error durante la importación CSV: " + err.message);
-                        alert("Error al importar CSV: " + err.message);
-                        actualizarProgreso(0);
+                        registrarLog("Error: " + err.message);
+                        alert("Error al importar: " + err.message);
                     }
-                },
-                error: function(err) {
-                    registrarLog("Error al leer el archivo CSV: " + err.message);
-                    alert("Error al leer CSV: " + err.message);
                 }
             });
         };
 
+        // Funciones heredadas (clientes, búsqueda, guardar orden, etc.)
         function aplicarDatosClienteEnUI(cliente) {
             clienteDocIdActual = cliente.id;
             document.getElementById('cedula').value = cliente.cedula || '';
             document.getElementById('nombre').value = cliente.nombre || '';
             document.getElementById('telefono').value = cliente.telefono || '';
             document.getElementById('direccion').value = cliente.direccion || '';
-
             vehiculosClienteActual = Array.isArray(cliente.vehiculos) ? [...cliente.vehiculos] : [];
             const selectPlaca = document.getElementById('ord-placa');
             selectPlaca.innerHTML = '<option value="">Seleccione vehículo (Placa)</option>';
-
             vehiculosClienteActual.forEach(placa => {
                 const det = (cliente.vehiculosDetalle && cliente.vehiculosDetalle[placa]) ? cliente.vehiculosDetalle[placa] : {};
                 const etiqueta = det.marca ? `${placa} - ${det.marca} ${det.modelo || ''} (${det.anio || ''})` : placa;
                 selectPlaca.innerHTML += `<option value="${placa}">${etiqueta}</option>`;
             });
             selectPlaca.innerHTML += '<option value="NUEVO">➕ Registrar Nuevo Vehículo</option>';
-
-            registrarLog(`Cliente cargado: ${cliente.nombre} | Placas asociadas: ${vehiculosClienteActual.join(', ') || 'Ninguna'}`);
-
-            if (vehiculosClienteActual.length === 1) {
-                selectPlaca.value = vehiculosClienteActual[0];
-                manejarSeleccionPlaca();
-            }
+            registrarLog(`Cliente cargado: ${cliente.nombre}`);
+            if (vehiculosClienteActual.length === 1) { selectPlaca.value = vehiculosClienteActual[0]; manejarSeleccionPlaca(); }
         }
 
         window.buscarCliente = async function() {
             const criterioRaw = document.getElementById('criterio-busqueda').value.trim();
-            if (!criterioRaw) {
-                alert("Ingrese un nombre, cédula, RIF o teléfono para buscar.");
-                return;
-            }
+            if (!criterioRaw) { alert("Ingrese un criterio de búsqueda."); return; }
             const criterio = normalizarTexto(criterioRaw);
-            registrarLog(`Buscando cliente: "${criterioRaw}"...`);
-            actualizarProgreso(40);
-
-            if (cacheClientes.length === 0) {
-                await recargarCacheFirebase();
-            }
-
+            if (cacheClientes.length === 0) await recargarCacheFirebase();
             coincidenciasClientes = cacheClientes.filter(c => {
-                const ced = normalizarTexto(c.cedula);
-                const nom = normalizarTexto(c.nombre);
-                const tel = normalizarTexto(c.telefono);
+                const ced = normalizarTexto(c.cedula), nom = normalizarTexto(c.nombre), tel = normalizarTexto(c.telefono);
                 return (ced && ced.includes(criterio)) || (nom && nom.includes(criterio)) || (tel && tel.includes(criterio));
             });
-
-            const boxCoincidencias = document.getElementById('selector-coincidencias-box');
-            const selectCoincidencias = document.getElementById('selector-coincidencias');
-
+            const box = document.getElementById('selector-coincidencias-box');
+            const sel = document.getElementById('selector-coincidencias');
             if (coincidenciasClientes.length === 0) {
-                boxCoincidencias.classList.add('hidden');
-                registrarLog(`No se encontró ningún cliente para "${criterioRaw}".`);
-                alert("Cliente no encontrado. Puede registrarlo completando los campos del Módulo 1.");
+                box.classList.add('hidden');
+                alert("Cliente no encontrado.");
                 clienteDocIdActual = null;
-                actualizarProgreso(100);
                 return;
             }
-
             if (coincidenciasClientes.length === 1) {
-                boxCoincidencias.classList.add('hidden');
+                box.classList.add('hidden');
                 aplicarDatosClienteEnUI(coincidenciasClientes[0]);
             } else {
                 coincidenciasClientes.sort((a, b) => {
-                    const aExact = normalizarTexto(a.nombre) === criterio || normalizarTexto(a.cedula) === criterio;
-                    const bExact = normalizarTexto(b.nombre) === criterio || normalizarTexto(b.cedula) === criterio;
-                    return (bExact ? 1 : 0) - (aExact ? 1 : 0);
+                    const aE = normalizarTexto(a.nombre) === criterio || normalizarTexto(a.cedula) === criterio;
+                    const bE = normalizarTexto(b.nombre) === criterio || normalizarTexto(b.cedula) === criterio;
+                    return (bE ? 1 : 0) - (aE ? 1 : 0);
                 });
-                selectCoincidencias.innerHTML = '';
+                sel.innerHTML = '';
                 coincidenciasClientes.forEach((cli, idx) => {
                     const cantPlacas = (cli.vehiculos || []).length;
-                    selectCoincidencias.innerHTML += `<option value="${idx}">${cli.nombre} ${cli.cedula ? '(' + cli.cedula + ')' : ''} - ${cantPlacas} placa(s)</option>`;
+                    sel.innerHTML += `<option value="${idx}">${cli.nombre} ${cli.cedula ? '(' + cli.cedula + ')' : ''} - ${cantPlacas} placa(s)</option>`;
                 });
-                boxCoincidencias.classList.remove('hidden');
+                box.classList.remove('hidden');
                 aplicarDatosClienteEnUI(coincidenciasClientes[0]);
-                registrarLog(`Se encontraron ${coincidenciasClientes.length} clientes coincidentes.`);
             }
-            actualizarProgreso(100);
         };
 
         window.seleccionarClienteDeLista = function() {
             const idx = parseInt(document.getElementById('selector-coincidencias').value, 10);
-            if (!isNaN(idx) && coincidenciasClientes[idx]) {
-                aplicarDatosClienteEnUI(coincidenciasClientes[idx]);
-            }
+            if (!isNaN(idx) && coincidenciasClientes[idx]) aplicarDatosClienteEnUI(coincidenciasClientes[idx]);
         };
 
         window.buscarPorPlacaDirecta = async function() {
             const placaBuscada = document.getElementById('buscar-placa-directa').value.trim().toUpperCase();
-            if (!placaBuscada) {
-                alert("Ingrese una placa para buscar.");
-                return;
-            }
-            registrarLog(`Buscando información completa de la placa: ${placaBuscada}...`);
-            actualizarProgreso(40);
-
-            if (cacheClientes.length === 0 || cacheOrdenes.length === 0) {
-                await recargarCacheFirebase();
-            }
-
+            if (!placaBuscada) { alert("Ingrese una placa."); return; }
+            if (cacheClientes.length === 0 || cacheOrdenes.length === 0) await recargarCacheFirebase();
             const clienteDueno = cacheClientes.find(c => Array.isArray(c.vehiculos) && c.vehiculos.some(p => p.toUpperCase() === placaBuscada));
             if (clienteDueno) {
                 aplicarDatosClienteEnUI(clienteDueno);
@@ -1123,9 +1082,7 @@ ${filasChecklist.length > 0 ? filasChecklist.map(([k, v]) => `<tr><td>${k}</td><
                 selectPlaca.innerHTML = `<option value="${placaBuscada}">${placaBuscada}</option><option value="NUEVO">➕ Registrar Nuevo Vehículo</option>`;
                 selectPlaca.value = placaBuscada;
             }
-
             await manejarSeleccionPlaca();
-            actualizarProgreso(100);
         };
 
         window.guardarCliente = async function(event) {
@@ -1134,117 +1091,65 @@ ${filasChecklist.length > 0 ? filasChecklist.map(([k, v]) => `<tr><td>${k}</td><
             const nombre = document.getElementById('nombre').value.trim();
             const telefono = document.getElementById('telefono').value.trim();
             const direccion = document.getElementById('direccion').value.trim();
-
             const docId = clienteDocIdActual || (cedula ? crearIdSeguro(cedula) : crearIdSeguro(nombre));
-            actualizarProgreso(50);
-
             try {
-                const clienteData = {
-                    cedula,
-                    nombre,
-                    telefono,
-                    direccion,
+                await setDoc(doc(db, "clientes_taller", docId), {
+                    cedula, nombre, telefono, direccion,
                     registradoPor: usuarioActual ? usuarioActual.email : "sistema",
                     fechaRegistro: obtenerFechaHoraActualFormateada(),
                     vehiculos: vehiculosClienteActual
-                };
-
-                await setDoc(doc(db, "clientes_taller", docId), clienteData, { merge: true });
+                }, { merge: true });
                 clienteDocIdActual = docId;
                 await recargarCacheFirebase();
-                registrarLog(`Cliente "${nombre}" guardado/actualizado sin duplicados (ID: ${docId}).`);
-                alert("¡Cliente guardado exitosamente!");
-                actualizarProgreso(100);
-            } catch (e) {
-                registrarLog("Error al guardar cliente: " + e.message);
-                alert("Error al guardar: " + e.message);
-                actualizarProgreso(100);
-            }
+                alert("¡Cliente guardado!");
+            } catch (e) { alert("Error: " + e.message); }
         };
 
         window.manejarSeleccionPlaca = async function() {
             const select = document.getElementById('ord-placa');
-            const contNuevaPlaca = document.getElementById('contenedor-nueva-placa');
-            const inputNuevoPlaca = document.getElementById('nuevo-placa');
-            const placaElegida = select.value.toUpperCase();
-
-            if (placaElegida === 'NUEVO') {
-                contNuevaPlaca.classList.remove('hidden');
-                inputNuevoPlaca.required = true;
+            const contNueva = document.getElementById('contenedor-nueva-placa');
+            const inputNueva = document.getElementById('nuevo-placa');
+            const placa = select.value.toUpperCase();
+            if (placa === 'NUEVO') {
+                contNueva.classList.remove('hidden'); inputNueva.required = true;
                 document.getElementById('ord-codigo').value = generarCodigoOrdenAutomatico();
                 document.getElementById('ord-fecha-ingreso').value = obtenerFechaHoraActualFormateada();
-                document.getElementById('ord-fecha-salida').value = '';
-                document.getElementById('ord-marca').value = '';
-                document.getElementById('ord-modelo').value = '';
-                document.getElementById('ord-anio').value = '';
-                document.getElementById('ord-km').value = '';
-                document.getElementById('ord-serial-carroceria').value = '';
-                document.getElementById('ord-serial-bateria').value = '';
-                document.getElementById('ord-combustible').value = '';
-                document.getElementById('ord-servicio').value = '';
+                ['ord-fecha-salida','ord-marca','ord-modelo','ord-anio','ord-km','ord-serial-carroceria','ord-serial-bateria','ord-combustible','ord-servicio'].forEach(id => document.getElementById(id).value = '');
                 return;
             }
-
-            contNuevaPlaca.classList.add('hidden');
-            inputNuevoPlaca.required = false;
-
-            if (!placaElegida) return;
-
-            registrarLog(`Cargando historial y ficha técnica de la placa ${placaElegida}...`);
-
-            const clienteActual = cacheClientes.find(c => c.id === clienteDocIdActual);
-            if (clienteActual && clienteActual.vehiculosDetalle && clienteActual.vehiculosDetalle[placaElegida]) {
-                const det = clienteActual.vehiculosDetalle[placaElegida];
-                document.getElementById('ord-marca').value = det.marca || '';
-                document.getElementById('ord-modelo').value = det.modelo || '';
-                document.getElementById('ord-anio').value = det.anio || '';
-                document.getElementById('ord-km').value = det.kilometraje || '';
-                document.getElementById('ord-serial-carroceria').value = det.serialCarroceria || '';
-                document.getElementById('ord-serial-bateria').value = det.serialBateria || '';
+            contNueva.classList.add('hidden'); inputNueva.required = false;
+            if (!placa) return;
+            const cli = cacheClientes.find(c => c.id === clienteDocIdActual);
+            if (cli && cli.vehiculosDetalle && cli.vehiculosDetalle[placa]) {
+                const d = cli.vehiculosDetalle[placa];
+                document.getElementById('ord-marca').value = d.marca || '';
+                document.getElementById('ord-modelo').value = d.modelo || '';
+                document.getElementById('ord-anio').value = d.anio || '';
+                document.getElementById('ord-km').value = d.kilometraje || '';
+                document.getElementById('ord-serial-carroceria').value = d.serialCarroceria || '';
+                document.getElementById('ord-serial-bateria').value = d.serialBateria || '';
             }
-
-            const ordenesPlaca = cacheOrdenes.filter(o => String(o.placa || '').toUpperCase() === placaElegida);
-            if (ordenesPlaca.length > 0) {
-                ordenesPlaca.sort((a, b) => String(b.codigoOrden || '').localeCompare(String(a.codigoOrden || '')));
-                const ultima = ordenesPlaca[0];
-
-                document.getElementById('ord-codigo').value = ultima.codigoOrden || generarCodigoOrdenAutomatico();
-                document.getElementById('ord-fecha-ingreso').value = ultima.fechaIngreso || obtenerFechaHoraActualFormateada();
-                document.getElementById('ord-fecha-salida').value = ultima.fechaSalida || '';
-                if (ultima.marca) document.getElementById('ord-marca').value = ultima.marca;
-                if (ultima.modelo) document.getElementById('ord-modelo').value = ultima.modelo;
-                if (ultima.anio) document.getElementById('ord-anio').value = ultima.anio;
-                if (ultima.kilometraje) document.getElementById('ord-km').value = ultima.kilometraje;
-                if (ultima.serialCarroceria) document.getElementById('ord-serial-carroceria').value = ultima.serialCarroceria;
-                if (ultima.serialBateria) document.getElementById('ord-serial-bateria').value = ultima.serialBateria;
-                document.getElementById('ord-combustible').value = ultima.combustible || '';
-                document.getElementById('ord-servicio').value = ultima.servicio || '';
-                document.getElementById('ord-mecanico').value = ultima.mecanico || ultima.recibidoPor || '';
-
-                if (ultima.checklist) {
-                    document.getElementById('chk-aceite-nivel').value = ultima.checklist.aceiteNivel || '';
-                    document.getElementById('chk-aceite-color').value = ultima.checklist.aceiteColor || '';
-                    document.getElementById('chk-aceite-filtro').value = ultima.checklist.aceiteFiltro || '';
-                    document.getElementById('chk-aceite-fugas').value = ultima.checklist.aceiteFugas || '';
-                    document.getElementById('chk-correa-tension').value = ultima.checklist.correaTension || '';
-                    document.getElementById('chk-correa-grietas').value = ultima.checklist.correaGrietas || '';
-                    document.getElementById('chk-refrig-nivel').value = ultima.checklist.refrigNivel || '';
-                    document.getElementById('chk-refrig-color').value = ultima.checklist.refrigColor || '';
-                    document.getElementById('chk-refrig-fugas').value = ultima.checklist.refrigFugas || '';
-                    document.getElementById('chk-bat-terminal').value = ultima.checklist.batTerminal || '';
-                    document.getElementById('chk-alt-voltaje').value = ultima.checklist.altVoltaje || '';
-                    document.getElementById('chk-dir-juego').value = ultima.checklist.dirJuego || '';
-                    document.getElementById('chk-freno-liga').value = ultima.checklist.frenoLiga || '';
-                    document.getElementById('chk-ruedas-presion').value = ultima.checklist.ruedasPresion || '';
-                    document.getElementById('chk-luces-ext').value = ultima.checklist.lucesExt || '';
+            const ords = cacheOrdenes.filter(o => String(o.placa || '').toUpperCase() === placa);
+            if (ords.length > 0) {
+                ords.sort((a, b) => String(b.codigoOrden || '').localeCompare(String(a.codigoOrden || '')));
+                const u = ords[0];
+                document.getElementById('ord-codigo').value = u.codigoOrden || generarCodigoOrdenAutomatico();
+                document.getElementById('ord-fecha-ingreso').value = u.fechaIngreso || obtenerFechaHoraActualFormateada();
+                document.getElementById('ord-fecha-salida').value = u.fechaSalida || '';
+                if (u.marca) document.getElementById('ord-marca').value = u.marca;
+                if (u.modelo) document.getElementById('ord-modelo').value = u.modelo;
+                if (u.anio) document.getElementById('ord-anio').value = u.anio;
+                if (u.kilometraje) document.getElementById('ord-km').value = u.kilometraje;
+                document.getElementById('ord-combustible').value = u.combustible || '';
+                document.getElementById('ord-servicio').value = u.servicio || '';
+                document.getElementById('ord-mecanico').value = u.mecanico || u.recibidoPor || '';
+                if (u.checklist) {
+                    ['aceite-nivel','aceite-color','aceite-filtro','aceite-fugas','correa-tension','correa-grietas','refrig-nivel','refrig-color','refrig-fugas','bat-terminal','alt-voltaje','dir-juego','freno-liga','ruedas-presion','luces-ext'].forEach(k => {
+                        const field = 'chk-' + k;
+                        const key = k.replace(/-([a-z])/g, (g) => g[1].toUpperCase());
+                        if (document.getElementById(field)) document.getElementById(field).value = u.checklist[key] || '';
+                    });
                 }
-
-                registrarLog(`Placa ${placaElegida}: ${ordenesPlaca.length} orden(es) encontrada(s). Mostrando Código ${ultima.codigoOrden} (${ultima.fechaIngreso}).`);
-            } else {
-                document.getElementById('ord-codigo').value = generarCodigoOrdenAutomatico();
-                document.getElementById('ord-fecha-ingreso').value = obtenerFechaHoraActualFormateada();
-                document.getElementById('ord-fecha-salida').value = '';
-                registrarLog(`Placa ${placaElegida} sin órdenes previas. Lista para nueva recepción.`);
             }
         };
 
@@ -1253,83 +1158,44 @@ ${filasChecklist.length > 0 ? filasChecklist.map(([k, v]) => `<tr><td>${k}</td><
             document.getElementById('ord-fecha-ingreso').value = obtenerFechaHoraActualFormateada();
             document.getElementById('ord-fecha-salida').value = '';
             document.getElementById('ord-servicio').value = '';
-            registrarLog("Nuevo código y fecha/hora actual generados para registrar servicio.");
         };
 
         window.guardarOrdenServicio = async function(event) {
             event.preventDefault();
             const nombreCliente = document.getElementById('nombre').value.trim();
-            if (!clienteDocIdActual && !nombreCliente) {
-                alert("Primero debe buscar o registrar un cliente en el Módulo 1.");
-                return;
-            }
-
+            if (!clienteDocIdActual && !nombreCliente) { alert("Primero registre un cliente."); return; }
             if (!clienteDocIdActual && nombreCliente) {
-                const cedula = document.getElementById('cedula').value.trim();
-                clienteDocIdActual = cedula ? crearIdSeguro(cedula) : crearIdSeguro(nombreCliente);
+                const ced = document.getElementById('cedula').value.trim();
+                clienteDocIdActual = ced ? crearIdSeguro(ced) : crearIdSeguro(nombreCliente);
             }
-
-            let placaSeleccionada = document.getElementById('ord-placa').value.toUpperCase();
-            if (placaSeleccionada === 'NUEVO') {
-                placaSeleccionada = document.getElementById('nuevo-placa').value.trim().toUpperCase();
-            }
-
-            if (!placaSeleccionada) {
-                alert("Debe seleccionar o ingresar una placa de vehículo.");
-                return;
-            }
-
+            let placa = document.getElementById('ord-placa').value.toUpperCase();
+            if (placa === 'NUEVO') placa = document.getElementById('nuevo-placa').value.trim().toUpperCase();
+            if (!placa) { alert("Seleccione o ingrese una placa."); return; }
             const marca = document.getElementById('ord-marca').value.trim();
             const modelo = document.getElementById('ord-modelo').value.trim();
             const anio = document.getElementById('ord-anio').value.trim();
-            const kilometraje = document.getElementById('ord-km').value.trim();
-            const serialCarroceria = document.getElementById('ord-serial-carroceria').value.trim();
-            const serialBateria = document.getElementById('ord-serial-bateria').value.trim();
+            const km = document.getElementById('ord-km').value.trim();
+            const serialC = document.getElementById('ord-serial-carroceria').value.trim();
+            const serialB = document.getElementById('ord-serial-bateria').value.trim();
             const codigoOrden = document.getElementById('ord-codigo').value.trim();
             const fechaIngreso = document.getElementById('ord-fecha-ingreso').value.trim();
             const fechaSalida = document.getElementById('ord-fecha-salida').value.trim();
-
-            if (!vehiculosClienteActual.includes(placaSeleccionada)) {
-                vehiculosClienteActual.push(placaSeleccionada);
-            }
-
+            if (!vehiculosClienteActual.includes(placa)) vehiculosClienteActual.push(placa);
             await setDoc(doc(db, "clientes_taller", clienteDocIdActual), {
                 cedula: document.getElementById('cedula').value.trim(),
                 nombre: nombreCliente,
                 telefono: document.getElementById('telefono').value.trim(),
                 direccion: document.getElementById('direccion').value.trim(),
                 vehiculos: vehiculosClienteActual,
-                vehiculosDetalle: {
-                    [placaSeleccionada]: {
-                        placa: placaSeleccionada,
-                        marca,
-                        modelo,
-                        anio,
-                        kilometraje,
-                        serialCarroceria,
-                        serialBateria
-                    }
-                }
+                vehiculosDetalle: { [placa]: { placa, marca, modelo, anio, kilometraje: km, serialCarroceria: serialC, serialBateria: serialB } }
             }, { merge: true });
-
-            const fotosURLs = await subirFotosMultiples(codigoOrden, placaSeleccionada);
-
-            const ordenIdUnico = crearIdSeguro(`${codigoOrden}_${placaSeleccionada}`);
+            const fotosURLs = await subirFotosMultiples(codigoOrden, placa);
+            const ordenIdUnico = crearIdSeguro(`${codigoOrden}_${placa}`);
             const ordenData = {
-                idServicio: ordenIdUnico,
-                codigoOrden: codigoOrden,
-                fechaIngreso: fechaIngreso,
-                fechaSalida: fechaSalida,
-                clienteId: clienteDocIdActual,
-                clienteNombre: nombreCliente,
+                idServicio: ordenIdUnico, codigoOrden, fechaIngreso, fechaSalida,
+                clienteId: clienteDocIdActual, clienteNombre: nombreCliente,
                 telefonoCliente: document.getElementById('telefono').value.trim(),
-                placa: placaSeleccionada,
-                kilometraje: kilometraje,
-                marca: marca,
-                modelo: modelo,
-                anio: anio,
-                serialCarroceria: serialCarroceria,
-                serialBateria: serialBateria,
+                placa, kilometraje: km, marca, modelo, anio, serialCarroceria: serialC, serialBateria: serialB,
                 combustible: document.getElementById('ord-combustible').value.trim(),
                 servicio: document.getElementById('ord-servicio').value.trim(),
                 mecanico: document.getElementById('ord-mecanico').value.trim(),
@@ -1353,80 +1219,40 @@ ${filasChecklist.length > 0 ? filasChecklist.map(([k, v]) => `<tr><td>${k}</td><
                 },
                 registradoPor: usuarioActual ? usuarioActual.email : "sistema"
             };
-
-            actualizarProgreso(80);
-            registrarLog(`Guardando orden ${codigoOrden} (${fechaIngreso}) en Firebase...`);
-
             try {
                 await setDoc(doc(db, "ordenes_servicio", ordenIdUnico), ordenData, { merge: true });
                 await recargarCacheFirebase();
-                registrarLog(`¡Orden ${codigoOrden} guardada/actualizada con éxito! (${fotosURLs.length} fotos subidas)`);
-                alert(`¡Orden de servicio y chequeo técnico guardados en la nube!\nFotos de recepción subidas: ${fotosURLs.length}`);
+                alert(`¡Orden guardada!\nFotos subidas: ${fotosURLs.length}`);
                 document.getElementById('ord-fotos').value = '';
                 document.getElementById('lista-fotos-preview').innerHTML = '';
-                actualizarProgreso(100);
-            } catch (e) {
-                registrarLog("Error al guardar orden: " + e.message);
-                alert("Error: " + e.message);
-                actualizarProgreso(100);
-            }
+            } catch (e) { alert("Error: " + e.message); }
         };
 
         window.exportarClientesCSV = async function() {
-            registrarLog("Generando archivo CSV de clientes...");
-            actualizarProgreso(30);
-            try {
-                if (cacheClientes.length === 0) await recargarCacheFirebase();
-                let csv = "Cedula_RIF,Nombre,Telefono,Direccion_Email,Placas\n";
-                cacheClientes.forEach(d => {
-                    const placasStr = Array.isArray(d.vehiculos) ? d.vehiculos.join(" | ") : "";
-                    csv += `"${(d.cedula || '').replace(/"/g, '""')}","${(d.nombre || '').replace(/"/g, '""')}","${(d.telefono || '').replace(/"/g, '""')}","${(d.direccion || '').replace(/"/g, '""')}","${placasStr}"\n`;
-                });
-                
-                const blob = new Blob(["\uFEFF" + csv], { type: 'text/csv;charset=utf-8;' });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = 'clientes_taller_syntro.csv';
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                registrarLog(`CSV de clientes exportado (${cacheClientes.length} registros).`);
-                actualizarProgreso(100);
-            } catch (e) {
-                registrarLog("Error al exportar clientes: " + e.message);
-                actualizarProgreso(100);
-            }
+            if (cacheClientes.length === 0) await recargarCacheFirebase();
+            let csv = "Cedula_RIF,Nombre,Telefono,Direccion_Email,Placas\n";
+            cacheClientes.forEach(d => {
+                const placasStr = Array.isArray(d.vehiculos) ? d.vehiculos.join(" | ") : "";
+                csv += `"${(d.cedula || '').replace(/"/g, '""')}","${(d.nombre || '').replace(/"/g, '""')}","${(d.telefono || '').replace(/"/g, '""')}","${(d.direccion || '').replace(/"/g, '""')}","${placasStr}"\n`;
+            });
+            const blob = new Blob(["\uFEFF" + csv], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a'); a.href = url; a.download = 'clientes_taller_syntro.csv';
+            document.body.appendChild(a); a.click(); document.body.removeChild(a);
         };
 
         window.exportarOrdenesCSV = async function() {
-            registrarLog("Generando archivo CSV de órdenes de servicio...");
-            actualizarProgreso(30);
-            try {
-                if (cacheOrdenes.length === 0) await recargarCacheFirebase();
-                let csv = "ID_SERVICIO,CODIGO,Ingreso_Fecha_Hora,Salida_Fecha_Hora,Placa,Cliente,Telefono,Marca,Modelo,Anio,Kilometraje,Mecanico,Servicio,Cantidad_Fotos,URLs_Fotos\n";
-                cacheOrdenes.forEach(d => {
-                    const kmLimpio = String(d.kilometraje || '').replace(/,/g, '.');
-                    const servicioLimpio = String(d.servicio || '').replace(/\r?\n/g, ' ').replace(/"/g, '""');
-                    const fotos = Array.isArray(d.fotosRecepcion) ? d.fotosRecepcion : [];
-                    const urlsFotos = fotos.join(' | ').replace(/"/g, '""');
-                    csv += `"${d.idServicio || d.id}","${d.codigoOrden || ''}","${d.fechaIngreso || ''}","${d.fechaSalida || ''}","${d.placa || ''}","${(d.clienteNombre || '').replace(/"/g, '""')}","${d.telefonoCliente || ''}","${d.marca || ''}","${d.modelo || ''}","${d.anio || ''}","${kmLimpio}","${(d.mecanico || '').replace(/"/g, '""')}","${servicioLimpio}","${fotos.length}","${urlsFotos}"\n`;
-                });
-                
-                const blob = new Blob(["\uFEFF" + csv], { type: 'text/csv;charset=utf-8;' });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = 'ordenes_servicio_taller_syntro.csv';
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                registrarLog(`CSV de órdenes exportado (${cacheOrdenes.length} registros).`);
-                actualizarProgreso(100);
-            } catch (e) {
-                registrarLog("Error al exportar órdenes: " + e.message);
-                actualizarProgreso(100);
-            }
+            if (cacheOrdenes.length === 0) await recargarCacheFirebase();
+            let csv = "ID_SERVICIO,CODIGO,Ingreso,Salida,Placa,Cliente,Telefono,Marca,Modelo,Anio,Kilometraje,Mecanico,Servicio,Cantidad_Fotos,URLs_Fotos\n";
+            cacheOrdenes.forEach(d => {
+                const fotos = Array.isArray(d.fotosRecepcion) ? d.fotosRecepcion : [];
+                const servicioLimpio = String(d.servicio || '').replace(/\r?\n/g, ' ').replace(/"/g, '""');
+                csv += `"${d.idServicio || d.id}","${d.codigoOrden || ''}","${d.fechaIngreso || ''}","${d.fechaSalida || ''}","${d.placa || ''}","${(d.clienteNombre || '').replace(/"/g, '""')}","${d.telefonoCliente || ''}","${d.marca || ''}","${d.modelo || ''}","${d.anio || ''}","${String(d.kilometraje || '').replace(/,/g, '.')}","${(d.mecanico || '').replace(/"/g, '""')}","${servicioLimpio}","${fotos.length}","${fotos.join(' | ').replace(/"/g, '""')}"\n`;
+            });
+            const blob = new Blob(["\uFEFF" + csv], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a'); a.href = url; a.download = 'ordenes_servicio_taller_syntro.csv';
+            document.body.appendChild(a); a.click(); document.body.removeChild(a);
         };
     </script>
 </body>
